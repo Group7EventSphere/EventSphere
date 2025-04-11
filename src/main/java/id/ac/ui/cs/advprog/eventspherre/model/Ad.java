@@ -20,4 +20,9 @@ public class Ad {
         this.description = description;
         this.imageUrl = imageUrl;
     }
+
+    @Override
+    public String toString() {
+        return "Ad [id=" + id + ", title=" + title + ", description=" + description + ", imageUrl=" + imageUrl + "]";
+    }
 }
