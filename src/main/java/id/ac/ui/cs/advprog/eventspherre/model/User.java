@@ -16,8 +16,26 @@ public class User {
     private Date createdAt;
     private Date updatedAt;
     private Role role;
+    private Double balance;
 
     public enum Role {
         ADMIN, ORGANIZER, ATTENDEE
+    }
+
+    public void topUp(double amount) {
+        if (amount > 0) {
+            this.balance += amount;
+        }
+    }
+
+    public boolean deduct(double amount) {
+        if (amount <= 0) {
+            return false;
+        }
+        if (amount <= balance) {
+            balance -= amount;
+            return true;
+        }
+        return false;
     }
 }
