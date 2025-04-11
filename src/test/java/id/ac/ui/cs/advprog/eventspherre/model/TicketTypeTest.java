@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -65,6 +64,25 @@ public class TicketTypeTest {
         TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
         ticketType.setPrice(new BigDecimal("150.00"));
         assertEquals(new BigDecimal("150.00"), ticketType.getPrice());
+    }
+
+    @Test
+    void testOnlyOrganizerCanCreateTicketType() {
+        User organizer = new User();
+        organizer.setRole(User.Role.ORGANIZER);
+
+        TicketType ticketType = TicketType.create("VIP", new BigDecimal("100.00"), 10, organizer);
+        assertEquals("VIP", ticketType.getName());
+    }
+
+    @Test
+    void testAttendeeCannotCreateTicketType() {
+        User attendee = new User();
+        attendee.setRole(User.Role.ATTENDEE);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                TicketType.create("VIP", new BigDecimal("100.00"), 10, attendee)
+        );
     }
 }
 
