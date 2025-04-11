@@ -43,7 +43,11 @@ class TopUpHandlerTest {
         private boolean called = false;
 
         @Override
-        public void setNext(PaymentHandler handler) {}
+        public void setNext(PaymentHandler handler) {
+
+            // Have not decided proper chain as of yet
+
+        }
 
         @Override
         public void handle(PaymentRequest request) {
