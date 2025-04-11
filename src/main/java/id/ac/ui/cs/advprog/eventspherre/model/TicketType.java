@@ -11,7 +11,6 @@ import java.util.UUID;
 public class TicketType {
     // Getters & Setters
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id = UUID.randomUUID();
 
     @Setter
@@ -35,6 +34,8 @@ public class TicketType {
     public void reduceQuota(int quantity) {
         if (quantity > this.quota) {
             throw new IllegalArgumentException("Not enough quota available");
+        } else if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
         }
         this.quota -= quantity;
     }
