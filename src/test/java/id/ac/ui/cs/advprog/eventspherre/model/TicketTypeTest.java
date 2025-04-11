@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TicketTypeTest {
+class TicketTypeTest {
     @Test
     void testGetName() {
         TicketType ticketType = new TicketType("VIP", new BigDecimal("75.00"), 20);
@@ -80,8 +80,12 @@ public class TicketTypeTest {
         User attendee = new User();
         attendee.setRole(User.Role.ATTENDEE);
 
+        String name = "VIP";
+        BigDecimal price = new BigDecimal("100.00");
+        int quota = 10;
+
         assertThrows(IllegalArgumentException.class, () ->
-                TicketType.create("VIP", new BigDecimal("100.00"), 10, attendee)
+                TicketType.create(name, price, quota, attendee)
         );
     }
 }

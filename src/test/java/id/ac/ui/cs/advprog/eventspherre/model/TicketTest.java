@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-public class TicketTest {
+class TicketTest {
     private Ticket ticket;
     private TicketType ticketType;
     private User attendee;
