@@ -39,4 +39,12 @@ public class TicketType {
         }
         this.quota -= quantity;
     }
+
+    public static TicketType create(String name, BigDecimal price, int quota, User user) {
+        // Use Factory Method to handle creation of object
+        if (user.getRole() != User.Role.ORGANIZER) {
+            throw new IllegalArgumentException("Only organizers can create ticket types");
+        }
+        return new TicketType(name, price, quota);
+    }
 }
