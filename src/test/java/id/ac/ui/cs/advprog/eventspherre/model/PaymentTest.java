@@ -9,7 +9,7 @@ class PaymentTest {
     private User user;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         user = new User();
         user.setName("Test Attendee");
         user.setEmail("attendee@example.com");
@@ -33,7 +33,6 @@ class PaymentTest {
 
     @Test
     void testPurchasePaymentRequestCreation() {
-        User user = new User();
         user.setName("Test Buyer");
         user.setEmail("buyer@example.com");
         user.setPassword("password");
@@ -52,7 +51,6 @@ class PaymentTest {
 
     @Test
     void testMarkRequestAsFailed() {
-        User user = new User();
         user.setName("Test Buyer");
         user.setEmail("buyer@example.com");
         user.setPassword("password");
@@ -71,7 +69,6 @@ class PaymentTest {
 
     @Test
     void testPaymentRequestToString() {
-        User user = new User();
         user.setName("Test User");
         user.setEmail("user@example.com");
         user.setPassword("password");
