@@ -1,25 +1,21 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Setter
 @Getter
 public class TicketType {
     // Getters & Setters
-    @Id
     private UUID id = UUID.randomUUID();
 
-    @Setter
     private String name;
 
-    @Setter
     private BigDecimal price;
 
-    @Setter
     private int quota;
 
     // Constructor
