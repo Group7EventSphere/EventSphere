@@ -22,6 +22,8 @@ public class User {
         ADMIN, ORGANIZER, ATTENDEE
     }
 
+    // Uses Domain Model pattern
+    // Subject to change incase integration with other modules become difficult
     public void topUp(double amount) {
         if (amount > 0) {
             this.balance += amount;
