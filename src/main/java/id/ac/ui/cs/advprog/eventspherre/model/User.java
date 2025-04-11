@@ -16,8 +16,29 @@ public class User {
     private Date createdAt;
     private Date updatedAt;
     private Role role;
+    private Double balance;
 
     public enum Role {
         ADMIN, ORGANIZER, ATTENDEE
     }
+
+    // Uses Domain Model pattern
+    // Subject to change incase integration with other modules become difficult
+    public void topUp(double amount) {
+        if (amount > 0) {
+            this.balance += amount;
+        }
+    }
+
+    public boolean deduct(double amount) {
+        if (amount <= 0) {
+            return false;
+        }
+        if (amount <= balance) {
+            balance -= amount;
+            return true;
+        }
+        return false;
+    }
 }
+
