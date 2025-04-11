@@ -73,20 +73,4 @@ class TopUpHandlerTest {
         assertEquals(expectedBalance, user.getBalance(), 0.001);
         assertTrue(user.getBalance() > initialBalance);
     }
-
-    private static class DummyHandler1 implements PaymentHandler {
-        private boolean called = false;
-
-        @Override
-        public void setNext(PaymentHandler handler) {}
-
-        @Override
-        public void handle(PaymentRequest request) {
-            called = true;
-        }
-
-        boolean wasCalled() {
-            return called;
-        }
-    }
 }
