@@ -1,72 +1,55 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
-import id.ac.ui.cs.advprog.eventspherre.model.Ad;
 import id.ac.ui.cs.advprog.eventspherre.model.UnauthorizedAccessException;
-import id.ac.ui.cs.advprog.eventspherre.repository.AdRepository;
+import id.ac.ui.cs.advprog.eventspherre.model.Ad;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AdServiceTest {
 
-    @Mock
-    private AdRepository adRepository;
-
-    @InjectMocks
-    private AdService adService;
-
+    private AdService adServiceAdmin;
+    private AdService adServiceUser;
     private Ad ad;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        ad = new Ad(1L, "Test Ad", "Description", "image.jpg", "ADMIN", true); // Use constructor with userRole and isActive
+        adServiceAdmin = new AdService("ADMIN");  // Admin user
+        adServiceUser = new AdService("USER");    // Regular user
+
+        // Initialize a sample ad
+        ad = new Ad(1L, "Test Ad", "This is a test ad description", "image1.jpg", "ADMIN");
     }
 
-    // Test create ad as admin
     @Test
-    void testCreateAdAsAdmin() {
-        when(adRepository.save(ad)).thenReturn(ad);
-
-        Ad result = adService.createAd(ad);
-
-        assertEquals(ad, result);
-        verify(adRepository, times(1)).save(ad); // Ensure save was called once
+    void testAdminCanCreateAd() {
+        Ad createdAd = adServiceAdmin.createAd(ad);
+        assertEquals("Test Ad", createdAd.getTitle(), "Admin should be able to create an ad");
     }
 
-    // Test create ad as non-admin user
     @Test
-    void testUnauthorizedCreateAdAsUser() {
-        Ad userAd = new Ad(2L, "Test Ad", "Description", "image.jpg", "USER", true);
-
-        assertThrows(UnauthorizedAccessException.class, () -> adService.createAd(userAd),
-                "Only admins can create ads.");
+    void testNonAdminCannotCreateAd() {
+        assertThrows(UnauthorizedAccessException.class, () -> adServiceUser.createAd(ad),
+                "Non-admin should not be able to create an ad");
     }
 
-    // Test update ad as admin
     @Test
-    void testUpdateAdAsAdmin() {
-        Ad updatedAd = new Ad(1L, "Updated Test Ad", "Updated Description", "updated_image.jpg", "ADMIN", true);
-        when(adRepository.findById(1L)).thenReturn(java.util.Optional.of(ad));
-        when(adRepository.save(updatedAd)).thenReturn(updatedAd);
-
-        Ad result = adService.updateAd(1L, updatedAd);
-
-        assertEquals(updatedAd, result);
-        verify(adRepository, times(1)).save(updatedAd); // Ensure save was called once
+    void testAdminCanUpdateAd() {
+        Ad updatedAd = new Ad(1L, "Updated Test Ad", "Updated Description", "updated_image.jpg", "ADMIN");
+        Ad result = adServiceAdmin.updateAd(1L, updatedAd);
+        assertEquals("Updated Test Ad", result.getTitle(), "Admin should be able to update an ad");
     }
 
-    // Test update ad as non-admin user
     @Test
-    void testUnauthorizedUpdateAdAsUser() {
-        Ad updatedAd = new Ad(1L, "Updated Test Ad", "Updated Description", "updated_image.jpg", "USER", true);
+    void testNonAdminCannotUpdateAd() {
+        Ad updatedAd = new Ad(1L, "Updated Test Ad", "Updated Description", "updated_image.jpg", "USER");
+        assertThrows(UnauthorizedAccessException.class, () -> adServiceUser.updateAd(1L, updatedAd),
+                "Non-admin should not be able to update an ad");
+    }
 
-        assertThrows(UnauthorizedAccessException.class, () -> adService.updateAd(1L, updatedAd),
-                "Only admins can edit ads.");
+    @Test
+    void testAnyUserCanViewAd() {
+        Ad viewedAd = adServiceUser.viewAd(1L);
+        assertNotNull(viewedAd, "Any user should be able to view an ad");
     }
 }
