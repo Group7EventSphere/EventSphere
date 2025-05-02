@@ -25,7 +25,6 @@ class AdServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        // Using the correct constructor
         ad = new Ad(1L, "Test Ad", "Description", "image.jpg", "ADMIN", true); // Use constructor with userRole and isActive
     }
 

@@ -16,7 +16,7 @@ public class Ad {
 
     public Ad() { }
 
-    // Updated constructor with the 'isActive' parameter
+    // Constructor with 'userRole' and 'isActive' fields
     public Ad(Long id, String title, String description, String imageUrl, String userRole, boolean isActive) {
         this.id = id;
         this.title = title;
@@ -32,8 +32,18 @@ public class Ad {
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
-        this.userRole = "USER";
+        this.userRole = "USER"; // Default to "USER" role
         this.isActive = true; // Default value for isActive
+    }
+
+    // Constructor without 'isActive' (default userRole to "USER" and isActive to true)
+    public Ad(Long id, String title, String description, String imageUrl, String userRole) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.userRole = userRole;
+        this.isActive = true; // Default to true if not specified
     }
 
     public boolean canEdit() {

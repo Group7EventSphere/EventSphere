@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AdRepository extends JpaRepository<Ad, Long> {
-    // Spring Data JPA automatically implements methods like save(), findById(), findAll(), and deleteById()
 }

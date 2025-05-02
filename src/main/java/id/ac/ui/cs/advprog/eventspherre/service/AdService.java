@@ -13,7 +13,7 @@ public class AdService {
 
     public Ad createAd(Ad ad) {
         if ("ADMIN".equalsIgnoreCase(currentUserRole)) {
-            return ad;  // For simplicity, we return the ad
+            return ad;
         } else {
             throw new UnauthorizedAccessException("Only admins can create ads.");
         }
