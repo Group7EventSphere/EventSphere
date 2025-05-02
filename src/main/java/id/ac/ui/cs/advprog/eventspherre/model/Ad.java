@@ -12,23 +12,28 @@ public class Ad {
     private String description;
     private String imageUrl;
     private String userRole;
+    private boolean isActive; // Added isActive field
 
     public Ad() { }
 
-    public Ad(Long id, String title, String description, String imageUrl, String userRole) {
+    // Updated constructor with the 'isActive' parameter
+    public Ad(Long id, String title, String description, String imageUrl, String userRole, boolean isActive) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
         this.userRole = userRole;
+        this.isActive = isActive;
     }
 
+    // Constructor without 'userRole' and 'isActive' (default userRole is "USER" and isActive is true)
     public Ad(Long id, String title, String description, String imageUrl) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
         this.userRole = "USER";
+        this.isActive = true; // Default value for isActive
     }
 
     public boolean canEdit() {
@@ -43,6 +48,6 @@ public class Ad {
 
     @Override
     public String toString() {
-        return "Ad [id=" + id + ", title=" + title + ", description=" + description + ", imageUrl=" + imageUrl + "]";
+        return "Ad [id=" + id + ", title=" + title + ", description=" + description + ", imageUrl=" + imageUrl + ", isActive=" + isActive + "]";
     }
 }
