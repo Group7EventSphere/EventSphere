@@ -1,0 +1,16 @@
+package id.ac.ui.cs.advprog.eventspherre.repository;
+
+import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface TicketRepository extends JpaRepository<Ticket, UUID> {
+    List<Ticket> findAllByAttendeeId(Integer attendeeId);
+    Optional<Ticket> findByConfirmationCode(String confirmationCode);
+    long countByTicketTypeId(UUID ticketTypeId);
+}

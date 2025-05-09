@@ -3,12 +3,12 @@ package id.ac.ui.cs.advprog.eventspherre.repository;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,10 +17,16 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
+@DataJpaTest
+// auto-configure an embedded test database (H2) for you
+@AutoConfigureTestDatabase
+// point JPA at your repo package
+@EnableJpaRepositories(basePackageClasses = TicketRepository.class)
+// point JPA at your entity package
+@EntityScan(basePackageClasses = Ticket.class)
 public class TicketRepositoryTest {
 
-    @InjectMocks
+    @Autowired
     TicketRepository ticketRepository;
 
     @Test
