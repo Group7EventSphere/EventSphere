@@ -17,20 +17,34 @@ public class TicketTypeServiceImpl implements TicketTypeService {
 
     @Override
     public TicketType createTicketType(TicketType type, User organizer) {
-        return null;
+        if (organizer.getRole() != User.Role.ORGANIZER) {
+            throw new IllegalArgumentException("Only organizers can create ticket types");
+        }
+        return ticketTypeRepository.save(type);
     }
 
     @Override
     public Optional<TicketType> getTicketTypeById(UUID id) {
-        return Optional.empty();
+        return ticketTypeRepository.findById(id);
     }
 
     @Override
     public TicketType updateTicketType(UUID id, TicketType updated, User editor) {
-        return null;
+        TicketType existing = ticketTypeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+
+        existing.setName(updated.getName());
+        existing.setPrice(updated.getPrice());
+        existing.setQuota(updated.getQuota());
+
+        return ticketTypeRepository.save(existing);
     }
 
     @Override
     public void deleteTicketType(UUID id, User requester) {
+        if (requester.getRole() != User.Role.ADMIN) {
+            throw new IllegalArgumentException("Only admins can delete ticket types");
+        }
+        ticketTypeRepository.deleteById(id);
     }
 }
