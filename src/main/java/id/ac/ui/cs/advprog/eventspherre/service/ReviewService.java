@@ -6,4 +6,6 @@ import java.util.Optional;
 public interface ReviewService {
     Review create(Review review);
     Optional<Review> findById(Long id);
+    Review update(Long id, Review review);
+    boolean delete(Long id);
 }
