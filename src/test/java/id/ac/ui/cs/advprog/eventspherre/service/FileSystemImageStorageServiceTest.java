@@ -1,4 +1,3 @@
-// src/test/java/id/ac/ui/cs/advprog/eventspherre/service/FileSystemImageStorageServiceTest.java
 package id.ac.ui.cs.advprog.eventspherre.service;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +27,7 @@ public class FileSystemImageStorageServiceTest {
     void storeAndDelete_roundTrip() throws Exception {
         byte[] content = "hello world".getBytes();
         MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "greeting.png",
-                "image/png",
-                content
+                "file", "greeting.png", "image/png", content
         );
 
         String storedPath = service.store(file);
@@ -47,10 +43,7 @@ public class FileSystemImageStorageServiceTest {
     @Test
     void store_invalidContentType_throws() {
         MockMultipartFile badFile = new MockMultipartFile(
-                "file",
-                "bad.txt",
-                "text/plain",
-                new byte[0]
+                "file", "bad.txt", "text/plain", new byte[0]
         );
         assertThatThrownBy(() -> service.store(badFile))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -61,10 +54,7 @@ public class FileSystemImageStorageServiceTest {
     void store_tooLarge_throws() {
         byte[] big = new byte[2_000_000];
         MockMultipartFile largeFile = new MockMultipartFile(
-                "file",
-                "big.png",
-                "image/png",
-                big
+                "file", "big.png", "image/png", big
         );
         assertThatThrownBy(() -> service.store(largeFile))
                 .isInstanceOf(IllegalArgumentException.class)
