@@ -8,14 +8,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 
+/**
+ * A filesystem-based implementation of ImageStorageService.
+ */
 @Service
 public class FileSystemImageStorageService implements ImageStorageService {
 
     private final Path root;
+
+    /** Production ctor: defaults to ./ads-images */
     public FileSystemImageStorageService() {
         this.root = Paths.get("ads-images");
     }
 
+    /** Test‐friendly ctor */
     public FileSystemImageStorageService(Path root) {
         this.root = root;
     }
@@ -49,20 +55,22 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public void delete(String imageUrl) {
         try {
             Files.deleteIfExists(Paths.get(imageUrl));
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) { }
     }
 
     private void validate(MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Cannot upload empty file");
-        }
-        if (file.getSize() > 1_000_000) {
-            throw new IllegalArgumentException("File too large");
-        }
+        // 1) content-type first
         String ct = file.getContentType();
         if (ct == null || !(ct.equals("image/png") || ct.equals("image/jpeg"))) {
             throw new IllegalArgumentException("Only PNG or JPEG images are allowed");
+        }
+        // 2) non-empty
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Cannot upload empty file");
+        }
+        // 3) size limit
+        if (file.getSize() > 1_000_000) {
+            throw new IllegalArgumentException("File too large");
         }
     }
 }
