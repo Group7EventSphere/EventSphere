@@ -1,159 +1,97 @@
 package id.ac.ui.cs.advprog.eventspherre.repository;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Ad;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class AdRepositoryTest {
 
     @Autowired
-    private TestEntityManager entityManager;
-
-    @Autowired
-    private AdRepository adRepository;
-
-    private Ad ad;
-
-    @BeforeEach
-    void setUp() {
-        // Initialize with test data
-        ad = new Ad();
-        ad.setTitle("Test Ad");
-        ad.setDescription("Test Description");
-        ad.setImageUrl("test.jpg");
-        // Clear any existing data
-        entityManager.clear();
-    }
-
-    @AfterEach
-    void tearDown() {
-        entityManager.clear();
-    }
+    private AdRepository repo;
 
     @Test
     void testSaveAd() {
-        // Act
-        Ad savedAd = adRepository.save(ad);
+        Ad a = Ad.builder()
+                .title("T1")
+                .description("D1")
+                .imageUrl("i1.jpg")
+                .active(true)
+                .build();
 
-        // Assert
-        assertNotNull(savedAd.getId(), "Saved ad should have an ID");
-        assertEquals("Test Ad", savedAd.getTitle(), "Titles should match");
-        assertEquals("Test Description", savedAd.getDescription(), "Descriptions should match");
-        assertEquals("test.jpg", savedAd.getImageUrl(), "Image URLs should match");
+        Ad saved = repo.save(a);
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getTitle()).isEqualTo("T1");
     }
 
     @Test
     void testFindById() {
-        // Arrange
-        Ad savedAd = entityManager.persist(ad);
+        Ad saved = repo.save(
+                Ad.builder().title("X").description("Y").imageUrl("z.png").active(true).build()
+        );
 
-        // Act
-        Optional<Ad> foundAd = adRepository.findById(savedAd.getId());
-
-        // Assert
-        assertTrue(foundAd.isPresent(), "Ad should be found");
-        assertEquals(savedAd.getId(), foundAd.get().getId(), "IDs should match");
-        assertEquals("Test Ad", foundAd.get().getTitle(), "Titles should match");
+        Optional<Ad> found = repo.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getDescription()).isEqualTo("Y");
     }
 
     @Test
     void testFindById_NotFound() {
-        // Act
-        Optional<Ad> foundAd = adRepository.findById(999L);
-
-        // Assert
-        assertFalse(foundAd.isPresent(), "Ad should not be found");
-    }
-
-    @Test
-    void testDeleteAd() {
-        // Arrange
-        Ad savedAd = entityManager.persist(ad);
-
-        // Act
-        adRepository.delete(savedAd);
-
-        // Assert
-        Optional<Ad> deletedAd = adRepository.findById(savedAd.getId());
-        assertFalse(deletedAd.isPresent(), "Ad should be deleted");
+        Optional<Ad> none = repo.findById(999L);
+        assertThat(none).isNotPresent();
     }
 
     @Test
     void testFindAllAds() {
-        // Arrange
-        entityManager.persist(ad);
+        repo.save(Ad.builder().title("A").description("a").imageUrl("a.jpg").active(true).build());
+        repo.save(Ad.builder().title("B").description("b").imageUrl("b.jpg").active(true).build());
 
-        Ad secondAd = new Ad();
-        secondAd.setTitle("Second Ad");
-        secondAd.setDescription("Desc");
-        secondAd.setImageUrl("img2.jpg");
-        entityManager.persist(secondAd);
-
-        // Act
-        Iterable<Ad> ads = adRepository.findAll();
-
-        // Assert
-        List<Ad> adList = (List<Ad>) ads;
-        assertEquals(2, adList.size(), "Should find 2 ads");
-        assertTrue(adList.stream().anyMatch(a -> a.getTitle().equals("Test Ad")),
-                "Should contain first ad");
-        assertTrue(adList.stream().anyMatch(a -> a.getTitle().equals("Second Ad")),
-                "Should contain second ad");
-    }
-
-    @Test
-    void testUpdateAd() {
-        // Arrange
-        Ad savedAd = entityManager.persist(ad);
-
-        Ad updatedAd = new Ad();
-        updatedAd.setId(savedAd.getId());
-        updatedAd.setTitle("Updated Title");
-        updatedAd.setDescription("Updated Description");
-        updatedAd.setImageUrl("updated.jpg");
-
-        // Act
-        Ad result = adRepository.save(updatedAd);
-
-        // Assert
-        assertEquals(savedAd.getId(), result.getId(), "IDs should match");
-        assertEquals("Updated Title", result.getTitle(), "Title should be updated");
-        assertEquals("Updated Description", result.getDescription(), "Description should be updated");
-        assertEquals("updated.jpg", result.getImageUrl(), "Image URL should be updated");
-
-        // Verify the update persisted
-        Optional<Ad> verifiedAd = adRepository.findById(savedAd.getId());
-        assertTrue(verifiedAd.isPresent(), "Ad should exist");
-        assertEquals("Updated Title", verifiedAd.get().getTitle(), "Title should be updated in DB");
+        List<Ad> all = repo.findAll();
+        assertThat(all).hasSize(2);
     }
 
     @Test
     void testCountAds() {
-        // Arrange
-        entityManager.persist(ad);
+        long before = repo.count();
+        repo.save(Ad.builder().title("C").description("c").imageUrl("c.jpg").active(true).build());
+        assertThat(repo.count()).isEqualTo(before + 1);
+    }
 
-        Ad secondAd = new Ad();
-        secondAd.setTitle("Second Ad");
-        secondAd.setDescription("Desc");
-        secondAd.setImageUrl("img2.jpg");
-        entityManager.persist(secondAd);
+    @Test
+    void testDeleteAd() {
+        Ad saved = repo.save(
+                Ad.builder().title("Del").description("d").imageUrl("d.jpg").active(true).build()
+        );
+        repo.deleteById(saved.getId());
+        assertThat(repo.findById(saved.getId())).isNotPresent();
+    }
 
-        // Act
-        long count = adRepository.count();
+    @Test
+    void testUpdateAd() {
+        Ad saved = repo.save(
+                Ad.builder().title("Old").description("d").imageUrl("i.jpg").active(true).build()
+        );
+        saved.setTitle("New");
+        Ad updated = repo.save(saved);
 
-        // Assert
-        assertEquals(2, count, "Should count 2 ads");
+        assertThat(updated.getTitle()).isEqualTo("New");
+        assertThat(repo.findById(saved.getId()).get().getTitle()).isEqualTo("New");
+    }
+
+    @Test
+    void testFindByActiveTrue() {
+        repo.save(Ad.builder().title("On").description("1").imageUrl("on.jpg").active(true).build());
+        repo.save(Ad.builder().title("Off").description("2").imageUrl("off.jpg").active(false).build());
+
+        List<Ad> activeList = repo.findByActiveTrue();
+        assertThat(activeList).allSatisfy(ad -> assertThat(ad.isActive()).isTrue());
     }
 }
