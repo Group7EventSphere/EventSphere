@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ads")  // Base URL for all ad-related operations
+@RequestMapping("/api/ads")
 public class AdController {
 
     private final AdService adService;
@@ -20,38 +20,47 @@ public class AdController {
         this.adService = adService;
     }
 
-    // Create a new ad
+    // CREATE (JSON body)
     @PostMapping
     public ResponseEntity<Ad> createAd(@RequestBody Ad ad) {
-        Ad createdAd = adService.createAd(ad);
-        return new ResponseEntity<>(createdAd, HttpStatus.CREATED);  // 201 Created
+        Ad created = adService.createAd(ad);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // Get an ad by its ID
+    // READ one
     @GetMapping("/{id}")
     public ResponseEntity<Ad> getAd(@PathVariable Long id) {
         Ad ad = adService.getAd(id);
-        return new ResponseEntity<>(ad, HttpStatus.OK);  // 200 OK
+        // test expects 200 OK and empty body if not found
+        return ad != null
+                ? ResponseEntity.ok(ad)
+                : ResponseEntity.ok().body(null);
     }
 
-    // Get all ads
+    // READ all
     @GetMapping
     public ResponseEntity<List<Ad>> getAllAds() {
         List<Ad> ads = adService.getAllAds();
-        return new ResponseEntity<>(ads, HttpStatus.OK);  // 200 OK
+        return ResponseEntity.ok(ads);
     }
 
-    // Update an existing ad
+    // UPDATE (JSON body)
     @PutMapping("/{id}")
-    public ResponseEntity<Ad> updateAd(@PathVariable Long id, @RequestBody Ad ad) {
-        Ad updatedAd = adService.updateAd(id, ad);
-        return new ResponseEntity<>(updatedAd, HttpStatus.OK);  // 200 OK
+    public ResponseEntity<Ad> updateAd(
+            @PathVariable Long id,
+            @RequestBody Ad ad
+    ) {
+        Ad updated = adService.updateAd(id, ad);
+        // test expects 200 OK and empty body if not found
+        return updated != null
+                ? ResponseEntity.ok(updated)
+                : ResponseEntity.ok().body(null);
     }
 
-    // Delete an ad
+    // DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAd(@PathVariable Long id) {
         adService.deleteAd(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // 204 No Content
+        return ResponseEntity.noContent().build();
     }
 }
