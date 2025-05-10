@@ -18,32 +18,32 @@ public class AdService {
         this.adRepository = adRepository;
     }
 
-    // Create a new ad
+    /** Called by createAd controller test */
     public Ad createAd(Ad ad) {
         return adRepository.save(ad);
     }
 
-    // Get an ad by ID
+    /** Called by getAd controller & service tests */
     public Ad getAd(Long id) {
-        Optional<Ad> ad = adRepository.findById(id);
-        return ad.orElse(null);  // Return the ad if found, else return null
+        Optional<Ad> opt = adRepository.findById(id);
+        return opt.orElse(null);
     }
 
-    // Get all ads
+    /** Called by getAllAds controller test */
     public List<Ad> getAllAds() {
-        return (List<Ad>) adRepository.findAll();  // Convert Iterable to List
+        return adRepository.findAll();
     }
 
-    // Update an existing ad
+    /** Called by updateAd controller & service tests */
     public Ad updateAd(Long id, Ad ad) {
-        if (adRepository.existsById(id)) {
-            ad.setId(id);  // Ensure the ID is set to the existing ad ID
-            return adRepository.save(ad);
+        if (!adRepository.existsById(id)) {
+            return null;
         }
-        return null;  // Return null if ad with given ID doesn't exist
+        ad.setId(id);
+        return adRepository.save(ad);
     }
 
-    // Delete an ad
+    /** Called by deleteAd controller & service tests */
     public void deleteAd(Long id) {
         adRepository.deleteById(id);
     }
