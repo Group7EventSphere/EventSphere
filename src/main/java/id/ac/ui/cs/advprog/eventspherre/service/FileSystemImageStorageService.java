@@ -11,7 +11,14 @@ import java.nio.file.*;
 @Service
 public class FileSystemImageStorageService implements ImageStorageService {
 
-    private final Path root = Paths.get("ads-images");
+    private final Path root;
+    public FileSystemImageStorageService() {
+        this.root = Paths.get("ads-images");
+    }
+
+    public FileSystemImageStorageService(Path root) {
+        this.root = root;
+    }
 
     @PostConstruct
     public void init() {
@@ -25,13 +32,13 @@ public class FileSystemImageStorageService implements ImageStorageService {
     @Override
     public String store(MultipartFile file) {
         validate(file);
-
         String filename = System.currentTimeMillis()
                 + "-"
                 + StringUtils.cleanPath(file.getOriginalFilename());
         Path target = root.resolve(filename);
         try {
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file.getInputStream(), target,
+                    StandardCopyOption.REPLACE_EXISTING);
             return target.toString();
         } catch (IOException e) {
             throw new RuntimeException("Failed to store image", e);
