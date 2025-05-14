@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.eventspherre;
+package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

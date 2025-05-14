@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.controller.api.UserController;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import org.junit.jupiter.api.*;
