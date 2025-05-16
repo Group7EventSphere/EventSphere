@@ -50,5 +50,5 @@ Davin
 
 | Diagram Type                     | Image |
 |----------------------------------|-----|
-| Component Diagram Ads Management | ![componentdiagram.drawio.png](../../../../Downloads/componentdiagram.drawio.png)|
-| Code Diagram Ads Management      | ![adpro2codediagram.drawio.png](../../../../Downloads/adpro2codediagram.drawio.png) |
+| Component Diagram Ads Management | ![componentdiagram.drawio.png](images/componentdiagram.drawio.png)|
+| Code Diagram Ads Management      | ![adpro2codediagram.drawio.png](images/adpro2codediagram.drawio.png) |
