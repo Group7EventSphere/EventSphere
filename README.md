@@ -21,5 +21,5 @@ By scrutinizing the interactions between users and the EventSphere platform, inc
 
 | Diagram Type | Image |
 |-------------|--------|
-| Component Diagram Ticket System | ![component_diagram.drawio.png](component_diagram.drawio.png)
-| Code Diagram | ![code_diagram.drawio.png](code_diagram.drawio.png) |
+| Component Diagram Ticket System | ![component_diagram drawio](https://github.com/user-attachments/assets/e662250c-4cea-41f8-9485-b828b04c5a15)|
+| Code Diagram | ![code_diagram drawio](https://github.com/user-attachments/assets/685556f8-6a7b-4bb4-9664-f27104ec4a40)|
