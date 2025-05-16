@@ -44,3 +44,11 @@ Davin
 | Component Diagram PaymentandBalanceManagement | ![Component diagram drawio](https://github.com/user-attachments/assets/d9feb647-0d56-4430-aa78-ddf7c912c78e)|
 | Code Diagram Admin side (Audit) |![AdminUsecase](https://github.com/user-attachments/assets/2b82511d-94b9-411d-8621-87eb10035424)|
 | Code Diagram Non-Admin side (Topup and Pay) |![PaymentHandler](https://github.com/user-attachments/assets/e60337ce-b061-41ca-aead-610a294c7aa1)|
+
+
+### Rayienda
+
+| Diagram Type                     | Image |
+|----------------------------------|-----|
+| Component Diagram Ads Management | ![componentdiagram.drawio.png](../../../../Downloads/componentdiagram.drawio.png)|
+| Code Diagram Ads Management      | ![adpro2codediagram.drawio.png](../../../../Downloads/adpro2codediagram.drawio.png) |
