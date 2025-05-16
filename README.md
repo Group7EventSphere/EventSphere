@@ -14,3 +14,10 @@
 
 <h2>Advertisement Management - Raye </h2>
 
+## Individual
+
+| Diagram Type         | Image |
+|----------------------|-------|
+| **Code Diagram Authentication**     | ![authimage.png](img\authimage.png) |
+| **Component Diagram**   | ![AuthComponentDiagram.png](img\AuthComponentDiagram.png) |
+
