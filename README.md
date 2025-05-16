@@ -18,3 +18,13 @@
 Risk Storming was implemented for the EventSphere system to proactively identify, analyze, and mitigate potential security and operational risks from the initial design stages. This collaborative technique allowed our team to systematically examine the system architecture, focusing on potential vulnerabilities related to user roles (Organizer, Admin, Guest, Attendee) and core functionalities such as event creation, ticket purchasing, and user authentication.
 
 By scrutinizing the interactions between users and the EventSphere platform, including its Authentication Microservice, we identified critical risks such as unauthorized access to event management functions, potential data breaches of sensitive user and transaction information, and system performance issues during high-demand periods like ticket sales launches. For example, we pinpointed the need for robust authorization mechanisms to ensure that only authenticated Organizers can modify event details and that Admins have secure access to system oversight. Furthermore, we addressed potential bottlenecks in the ticket purchasing flow for Guests and Attendees to ensure a smooth and reliable user experience. This structured, risk-first approach ensures that EventSphere is developed to be not only feature-rich but also secure, resilient, and capable of handling expected user loads.
+
+## Individual 
+
+Min 
+
+| Diagram Type | Image |
+|-------|------|
+| Component Diagram Ticket System | ![component_diagram drawio](https://github.com/user-attachments/assets/b4f79376-69f3-4cad-acac-aba1b49c9947) |
+| Code Diagram Ticket System | ![code_diagram drawio](https://github.com/user-attachments/assets/0a23e5af-58d9-4a05-8f3a-7989928115d5) |
+
