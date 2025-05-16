@@ -21,10 +21,16 @@ By scrutinizing the interactions between users and the EventSphere platform, inc
 
 ## Individual 
 
-Min 
+### Min 
 
 | Diagram Type | Image |
 |-------|------|
 | Component Diagram Ticket System | ![component_diagram drawio](https://github.com/user-attachments/assets/b4f79376-69f3-4cad-acac-aba1b49c9947) |
 | Code Diagram Ticket System | ![code_diagram drawio](https://github.com/user-attachments/assets/0a23e5af-58d9-4a05-8f3a-7989928115d5) |
 
+### Adyo 
+
+| Diagram Type | Image |
+|-------|------|
+| Component Diagram Event Management | ![CodeDiagramEventManagement](https://github.com/user-attachments/assets/aca02926-dea4-4fc9-a864-ac19e4c66d0f) |
+| Code Diagram Event Management | ![EventManagementComponentDiagram](https://github.com/user-attachments/assets/91521f61-dae0-4823-a1c6-3322a476b71f) |
