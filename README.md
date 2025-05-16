@@ -34,3 +34,14 @@ By scrutinizing the interactions between users and the EventSphere platform, inc
 |-------|------|
 | Component Diagram Event Management | ![CodeDiagramEventManagement](https://github.com/user-attachments/assets/aca02926-dea4-4fc9-a864-ac19e4c66d0f) |
 | Code Diagram Event Management | ![EventManagementComponentDiagram](https://github.com/user-attachments/assets/91521f61-dae0-4823-a1c6-3322a476b71f) |
+
+
+### Davin
+
+Davin
+
+| Diagram Type | Image |
+|-------|------|
+| Component Diagram PaymentandBalanceManagement | ![Component diagram drawio](https://github.com/user-attachments/assets/d9feb647-0d56-4430-aa78-ddf7c912c78e)|
+| Code Diagram Admin side (Audit) |![AdminUsecase](https://github.com/user-attachments/assets/2b82511d-94b9-411d-8621-87eb10035424)|
+| Code Diagram Non-Admin side (Topup and Pay) |![PaymentHandler](https://github.com/user-attachments/assets/e60337ce-b061-41ca-aead-610a294c7aa1)|
