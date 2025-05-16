@@ -18,6 +18,6 @@
 
 | Diagram Type         | Image |
 |----------------------|-------|
-| **Code Diagram Authentication**     | ![authimage.png](img\authimage.png) |
-| **Component Diagram**   | ![AuthComponentDiagram.png](img\AuthComponentDiagram.png) |
+| **Code Diagram Authentication**     | ![authimage.png](img/authimage.png) |
+| **Component Diagram**   | ![AuthComponentDiagram.png](img/AuthComponentDiagram.png) |
 
