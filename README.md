@@ -32,9 +32,8 @@ By scrutinizing the interactions between users and the EventSphere platform, inc
 
 | Diagram Type | Image |
 |-------|------|
-| Component Diagram Event Management | ![CodeDiagramEventManagement](https://github.com/user-attachments/assets/aca02926-dea4-4fc9-a864-ac19e4c66d0f) |
-| Code Diagram Event Management | ![EventManagementComponentDiagram](https://github.com/user-attachments/assets/91521f61-dae0-4823-a1c6-3322a476b71f) |
-
+| Component Diagram Event Management | ![EventManagementComponentDiagram](https://github.com/user-attachments/assets/91521f61-dae0-4823-a1c6-3322a476b71f) |
+| Code Diagram Event Management | ![CodeDiagramEventManagement](https://github.com/user-attachments/assets/aca02926-dea4-4fc9-a864-ac19e4c66d0f) |
 
 ### Davin
 
