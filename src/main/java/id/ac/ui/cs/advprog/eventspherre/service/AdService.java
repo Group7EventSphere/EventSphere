@@ -18,23 +18,19 @@ public class AdService {
         this.adRepository = adRepository;
     }
 
-    /** Called by createAd controller test */
     public Ad createAd(Ad ad) {
         return adRepository.save(ad);
     }
 
-    /** Called by getAd controller & service tests */
     public Ad getAd(Long id) {
         Optional<Ad> opt = adRepository.findById(id);
         return opt.orElse(null);
     }
 
-    /** Called by getAllAds controller test */
     public List<Ad> getAllAds() {
         return adRepository.findAll();
     }
 
-    /** Called by updateAd controller & service tests */
     public Ad updateAd(Long id, Ad ad) {
         if (!adRepository.existsById(id)) {
             return null;
@@ -43,7 +39,6 @@ public class AdService {
         return adRepository.save(ad);
     }
 
-    /** Called by deleteAd controller & service tests */
     public void deleteAd(Long id) {
         adRepository.deleteById(id);
     }

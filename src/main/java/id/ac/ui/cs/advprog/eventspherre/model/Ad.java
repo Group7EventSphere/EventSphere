@@ -25,9 +25,6 @@ public class Ad {
     @Column(nullable = false)
     private String imageUrl;
 
-    /**
-     * Role of the creator (defaults to USER).
-     */
     @Default
     @Column(nullable = false)
     private String userRole = "USER";
