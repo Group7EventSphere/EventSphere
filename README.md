@@ -52,3 +52,11 @@ Davin
 |----------------------------------|-----|
 | Component Diagram Ads Management | ![componentdiagram.drawio.png](images/componentdiagram.drawio.png)|
 | Code Diagram Ads Management      | ![adpro2codediagram.drawio.png](images/adpro2codediagram.drawio.png) |
+
+### Syifa
+
+
+| Diagram Type                        | Image                                                                    |
+|-------------------------------------|--------------------------------------------------------------------------|
+| Component Diagram Review Management | ![](images/componentdiagramReview.drawio.png) |
+| Code Diagram Review Management      | ![](images/codediagramReview.drawio.png)     |
