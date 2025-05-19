@@ -49,7 +49,7 @@ class TicketControllerTest {
         Ticket ticket = sampleTicket();
         when(ticketService.getTicketById(ticketId)).thenReturn(Optional.of(ticket));
 
-        mockMvc.perform(get("/EventSphere/tickets/" + ticketId))
+        mockMvc.perform(get("/api/tickets/" + ticketId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
     }
@@ -78,16 +78,10 @@ class TicketControllerTest {
     @Test
     @DisplayName("DELETE /EventSphere/tickets/{id} should delete and return 204")
     void deleteTicket_shouldReturnNoContent() throws Exception {
-        User user = new User();
-        user.setId(1);
-        user.setName("Dummy Admin");
-        user.setRole(User.Role.ADMIN);
-
         UUID ticketId = UUID.randomUUID();
-        doNothing().when(ticketService).deleteTicket(ticketId, user);
+        doNothing().when(ticketService).deleteTicket(ticketId);
 
-        mockMvc.perform(delete("/EventSphere/tickets/" + ticketId)
-                        .param("userId", "1"))
+        mockMvc.perform(delete("/api/tickets/" + ticketId))
                 .andExpect(status().isNoContent());
     }
 
