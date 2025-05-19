@@ -12,7 +12,7 @@ class PaymentTransactionDTOTest {
     @Test
     void recordAccessorsReturnConstructorValues() {
         UUID id       = UUID.randomUUID();
-        UUID userId   = UUID.randomUUID();
+        int userId   = 10;
         double amount = 99.99;
         String type   = "PURCHASE";
         String status = "FAILED";
@@ -36,7 +36,7 @@ class PaymentTransactionDTOTest {
         Instant ts  = Instant.parse("2025-05-09T12:00:00Z");
 
         PaymentTransactionDTO a = new PaymentTransactionDTO(
-                id, UUID.randomUUID(), 10.0, "TOPUP", "SUCCESS", ts
+                id, 11, 10.0, "TOPUP", "SUCCESS", ts
         );
         PaymentTransactionDTO b = new PaymentTransactionDTO(
                 id, a.userId(),         10.0, "TOPUP", "SUCCESS", ts
@@ -54,14 +54,14 @@ class PaymentTransactionDTOTest {
     @Test
     void toString_includesAllFields() {
         UUID id     = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        int userId = 50;
         double amt  = 42.42;
         String type = "TOPUP";
         String stat = "SUCCESS";
         Instant ts  = Instant.parse("2025-05-09T12:34:56Z");
 
         PaymentTransactionDTO dto = new PaymentTransactionDTO(
-                id, userId, amt, type, stat, ts
+                id, 50, amt, type, stat, ts
         );
 
         String s = dto.toString();
@@ -69,7 +69,7 @@ class PaymentTransactionDTOTest {
         assertThat(s)
                 .contains("PaymentTransactionDTO")
                 .contains(id.toString())
-                .contains(userId.toString())
+                .contains(String.valueOf(userId))
                 .contains(Double.toString(amt))
                 .contains(type)
                 .contains(stat)
