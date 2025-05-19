@@ -31,6 +31,8 @@ public class TicketServiceTest {
 
     private Ticket sampleTicket;
     private UUID ticketId;
+    private User user;
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
@@ -38,6 +40,11 @@ public class TicketServiceTest {
         user.setId(1);
         user.setName("Test User");
         user.setRole(User.Role.ATTENDEE);
+
+        adminUser = new User();
+        adminUser.setId(99);
+        adminUser.setName("Admin");
+        adminUser.setRole(User.Role.ADMIN);
 
         TicketType type = new TicketType("VIP", new BigDecimal("100.00"), 100);
 

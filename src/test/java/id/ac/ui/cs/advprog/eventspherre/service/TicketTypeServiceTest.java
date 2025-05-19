@@ -45,9 +45,15 @@ public class TicketTypeServiceTest {
     @Test
     @DisplayName("Organizer can create a ticket type")
     void createTicketType_shouldSucceedForOrganizer() {
-        when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        TicketType result = ticketTypeService.createTicketType(ticketType, organizer);
-        assertThat(result).isEqualTo(ticketType);
+        User organizer = new User();
+        organizer.setRole(User.Role.ORGANIZER);
+
+        TicketType created = TicketType.create("VIP", new BigDecimal("100.00"), 50, organizer);
+
+        assertThat(created).isNotNull();
+        assertThat(created.getName()).isEqualTo("VIP");
+        assertThat(created.getQuota()).isEqualTo(50);
+        assertThat(created.getPrice()).isEqualByComparingTo("100.00");
     }
 
     @Test
@@ -55,8 +61,10 @@ public class TicketTypeServiceTest {
     void createTicketType_shouldFailForAttendee() {
         User attendee = new User();
         attendee.setRole(User.Role.ATTENDEE);
-        assertThatThrownBy(() -> ticketTypeService.createTicketType(ticketType, attendee))
-                .isInstanceOf(IllegalArgumentException.class)
+
+        assertThatThrownBy(() ->
+                TicketType.create("VIP", new BigDecimal("100.00"), 10, attendee)
+        ).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Only organizers can create ticket types");
     }
 

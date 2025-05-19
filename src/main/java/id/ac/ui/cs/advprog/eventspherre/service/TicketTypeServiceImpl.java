@@ -16,14 +16,6 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     private final TicketTypeRepository ticketTypeRepository;
 
     @Override
-    public TicketType createTicketType(TicketType type, User organizer) {
-        if (organizer.getRole() != User.Role.ORGANIZER) {
-            throw new IllegalArgumentException("Only organizers can create ticket types");
-        }
-        return ticketTypeRepository.save(type);
-    }
-
-    @Override
     public Optional<TicketType> getTicketTypeById(UUID id) {
         return ticketTypeRepository.findById(id);
     }

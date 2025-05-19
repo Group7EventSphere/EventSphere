@@ -43,66 +43,72 @@ class TicketControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/tickets/{id} returns ticket if found")
+    @DisplayName("GET /EventSphere/tickets/{id} returns ticket if found")
     void getTicketById_shouldReturnTicket() throws Exception {
         UUID ticketId = UUID.randomUUID();
         Ticket ticket = sampleTicket();
         when(ticketService.getTicketById(ticketId)).thenReturn(Optional.of(ticket));
 
-        mockMvc.perform(get("/api/tickets/" + ticketId))
+        mockMvc.perform(get("/EventSphere/tickets/" + ticketId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
     }
 
     @Test
-    @DisplayName("GET /api/tickets/{id} returns 404 if not found")
+    @DisplayName("GET /EventSphere/tickets/{id} returns 404 if not found")
     void getTicketById_shouldReturnNotFound() throws Exception {
         UUID ticketId = UUID.randomUUID();
         when(ticketService.getTicketById(ticketId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/tickets/" + ticketId))
+        mockMvc.perform(get("/EventSphere/tickets/" + ticketId))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /api/tickets/attendee/{attendeeId} returns list of tickets")
+    @DisplayName("GET /EventSphere/tickets/attendee/{attendeeId} returns list of tickets")
     void getTicketsByAttendee_shouldReturnList() throws Exception {
         when(ticketService.getTicketsByAttendeeId(1)).thenReturn(List.of(sampleTicket()));
 
-        mockMvc.perform(get("/api/tickets/attendee/1"))
+        mockMvc.perform(get("/EventSphere/tickets/attendee/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].confirmationCode").value("TKT-ABC123"));
     }
 
     @Test
-    @DisplayName("DELETE /api/tickets/{id} should delete and return 204")
+    @DisplayName("DELETE /EventSphere/tickets/{id} should delete and return 204")
     void deleteTicket_shouldReturnNoContent() throws Exception {
-        UUID ticketId = UUID.randomUUID();
-        doNothing().when(ticketService).deleteTicket(ticketId);
+        User user = new User();
+        user.setId(1);
+        user.setName("Dummy Admin");
+        user.setRole(User.Role.ADMIN);
 
-        mockMvc.perform(delete("/api/tickets/" + ticketId))
+        UUID ticketId = UUID.randomUUID();
+        doNothing().when(ticketService).deleteTicket(ticketId, user);
+
+        mockMvc.perform(delete("/EventSphere/tickets/" + ticketId)
+                        .param("userId", "1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("GET /api/tickets/code/{confirmationCode} returns ticket")
+    @DisplayName("GET /EventSphere/tickets/code/{confirmationCode} returns ticket")
     void getTicketByConfirmationCode_shouldReturnTicket() throws Exception {
         Ticket ticket = sampleTicket();
         when(ticketService.getTicketByConfirmationCode("TKT-ABC123")).thenReturn(Optional.of(ticket));
 
-        mockMvc.perform(get("/api/tickets/code/TKT-ABC123"))
+        mockMvc.perform(get("/EventSphere/tickets/code/TKT-ABC123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
     }
 
     @Test
-    @DisplayName("GET /api/tickets/count/{ticketTypeId} returns ticket count")
+    @DisplayName("GET /EventSphere/tickets/count/{ticketTypeId} returns ticket count")
     void countByTicketTypeId_shouldReturnCount() throws Exception {
         UUID ticketTypeId = UUID.randomUUID();
         when(ticketService.countTicketsByType(ticketTypeId)).thenReturn(5L);
 
-        mockMvc.perform(get("/api/tickets/count/" + ticketTypeId))
+        mockMvc.perform(get("/EventSphere/tickets/count/" + ticketTypeId))
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
     }
