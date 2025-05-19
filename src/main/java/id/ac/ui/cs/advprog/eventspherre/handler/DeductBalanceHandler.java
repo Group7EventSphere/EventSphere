@@ -13,14 +13,21 @@ public class DeductBalanceHandler implements PaymentHandler {
 
     @Override
     public void handle(PaymentRequest request) {
-        if (request.getPaymentType() == PaymentRequest.PaymentType.PURCHASE) {
+        if (request.getPaymentType() == PaymentRequest.PaymentType.PURCHASE
+            && request.getAmount() > 0) 
+        {
             User user = request.getUser();
+            synchronized(user) {
+                double balance = user.getBalance();
+                if (balance >= request.getAmount()) {
+                    user.deduct(request.getAmount());
+                    request.setProcessed(true);
+                    request.setMessage("Purchase successful: balance deducted");
+                } else {
+                    request.setProcessed(true);
+                    request.setMessage("Payment failed: insufficient funds");
 
-            // Order of the chain determines that balance should be checked before this stage
-            if (user.getBalance() >= request.getAmount()) {
-                user.deduct(request.getAmount());
-                request.setProcessed(true);
-                request.setMessage("Purchase successful: balance deducted");
+                }
             }
         }
         if (next != null) {
