@@ -31,8 +31,9 @@ class AdminTransactionControllerTest {
 
     @Test
     void listActive_returns200() throws Exception {
+        int userid = 1;
         var dto = new PaymentTransactionDTO(
-                UUID.randomUUID(), UUID.randomUUID(), 10,
+                UUID.randomUUID(),userid, 10,
                 "PURCHASE", "SUCCESS", Instant.now());
         when(auditService.getActive()).thenReturn(List.of());
         when(mapper.toDtoList(List.of())).thenReturn(List.of(dto));
