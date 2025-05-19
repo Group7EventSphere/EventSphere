@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest.PaymentType.*;
 
 @DataJpaTest(
         properties = "spring.sql.init.mode=never"
@@ -25,9 +26,9 @@ class PaymentTransactionRepositoryTest {
     @DisplayName("findAll() should return exactly the rows we save")
     void findAll_shouldReturnAllSavedTransactions() {
         var tx1 = PaymentTransaction.builder()
-                .userId(UUID.randomUUID())
+                .userId(30)
                 .amount(10.0)
-                .type("PURCHASE")
+                .type(TOPUP)
                 .status("SUCCESS")
                 .createdAt(Instant.now())
                 .build();
@@ -49,9 +50,9 @@ class PaymentTransactionRepositoryTest {
     @DisplayName("findByStatusNot() should exclude soft-deleted rows only")
     void findByStatusNot_shouldExcludeSoftDeleted() {
         var tx1 = PaymentTransaction.builder()
-                .userId(UUID.randomUUID())
+                .userId(555)
                 .amount(10.0)
-                .type("PURCHASE")
+                .type(PURCHASE)
                 .status("SUCCESS")
                 .createdAt(Instant.now())
                 .build();
