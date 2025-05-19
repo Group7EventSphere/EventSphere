@@ -2,10 +2,13 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import org.junit.jupiter.api.Test;
 
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest.PaymentType;
+
 import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest.PaymentType.*;
 
 class PaymentTransactionTest {
 
@@ -13,9 +16,9 @@ class PaymentTransactionTest {
     void builderAndToBuilder_shouldProduceCorrectInstances() {
         // arrange
         UUID id = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        int userId = 50;
         double amount = 150.5;
-        String type = "PURCHASE";
+        PaymentType type = PURCHASE;
         String status = "SUCCESS";
         Instant now = Instant.now();
 
