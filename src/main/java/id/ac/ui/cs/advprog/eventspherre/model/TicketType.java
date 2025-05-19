@@ -11,11 +11,8 @@ import java.util.UUID;
 public class TicketType {
     // Getters & Setters
     private UUID id = UUID.randomUUID();
-
     private String name;
-
     private BigDecimal price;
-
     private int quota;
 
     // Constructor

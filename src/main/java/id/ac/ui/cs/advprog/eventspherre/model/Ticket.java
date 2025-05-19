@@ -8,6 +8,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Ticket {
+    // private Event event;
     private UUID id = UUID.randomUUID();
     private TicketType ticketType;
     private User attendee;

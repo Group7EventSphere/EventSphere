@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
-import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,10 +31,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void deleteTicket(UUID id, User user) {
-        if (user.getRole() != User.Role.ADMIN) {
-            throw new IllegalArgumentException("Only admins can delete tickets");
-        }
+    public void deleteTicket(UUID id) {
         ticketRepository.deleteById(id);
     }
 
