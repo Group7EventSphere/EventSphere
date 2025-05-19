@@ -49,7 +49,7 @@ class TicketControllerTest {
         Ticket ticket = sampleTicket();
         when(ticketService.getTicketById(ticketId)).thenReturn(Optional.of(ticket));
 
-        mockMvc.perform(get("/api/tickets/" + ticketId))
+        mockMvc.perform(get("/EventSphere/tickets/" + ticketId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
     }
@@ -81,7 +81,7 @@ class TicketControllerTest {
         UUID ticketId = UUID.randomUUID();
         doNothing().when(ticketService).deleteTicket(ticketId);
 
-        mockMvc.perform(delete("/api/tickets/" + ticketId))
+        mockMvc.perform(delete("/EventSphere/tickets/" + ticketId))
                 .andExpect(status().isNoContent());
     }
 
