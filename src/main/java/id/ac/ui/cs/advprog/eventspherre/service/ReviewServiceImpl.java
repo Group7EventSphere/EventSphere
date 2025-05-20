@@ -48,6 +48,12 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public boolean delete(Long id) {
-        return repo.deleteById(id);
+        if (repo.existsById(id)) {
+            repo.deleteById(id);
+            return true;
+        }
+        return false;
     }
+
 }
+
