@@ -70,8 +70,8 @@ public class TicketServiceTest {
 
     @Test
     @DisplayName("Get tickets by attendee ID should return ticket list")
-    void getTicketsByAttendeeId_shouldReturnList() {
-        when(ticketRepository.findAllByAttendeeId(1)).thenReturn(Arrays.asList(sampleTicket));
+    void getTicketsByUserId_shouldReturnList() {
+        when(ticketRepository.findAllByUserId(1)).thenReturn(Arrays.asList(sampleTicket));
         assertThat(ticketService.getTicketsByAttendeeId(1)).containsExactly(sampleTicket);
     }
 
