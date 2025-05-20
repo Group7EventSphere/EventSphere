@@ -53,4 +53,30 @@ class PaymentTransactionTest {
         assertThat(modified.getType()).isEqualTo(type);
         assertThat(modified.getCreatedAt()).isEqualTo(now);
     }
+
+@Test
+void allArgsConstructor_and_settersAndGetters_shouldWork() {
+    User user1 = new User();
+    user1.setId(3);
+    double amount = 42.0;
+    PaymentType type1 = TOPUP;
+    String status1 = "OK";
+
+    PaymentTransaction tx = new PaymentTransaction(user1, amount, type1, status1);
+
+    assertThat(tx.getUser()).isEqualTo(user1);
+    assertThat(tx.getAmount()).isEqualTo(amount);
+    assertThat(tx.getPaymentType()).isEqualTo(type1);
+    assertThat(tx.getStatus()).isEqualTo(status1);
+
+    User user2 = new User();
+    user2.setId(7); 
+    tx.setUser(user2);
+
+    assertThat(tx.getUser()).isEqualTo(user2);
+    assertThat(tx.getUserId()).isEqualTo(7);   
+
+    tx.setPaymentType(PURCHASE);
+    assertThat(tx.getPaymentType()).isEqualTo(PURCHASE);
+}
 }
