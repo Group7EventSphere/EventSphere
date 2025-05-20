@@ -12,6 +12,7 @@ class TopUpHandlerTest {
     @BeforeEach
     void setUp() {
         user = new User();
+        user.setId(1);
         user.setName("TopUp User");
         user.setEmail("topup@example.com");
         user.setPassword("password");
