@@ -14,7 +14,7 @@ public class PaymentTransactionMapper {
                 tx.getId(),
                 tx.getUserId(),
                 tx.getAmount(),
-                tx.getType(),
+                tx.getType().name(),
                 tx.getStatus(),
                 tx.getCreatedAt()
         );
