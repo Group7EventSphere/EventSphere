@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Navigation Bar Fragment -->
+    <nav th:fragment="navbar" class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">
+                <a th:href="@{/}" class="logo-text">EventSphere</a>
+            </div>
+            
+            <div class="navbar-links">
+                <!-- These links will show for all users -->
+                <div class="nav-section">
+                    <a th:href="@{/}" class="nav-link">Dashboard</a>
+                </div>
+                
+                <!-- These links will show for all authenticated users -->
+                <div class="nav-section" sec:authorize="isAuthenticated()" >
+                    <a th:href="@{/events}" class="nav-link">Events</a>
+                    <a th:href="@{/tickets}" class="nav-link">My Tickets</a>
+                </div>
+                
+                <!-- These links will only show for organizers and admins -->
+                <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')">
+                    <a th:href="@{/events/manage}" class="nav-link">Manage Events</a>
+                </div>
+                
+                <!-- These links will only show for admins -->
+                <div class="nav-section" sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{/admin}" class="nav-link">Admin Panel</a>
+                </div>
+            </div>
+            
+            <div class="navbar-auth">
+                <!-- Show these links when user is not authenticated -->
+                <div sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/login}" class="nav-link">Login</a>
+                    <a th:href="@{/register}" class="nav-link btn-nav">Register</a>
+                </div>
+                
+                <!-- Show these when user is authenticated -->
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <a th:href="@{/profile}" class="nav-link">
+                        <img th:src="@{/images/icons/user-circle.svg}" style="width: 1.25rem; height: 1.25rem; vertical-align: -0.25rem; margin-right: 0.25rem;">
+                        <span sec:authentication="name">User</span>
+                    </a>
+                    <form th:action="@{/logout}" method="post" class="logout-form">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>
