@@ -1,44 +1,40 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
-import id.ac.ui.cs.advprog.eventspherre.model.User;
-import id.ac.ui.cs.advprog.eventspherre.dto.LoginUserDto;
 import id.ac.ui.cs.advprog.eventspherre.dto.RegisterUserDto;
-import id.ac.ui.cs.advprog.eventspherre.dto.LoginResponse;
 import id.ac.ui.cs.advprog.eventspherre.service.AuthenticationService;
-import id.ac.ui.cs.advprog.eventspherre.service.JwtService;
-import org.springframework.http.ResponseEntity;
+
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
-@RequestMapping("/auth")
-@RestController
+import org.springframework.stereotype.Controller;
+
+import org.springframework.ui.Model;
+
+@Controller
+@RequestMapping("/")
 public class AuthenticationController {
-    private final JwtService jwtService;
-    
-    private final AuthenticationService authenticationService;
+    private final AuthenticationService authService;
 
-    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService) {
-        this.jwtService = jwtService;
-        this.authenticationService = authenticationService;
+    public AuthenticationController(AuthenticationService authService) {
+        this.authService = authService;
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
-        User registeredUser = authenticationService.signup(registerUserDto);
-
-        return ResponseEntity.ok(registeredUser);
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
-        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+    @GetMapping("/register")
+    public String registerPage(Model model) {
+        model.addAttribute("registerDto", new RegisterUserDto());
+        return "register";
+    }
 
-        String jwtToken = jwtService.generateToken(authenticatedUser);
-
-        LoginResponse loginResponse = new LoginResponse().setToken(jwtToken).setExpiresIn(jwtService.getExpirationTime());
-
-        return ResponseEntity.ok(loginResponse);
+    @PostMapping("/register")
+    public String register(@ModelAttribute RegisterUserDto dto) {
+        authService.signup(dto);
+        return "redirect:/login";
     }
 }
