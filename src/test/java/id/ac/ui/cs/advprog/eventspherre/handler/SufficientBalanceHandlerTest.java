@@ -12,6 +12,7 @@ class SufficientBalanceHandlerTest {
     @BeforeEach
     void setUp() {
         user = new User();
+        user.setId(1);
         user.setName("Purchase User");
         user.setEmail("purchase@example.com");
         user.setPassword("password");

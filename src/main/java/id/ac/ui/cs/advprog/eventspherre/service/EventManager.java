@@ -7,6 +7,9 @@ import id.ac.ui.cs.advprog.eventspherre.observer.UserObserver;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class EventManager {
     private Map<Integer, Event> events = new HashMap<>();
     private int nextId = 1;
@@ -27,5 +30,19 @@ public class EventManager {
 
     public Event getEvent(int id) {
         return events.get(id);
+    }
+
+    public Map<Integer, Event> getAllEvents() {
+        return events;
+    }
+
+    public boolean deleteEvent(int id) {
+        return events.remove(id) != null;
+    }
+
+    public void clearAllEvents() {
+        if (events != null) {
+            events.clear();
+        }
     }
 }
