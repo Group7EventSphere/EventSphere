@@ -14,15 +14,11 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     
     private final PasswordEncoder passwordEncoder;
-    
-    private final AuthenticationManager authenticationManager;
 
     public AuthenticationService(
         UserRepository userRepository,
-        AuthenticationManager authenticationManager,
         PasswordEncoder passwordEncoder
     ) {
-        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -32,19 +28,17 @@ public class AuthenticationService {
         user.setEmail(input.getEmail());
         user.setName(input.getName());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
+        user.setPhoneNumber(input.getPhoneNumber());
+        
+        // For testing: If email contains "admin", set role to ADMIN
+        if (input.getEmail() != null && input.getEmail().contains("admin")) {
+            user.setRole(User.Role.ADMIN);
+        } else if (input.getEmail() != null && input.getEmail().contains("organizer")) {
+            user.setRole(User.Role.ORGANIZER);
+        } else {
+            user.setRole(User.Role.ATTENDEE);
+        }
 
         return userRepository.save(user);
-    }
-
-    public User authenticate(LoginUserDto input) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        input.getEmail(),
-                        input.getPassword()
-                )
-        );
-
-        return userRepository.findByEmail(input.getEmail())
-                .orElseThrow();
     }
 }
