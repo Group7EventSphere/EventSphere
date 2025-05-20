@@ -34,7 +34,14 @@ public class Ticket {
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
         this.ticketType = ticketType;
         this.attendee = attendee;
-        this.userId = attendee.getId(); // assuming User has getId() returning int
+
+        // Defensive check to prevent NPE
+        if (attendee == null || attendee.getId() == null) {
+            this.userId = 0;
+        } else {
+            this.userId = attendee.getId();
+        }
+
         this.confirmationCode = confirmationCode;
     }
 
