@@ -10,6 +10,7 @@ class PaymentTest {
     @BeforeEach
     void setUp() {
         user = new User();
+        user.setId(7);
         user.setName("Test Attendee");
         user.setEmail("attendee@example.com");
         user.setPassword("password");

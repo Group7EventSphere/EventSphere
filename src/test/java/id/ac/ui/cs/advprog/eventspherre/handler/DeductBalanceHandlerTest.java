@@ -12,6 +12,7 @@ class DeductBalanceHandlerTest {
     @BeforeEach
     void setUp() {
         user = new User();
+        user.setId(1);
         user.setName("Deduct User");
         user.setEmail("deduct@example.com");
         user.setPassword("password");
