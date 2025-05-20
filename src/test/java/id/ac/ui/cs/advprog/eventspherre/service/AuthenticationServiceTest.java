@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
-import id.ac.ui.cs.advprog.eventspherre.dto.LoginUserDto;
 import id.ac.ui.cs.advprog.eventspherre.dto.RegisterUserDto;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
@@ -8,13 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.lang.reflect.Field;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -29,93 +22,136 @@ class AuthenticationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
-
     @InjectMocks
     private AuthenticationService authService;
 
     @Captor
     private ArgumentCaptor<User> userCaptor;
 
+    private RegisterUserDto regularUserDto;
+    private RegisterUserDto adminUserDto;
+    private RegisterUserDto organizerUserDto;
+
     @BeforeEach
     void setUp() {
-        // MockitoAnnotations.openMocks is done by @ExtendWith(MockitoExtension.class)
+        // Setup test data
+        regularUserDto = new RegisterUserDto();
+        regularUserDto.setEmail("john@example.com");
+        regularUserDto.setPassword("password123");
+        regularUserDto.setName("John Doe");
+        regularUserDto.setPhoneNumber("1234567890");
+
+        adminUserDto = new RegisterUserDto();
+        adminUserDto.setEmail("admin@example.com");
+        adminUserDto.setPassword("adminpass");
+        adminUserDto.setName("Admin User");
+        adminUserDto.setPhoneNumber("9876543210");
+
+        organizerUserDto = new RegisterUserDto();
+        organizerUserDto.setEmail("organizer@events.com");
+        organizerUserDto.setPassword("orgpass");
+        organizerUserDto.setName("Event Organizer");
+        organizerUserDto.setPhoneNumber("5555555555");
     }
 
     @Test
-    void signup_encodesPasswordAndSavesUser() throws Exception {
-        // arrange
-        RegisterUserDto dto = new RegisterUserDto();
-        setField(dto, "email",    "joe@example.com");
-        setField(dto, "password", "plainPwd");
-        setField(dto, "name",     "Joe");
+    void signupRegularUserShouldCreateAttendeeUser() {
+        // Arrange
+        when(passwordEncoder.encode("password123")).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(passwordEncoder.encode("plainPwd")).thenReturn("encodedPwd");
-        User saved = new User();
-        when(userRepository.save(any(User.class))).thenReturn(saved);
+        // Act
+        User result = authService.signup(regularUserDto);
 
-        // act
-        User result = authService.signup(dto);
-
-        // assert
-        assertSame(saved, result, "should return whatever repository.save returns");
-
-        verify(passwordEncoder).encode("plainPwd");
+        // Assert
+        verify(passwordEncoder).encode("password123");
         verify(userRepository).save(userCaptor.capture());
 
-        User toSave = userCaptor.getValue();
-        assertEquals("joe@example.com", toSave.getEmail());
-        assertEquals("Joe",              toSave.getName());
-        assertEquals("encodedPwd",       toSave.getPassword());
+        User savedUser = userCaptor.getValue();
+        assertEquals("john@example.com", savedUser.getEmail());
+        assertEquals("John Doe", savedUser.getName());
+        assertEquals("encoded_password", savedUser.getPassword());
+        assertEquals("1234567890", savedUser.getPhoneNumber());
+        assertEquals(User.Role.ATTENDEE, savedUser.getRole());
     }
 
     @Test
-    void authenticate_callsManagerAndReturnsUser() throws Exception {
-        // arrange
-        LoginUserDto dto = new LoginUserDto();
-        setField(dto, "email",    "anna@domain.com");
-        setField(dto, "password", "herPass");
+    void signupWithAdminEmailShouldCreateAdminUser() {
+        // Arrange
+        when(passwordEncoder.encode("adminpass")).thenReturn("encoded_admin_password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User found = new User();
-        found.setEmail("anna@domain.com");
-        when(userRepository.findByEmail("anna@domain.com"))
-            .thenReturn(Optional.of(found));
+        // Act
+        User result = authService.signup(adminUserDto);
 
-        // act
-        User result = authService.authenticate(dto);
+        // Assert
+        verify(passwordEncoder).encode("adminpass");
+        verify(userRepository).save(userCaptor.capture());
 
-        // assert
-        assertSame(found, result);
-        verify(authenticationManager).authenticate(
-            argThat(token ->
-                token instanceof UsernamePasswordAuthenticationToken &&
-                ((UsernamePasswordAuthenticationToken) token).getPrincipal().equals("anna@domain.com") &&
-                ((UsernamePasswordAuthenticationToken) token).getCredentials().equals("herPass")
-            )
-        );
-        verify(userRepository).findByEmail("anna@domain.com");
+        User savedUser = userCaptor.getValue();
+        assertEquals("admin@example.com", savedUser.getEmail());
+        assertEquals(User.Role.ADMIN, savedUser.getRole());
     }
 
     @Test
-    void authenticate_userNotFound_throws() throws Exception {
-        // arrange
-        LoginUserDto dto = new LoginUserDto();
-        setField(dto, "email",    "nobody@none.com");
-        setField(dto, "password", "x");
+    void signupWithOrganizerEmailShouldCreateOrganizerUser() {
+        // Arrange
+        when(passwordEncoder.encode("orgpass")).thenReturn("encoded_org_password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userRepository.findByEmail("nobody@none.com")).thenReturn(Optional.empty());
+        // Act
+        User result = authService.signup(organizerUserDto);
 
-        // act & assert
-        assertThrows(NoSuchElementException.class, () -> authService.authenticate(dto));
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository).findByEmail("nobody@none.com");
+        // Assert
+        verify(passwordEncoder).encode("orgpass");
+        verify(userRepository).save(userCaptor.capture());
+
+        User savedUser = userCaptor.getValue();
+        assertEquals("organizer@events.com", savedUser.getEmail());
+        assertEquals(User.Role.ORGANIZER, savedUser.getRole());
     }
 
-    // --- reflection helper to set private fields on a Lombok @Getter-only DTO ---
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field f = target.getClass().getDeclaredField(fieldName);
-        f.setAccessible(true);
-        f.set(target, value);
+    @Test
+    void signupWithNullEmailShouldCreateAttendeeUser() {
+        // Arrange
+        RegisterUserDto nullEmailDto = new RegisterUserDto();
+        nullEmailDto.setEmail(null);
+        nullEmailDto.setPassword("password");
+        nullEmailDto.setName("No Email User");
+
+        when(passwordEncoder.encode("password")).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        User result = authService.signup(nullEmailDto);
+
+        // Assert
+        verify(passwordEncoder).encode("password");
+        verify(userRepository).save(userCaptor.capture());
+
+        User savedUser = userCaptor.getValue();
+        assertNull(savedUser.getEmail());
+        assertEquals(User.Role.ATTENDEE, savedUser.getRole());
+    }
+
+    @Test
+    void signupShouldReturnSavedUser() {
+        // Arrange
+        User savedUser = new User();
+        savedUser.setId(1);
+        savedUser.setEmail("john@example.com");
+        savedUser.setName("John Doe");
+        savedUser.setPassword("encoded_password");
+        savedUser.setRole(User.Role.ATTENDEE);
+
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        // Act
+        User result = authService.signup(regularUserDto);
+
+        // Assert
+        assertSame(savedUser, result);
+        assertEquals(1, result.getId());
     }
 }
