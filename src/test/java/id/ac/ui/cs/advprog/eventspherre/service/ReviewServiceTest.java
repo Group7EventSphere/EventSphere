@@ -1,86 +1,94 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Review;
-import id.ac.ui.cs.advprog.eventspherre.repository.InMemoryReviewRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.ReviewRepository;
 import id.ac.ui.cs.advprog.eventspherre.validation.DefaultReviewValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class ReviewServiceTest {
 
-    private ReviewService service;
+    private ReviewRepository repo;
+    private ReviewServiceImpl svc;
 
     @BeforeEach
-    void setUp() {
-        service = new ReviewServiceImpl(
-                new InMemoryReviewRepository(),
-                new DefaultReviewValidator()
-        );
+    void init() {
+        repo = mock(ReviewRepository.class);
+        svc  = new ReviewServiceImpl(repo, new DefaultReviewValidator());
     }
 
     @Test
-    void create_validReview_assignsId() {
-        Review input = new Review(10L, 20L, "Great!", 5);
-        Review saved = service.create(input);
+    void createAndSave() {
+        Review toSave = new Review(1L, 2L, "Nice!", 5);
+        Review saved  = new Review(1L, 2L, "Nice!", 5);
+        saved.setId(42L);
 
-        assertNotNull(saved.getId(), "ID must be assigned");
-        assertEquals("Great!", saved.getReviewText());
+        when(repo.save(toSave)).thenReturn(saved);
+
+        Review result = svc.create(toSave);
+        assertEquals(42L, result.getId());
+        assertEquals("Nice!", result.getReviewText());
+        verify(repo).save(toSave);
     }
 
     @Test
-    void create_invalidReview_throwsException() {
-        Review bad = new Review(10L, 20L, "", 8);
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> service.create(bad)
-        );
-        assertTrue(ex.getMessage().contains("Invalid review"));
+    void createInvalidThrows() {
+        Review bad = new Review(1L, 2L, "", 8);
+        assertThrows(IllegalArgumentException.class,
+                () -> svc.create(bad));
+        verify(repo, never()).save(any());
     }
 
     @Test
-    void findById_existingId_returnsReview() {
-        Review created = service.create(new Review(11L, 21L, "Test", 4));
-        Optional<Review> found = service.findById(created.getId());
+    void findById() {
+        Review r = new Review(1L, 2L, "OK", 4);
+        r.setId(5L);
+        when(repo.findById(5L)).thenReturn(Optional.of(r));
 
-        assertTrue(found.isPresent());
-        assertEquals(4, found.get().getRating());
+        Optional<Review> opt = svc.findById(5L);
+        assertTrue(opt.isPresent());
+        assertEquals(4, opt.get().getRating());
     }
 
     @Test
-    void update_existingReview_updatesFields() {
-        Review original = service.create(new Review(10L,20L,"Old",2));
-        Review update = new Review(10L,20L,"New text",5);
+    void updateReview() {
+        Review original = new Review(1L, 2L, "Old", 2);
+        original.setId(10L);
+        Review update = new Review(1L, 2L, "New", 4);
 
-        Review result = service.update(original.getId(), update);
+        when(repo.findById(10L)).thenReturn(Optional.of(original));
+        when(repo.save(original)).thenReturn(original);
 
-        assertEquals("New text", result.getReviewText());
-        assertEquals(5, result.getRating());
+        Review out = svc.update(10L, update);
+        assertEquals("New", out.getReviewText());
+        assertEquals(4, out.getRating());
+        verify(repo).save(original);
     }
 
     @Test
-    void update_nonExisting_throwsNoSuchElement() {
-        Review update = new Review(1L,1L,"X",1);
+    void updateNonExistingThrows() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
         assertThrows(NoSuchElementException.class,
-                () -> service.update(999L, update),
-                "Should throw when updating missing review");
+                () -> svc.update(99L, new Review(0L,0L,"X",1)));
     }
 
     @Test
-    void delete_existing_returnsTrueAndRemoves() {
-        Review r = service.create(new Review(5L,5L,"T",1));
-        boolean ok = service.delete(r.getId());
-
-        assertTrue(ok);
-        assertFalse(service.findById(r.getId()).isPresent());
+    void deleteExisting() {
+        when(repo.existsById(7L)).thenReturn(true);
+        assertTrue(svc.delete(7L));
+        verify(repo).deleteById(7L);
     }
 
     @Test
-    void delete_nonExisting_returnsFalse() {
-        assertFalse(service.delete(123L), "Deleting missing should return false");
+    void deleteNonExisting() {
+        when(repo.existsById(8L)).thenReturn(false);
+        assertFalse(svc.delete(8L));
+        verify(repo, never()).deleteById(any());
     }
 }
