@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, UUID> {
-    List<Ticket> findAllByAttendeeId(Integer attendeeId);
+    List<Ticket> findAllByUserId(Integer userId);
     Optional<Ticket> findByConfirmationCode(String confirmationCode);
     long countByTicketTypeId(UUID ticketTypeId);
 }
