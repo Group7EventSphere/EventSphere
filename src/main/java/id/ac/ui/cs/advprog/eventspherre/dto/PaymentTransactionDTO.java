@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record PaymentTransactionDTO(
         UUID id,
-        UUID userId,
+        int userId,
         double amount,
         String type,
         String status,
