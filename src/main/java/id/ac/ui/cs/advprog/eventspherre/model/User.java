@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +35,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(name = "phone_number")
+    private String phoneNumber;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
@@ -56,7 +60,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     public String getPassword() {
