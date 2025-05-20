@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,5 +99,143 @@ public class TicketServiceTest {
         when(ticketRepository.countByTicketTypeId(typeId)).thenReturn(3L);
         long count = ticketService.countTicketsByType(typeId);
         assertThat(count).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("Should assign user, generate code, and reduce quota on ticket creation")
+    void createTicket_checkoutBehavior() {
+        // Given
+        TicketType ticketType = new TicketType("Regular", new BigDecimal("50.00"), 5);
+
+        User user = new User();
+        user.setId(10);
+        user.setName("CheckoutUser");
+        user.setEmail("checkout@example.com");
+        user.setRole(User.Role.ATTENDEE);
+
+        Ticket ticket = new Ticket(ticketType, user, null); // no confirmation code
+
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
+            Ticket saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID()); // simulate DB save
+            return saved;
+        });
+
+        // When
+        Ticket saved = ticketService.createTicket(ticket);
+
+        // Then
+        assertNotNull(saved.getConfirmationCode());
+        assertTrue(saved.getConfirmationCode().startsWith("TKT-"));
+        assertEquals(10, saved.getUserId());
+        assertEquals(4, ticketType.getQuota()); // quota reduced
+
+        verify(ticketRepository, times(1)).save(any(Ticket.class));
+    }
+
+    @Test
+    @DisplayName("Should fail when ticket quota is 0")
+    void createTicket_quotaExceeded_throwsException() {
+        TicketType ticketType = new TicketType("Sold Out", new BigDecimal("999.99"), 0);
+
+        User user = new User();
+        user.setId(11);
+        user.setName("TooLate");
+        user.setEmail("late@example.com");
+
+        Ticket ticket = new Ticket(ticketType, user, null);
+
+        assertThrows(IllegalStateException.class, () -> ticketService.createTicket(ticket));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should not allow quota to become negative")
+    void createTicket_preventsNegativeQuota() {
+        TicketType type = new TicketType("Last-Minute", new BigDecimal("90.00"), 1);
+        User user = new User();
+        user.setId(7);
+
+        Ticket first = new Ticket(type, user, null);
+        ticketService.createTicket(first);
+
+        Ticket second = new Ticket(type, user, null);
+
+        assertThrows(IllegalStateException.class, () -> {
+            ticketService.createTicket(second);
+        });
+
+        assertEquals(0, type.getQuota());
+    }
+
+    @Test
+    @DisplayName("Should not override confirmation code if already provided")
+    void createTicket_preservesProvidedConfirmationCode() {
+        TicketType ticketType = new TicketType("Gold", new BigDecimal("120.00"), 3);
+        User user = new User();
+        user.setId(5);
+
+        String customCode = "CUSTOM-1234";
+        Ticket ticket = new Ticket(ticketType, user, customCode);
+
+        when(ticketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Ticket saved = ticketService.createTicket(ticket);
+
+        assertEquals(customCode, saved.getConfirmationCode());
+        verify(ticketRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw when attendee is null")
+    void createTicket_throwsIfAttendeeNull() {
+        TicketType type = new TicketType("Silver", new BigDecimal("70.00"), 5);
+
+        Ticket ticket = new Ticket(); // empty constructor
+        ticket.setTicketType(type);
+        ticket.setAttendee(null); // explicit
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> {
+            ticketService.createTicket(ticket);
+        });
+
+        assertTrue(ex.getMessage().contains("Attendee must be specified"));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw when attendee has no ID")
+    void createTicket_throwsIfAttendeeIdMissing() {
+        TicketType type = new TicketType("Bronze", new BigDecimal("30.00"), 10);
+        User user = new User(); // ID is null
+
+        Ticket ticket = new Ticket(type, user, null);
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> {
+            ticketService.createTicket(ticket);
+        });
+
+        assertTrue(ex.getMessage().contains("Attendee must be specified"));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should populate ticket with user ID and save")
+    void createTicket_setsFieldsCorrectlyBeforeSave() {
+        TicketType type = new TicketType("Regular", new BigDecimal("50.00"), 3);
+        User user = new User();
+        user.setId(99);
+        user.setName("Verify");
+        user.setEmail("verify@example.com");
+
+        Ticket ticket = new Ticket(type, user, null);
+
+        when(ticketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Ticket saved = ticketService.createTicket(ticket);
+
+        assertEquals(99, saved.getUserId());
+        assertEquals(type, saved.getTicketType());
+        assertEquals(2, type.getQuota()); // reduced
     }
 }
