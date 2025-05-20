@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - EventSphere Admin</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+        
+        .form-note {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar">
+        <div class="admin-header">
+            <h2 class="admin-title">Edit User</h2>
+            <a th:href="@{/admin}" class="btn btn-secondary">Back to User List</a>
+        </div>
+        
+        <div class="card">
+            <div class="form-section">
+                <h3>Edit Profile Information</h3>
+                <form th:action="@{/admin/users/{id}/update(id=${user.id})}" method="post">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" th:value="${user.name}" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" th:value="${user.email}" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number</label>
+                        <input type="text" id="phoneNumber" name="phoneNumber" th:value="${user.phoneNumber}" class="form-control" />
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-section">
+                <h3>Update Password</h3>
+                <form th:action="@{/admin/users/{id}/update-password(id=${user.id})}" method="post">
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" name="newPassword" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-note">
+                        Note: This will reset the user's password immediately.
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-section" th:if="${!isCurrentUser}">
+                <h3>Delete User</h3>
+                <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                    <div class="form-note">
+                        Warning: This action cannot be undone. All user data will be permanently deleted.
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-section" th:if="${isCurrentUser}">
+                <h3>Delete User</h3>
+                <div class="form-note">
+                    You cannot delete your own account while logged in.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
