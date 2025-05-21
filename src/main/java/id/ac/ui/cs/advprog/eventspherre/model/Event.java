@@ -1,40 +1,71 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
-import id.ac.ui.cs.advprog.eventspherre.observer.EventObserver;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
+@Getter @Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "events")
 public class Event {
-    private int id;
-    private Map<String, Object> details;
-    private List<EventObserver> observers = new ArrayList<>();
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    public Event(int id, Map<String, Object> details) {
+    @Column(nullable = false)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "event_date")
+    private String eventDate;
+
+    @Column
+    private String location;
+
+    @Column(name = "organizer_id")
+    private Integer organizerId;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> details;
+
+    public Event(UUID id, Map<String, Object> details) {
         this.id = id;
         this.details = details;
-    }
 
-    public int getId() {
-        return id;
-    }
+        // Extract common fields from details
+        if (details != null) {
+            this.title = (String) details.getOrDefault("title", "");
+            this.description = (String) details.getOrDefault("description", "");
+            this.eventDate = (String) details.getOrDefault("date", "");
+            this.location = (String) details.getOrDefault("location", "");
 
-    public Map<String, Object> getDetails() {
-        return details;
-    }
-
-    public void setDetails(Map<String, Object> details) {
-        this.details = details;
-        notifyObservers();
-    }
-
-    public void addObserver(EventObserver observer) {
-        observers.add(observer);
-    }
-
-    private void notifyObservers() {
-        for (EventObserver observer : observers) {
-            observer.update(this);
+            // Handle organizerId if present
+            Object orgId = details.get("organizerId");
+            if (orgId != null) {
+                if (orgId instanceof Integer) {
+                    this.organizerId = (Integer) orgId;
+                } else if (orgId instanceof String) {
+                    this.organizerId = Integer.parseInt((String) orgId);
+                }
+            }
         }
+
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 }
