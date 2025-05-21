@@ -14,4 +14,5 @@ public interface TicketService {
     void deleteTicket(UUID id);
     Optional<Ticket> getTicketByConfirmationCode(String code);
     long countTicketsByType(UUID ticketTypeId);
+    Ticket updateTicket(UUID id, Ticket ticket);
 }

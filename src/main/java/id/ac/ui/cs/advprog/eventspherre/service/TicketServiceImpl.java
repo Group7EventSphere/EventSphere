@@ -71,5 +71,18 @@ public class TicketServiceImpl implements TicketService {
     public long countTicketsByType(UUID ticketTypeId) {
         return ticketRepository.countByTicketTypeId(ticketTypeId);
     }
+
+    @Override
+    public Ticket updateTicket(UUID id, Ticket updatedTicket) {
+        // Make sure ticket exists
+        Ticket existing = ticketRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
+
+        // Update fields (except ID and attendee which should stay the same)
+        existing.setTicketType(updatedTicket.getTicketType());
+        existing.setConfirmationCode(updatedTicket.getConfirmationCode());
+
+        return ticketRepository.save(existing);
+    }
 }
 
