@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.*;
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,18 +17,25 @@ import java.util.UUID;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
+    private final TicketTypeRepository ticketTypeRepository;
+
 
     @Override
     public Ticket createTicket(Ticket ticket) {
         // Validate ticketType
         TicketType ticketType = ticket.getTicketType();
-        if (ticketType.getQuota() <= 0) {
-            throw new IllegalStateException("Ticket quota is full");
+
+        // Fetch latest from DB to prevent stale data
+        TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ticket type not found"));
+
+        if (existingType.getQuota() <= 0) {
+            throw new IllegalStateException("No tickets left for this type");
         }
 
-        // Reduce quota (business logic)
-        ticketType.reduceQuota(1);  // Will throw if not enough quota
-        // If TicketType is a managed JPA entity, make sure it's saved
+        // Decrement quota
+        existingType.setQuota(existingType.getQuota() - 1);
+        ticketTypeRepository.save(existingType);
 
         // Extract user info from ticket
         User attendee = ticket.getAttendee();
