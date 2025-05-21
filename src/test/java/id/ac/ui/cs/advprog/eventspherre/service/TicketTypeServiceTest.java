@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,9 @@ public class TicketTypeServiceTest {
 
     @Mock
     private TicketTypeRepository ticketTypeRepository;
+
+    @Mock
+    private TicketRepository ticketRepository;
 
     @InjectMocks
     private TicketTypeServiceImpl ticketTypeService;
@@ -90,6 +94,7 @@ public class TicketTypeServiceTest {
         admin.setRole(User.Role.ADMIN);
 
         ticketTypeService.deleteTicketType(ticketTypeId, admin);
+
         verify(ticketTypeRepository, times(1)).deleteById(ticketTypeId);
     }
 
