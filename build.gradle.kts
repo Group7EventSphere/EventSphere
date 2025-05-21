@@ -37,6 +37,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.h2database:h2")
     implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
+    implementation ("org.springframework.boot:spring-boot-starter-webflux")
+
 }
 
 tasks.withType<Test> {

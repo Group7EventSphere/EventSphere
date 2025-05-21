@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Ads - EventSphere</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; }
+
+        /* Top Navbar (Dark) */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: .75rem 2rem; background: #2d2d2d; }
+        .navbar .logo { font-weight: bold; font-size: 1.2rem; color: #fff; }
+        .navbar .user-info { font-size: .9rem; color: #ccc; }
+
+        /* Secondary Header */
+        .create-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fff; border-bottom: 1px solid #e0e0e0; }
+        .create-header h2 { font-size: 1.5rem; font-weight: 500; color: #333; }
+        .btn-submit { padding: .5rem 1.25rem; background: #009aff; color: #fff; text-decoration: none; border-radius: .25rem; font-size: .95rem; cursor: pointer; border: none; }
+        .btn-submit:hover { background: #0080e0; }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Form Container */
+        .form-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: .5rem; font-size: .95rem; color: #555; }
+        .form-group input[type="text"],
+        .form-group textarea { width: 100%; padding: .75rem 1rem; border: 1px solid #ccc; border-radius: .5rem; font-size: 1rem; }
+        .form-group textarea { height: 200px; resize: vertical; }
+
+        /* Upload Card */
+        .upload-card { border: 2px dashed #ccc; border-radius: .5rem; background: #fafafa; padding: 2rem; text-align: center; position: relative; }
+        .upload-card:hover { border-color: #999; }
+        .upload-card-icon { font-size: 3rem; color: #888; margin-bottom: 1rem; }
+        .upload-card p { margin-bottom: 1rem; color: #666; }
+        .upload-btn { display: inline-block; padding: .5rem 1rem; background: #009aff; color: #fff; text-decoration: none; border-radius: .25rem; font-size: .95rem; cursor: pointer; }
+        .upload-btn:hover { background: #0080e0; }
+        .upload-input { display: none; }
+
+        /* Upload Preview */
+        .upload-preview { margin-top: 1rem; display: none; }
+        .upload-preview img { max-width: 100%; max-height: 150px; border-radius: .25rem; }
+
+        /* Loading State */
+        .loading-indicator {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            justify-content: center;
+            align-items: center;
+            border-radius: .5rem;
+        }
+        .loading-indicator span {
+            background: #fff;
+            padding: .5rem 1rem;
+            border-radius: .25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Status Message */
+        .status-message {
+            margin-top: 1rem;
+            padding: .5rem;
+            border-radius: .25rem;
+            font-size: .9rem;
+            display: none;
+        }
+        .status-success {
+            background: #e6f7e6;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        /* Footer */
+        .footer { background-color: #222; color: #bbb; padding: 3rem 2rem; margin-top: 2rem; }
+        .footer-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .footer h3 { color: #fff; margin-bottom: 1rem; font-size: 1.1rem; }
+        .footer a { display: block; color: #bbb; text-decoration: none; margin-bottom: .5rem; font-size: .9rem; }
+        .footer a:hover { text-decoration: underline; }
+        .footer p { font-size: .9rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<!-- Top Navbar -->
+<header class="navbar">
+    <div class="logo">EventSphere</div>
+    <div class="user-info">0 currency  |  Username</div>
+</header>
+
+<!-- FORM -->
+<form id="ad-form">
+    <!-- Secondary Header: Create Ads + Submit -->
+    <div class="create-header">
+        <h2>Create Ads</h2>
+        <button type="submit" id="submit-btn" class="btn-submit" disabled>Submit</button>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <!-- Left Column: Title & Upload -->
+        <div>
+            <div class="form-group">
+                <label for="ads-title">Ads Title:</label>
+                <input type="text" id="ads-title" name="title" placeholder="Enter ad title" required />
+            </div>
+            <div class="upload-card">
+                <div class="loading-indicator" id="upload-loading">
+                    <span>Uploading image...</span>
+                </div>
+                <div class="upload-card-icon">⬆️</div>
+                <p>Upload Image</p>
+                <label class="upload-btn" for="file-input">Select a file</label>
+                <input
+                        type="file"
+                        id="file-input"
+                        class="upload-input"
+                        accept="image/png, image/jpeg"
+                />
+                <div class="upload-preview" id="image-preview">
+                    <img id="preview-image" src="" alt="Preview">
+                </div>
+                <div class="status-message" id="upload-status"></div>
+                <input type="hidden" id="image-url" name="imageUrl" />
+            </div>
+        </div>
+
+        <!-- Right Column: Description -->
+        <div>
+            <div class="form-group">
+                <label for="ads-desc">Ads Description:</label>
+                <textarea
+                        id="ads-desc"
+                        name="description"
+                        placeholder="Enter ad description..."
+                        required
+                ></textarea>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-container">
+        <div>
+            <h3>About EventSphere</h3>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit…</p>
+        </div>
+        <div>
+            <h3>Partnerships</h3>
+            <a href="#">Merchant Sign Up</a>
+            <a href="#">Merchant Log In</a>
+            <a href="#">Affiliate Partnership</a>
+            <a href="#">Influencer Program</a>
+        </div>
+        <div>
+            <h3>Contact Us</h3>
+            <a href="#">Contact</a>
+            <a href="#">Support</a>
+            <a href="#">Contact Sales</a>
+            <a href="#">Facebook</a>
+            <a href="#">Linkedin</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+        </div>
+        <div>
+            <h3>Terms of Use</h3>
+            <a href="#">General Terms of Use</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Cookie Policy</a>
+        </div>
+    </div>
+</footer>
+
+<!-- SCRIPT for Cloudinary upload + submit -->
+<script>
+    // DOM elements
+    const fileInput = document.getElementById("file-input");
+    const imageUrl = document.getElementById("image-url");
+    const submitBtn = document.getElementById("submit-btn");
+    const uploadLoading = document.getElementById("upload-loading");
+    const imagePreview = document.getElementById("image-preview");
+    const previewImage = document.getElementById("preview-image");
+    const uploadStatus = document.getElementById("upload-status");
+    const adForm = document.getElementById("ad-form");
+    const adsTitle = document.getElementById("ads-title");
+    const adsDesc = document.getElementById("ads-desc");
+
+    // Cloudinary upload configuration
+    const CLOUDINARY_UPLOAD_PRESET = "adpro-ads"; // Replace with your upload preset
+    const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5"; // Replace with your cloud name
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    // Check if form is valid
+    function checkFormValidity() {
+        if (adsTitle.value && adsDesc.value && imageUrl.value) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+
+    // Add event listeners for input fields
+    adsTitle.addEventListener("input", checkFormValidity);
+    adsDesc.addEventListener("input", checkFormValidity);
+
+    // Show status message
+    function showStatus(message, isError = false) {
+        uploadStatus.innerText = message;
+        uploadStatus.style.display = "block";
+
+        if (isError) {
+            uploadStatus.className = "status-message status-error";
+        } else {
+            uploadStatus.className = "status-message status-success";
+        }
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+            uploadStatus.style.display = "none";
+        }, 5000);
+    }
+
+    // Upload file to Cloudinary when a file is selected
+    fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Show loading indicator
+        uploadLoading.style.display = "flex";
+        imagePreview.style.display = "none";
+
+        try {
+            // Create FormData for Cloudinary upload
+            const data = new FormData();
+            data.append("file", file);
+            data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+            // Upload to Cloudinary
+            const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+                method: "POST",
+                body: data
+            });
+
+            if (!response.ok) {
+                throw new Error("Cloudinary upload failed");
+            }
+
+            const cloudinaryData = await response.json();
+
+            // Set the secure URL in the hidden input
+            imageUrl.value = cloudinaryData.secure_url;
+
+            // Show preview
+            previewImage.src = cloudinaryData.secure_url;
+            imagePreview.style.display = "block";
+
+            // Show success message
+            showStatus("Image uploaded successfully!");
+
+            // Check if form can be submitted
+            checkFormValidity();
+
+        } catch (error) {
+            console.error("Upload error:", error);
+            showStatus("Failed to upload image. Please try again.", true);
+        } finally {
+            // Hide loading indicator
+            uploadLoading.style.display = "none";
+        }
+    });
+
+    // Submit form to your API endpoint
+    adForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Disable submit button during submission
+        submitBtn.disabled = true;
+
+        try {
+            const payload = {
+                title: adsTitle.value,
+                description: adsDesc.value,
+                imageUrl: imageUrl.value
+            };
+
+            // Submit to your API
+            const response = await fetch("/api/ads", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("API submission failed");
+            }
+
+            // Show success message
+            alert("Ad created successfully!");
+
+            // Reset form
+            adForm.reset();
+            imageUrl.value = "";
+            imagePreview.style.display = "none";
+            submitBtn.disabled = true;
+
+        } catch (error) {
+            console.error("Submission error:", error);
+            alert("Failed to create ad. Please try again.");
+        } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Ads - EventSphere</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; }
+
+        /* Top Navbar (Dark) */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2rem; background: #2d2d2d; }
+        .navbar .logo { font-weight: bold; font-size: 1.2rem; color: #fff; }
+        .navbar .user-info { font-size: 0.9rem; color: #ccc; }
+
+        /* Secondary Header */
+        .create-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fff; border-bottom: 1px solid #e0e0e0; }
+        .create-header h2 { font-size: 1.5rem; font-weight: 500; color: #333; }
+        .btn-submit { padding: 0.5rem 1.25rem; background: #009aff; color: #fff; text-decoration: none; border-radius: 0.25rem; font-size: 0.95rem; cursor: pointer; }
+        .btn-submit:hover { background: #0080e0; }
+
+        /* Form Container */
+        .form-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.95rem; color: #555; }
+        .form-group input[type="text"],
+        .form-group textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 0.5rem; font-size: 1rem; }
+        .form-group textarea { height: 200px; resize: vertical; }
+
+        /* Upload Card */
+        .upload-card { border: 2px dashed #ccc; border-radius: 0.5rem; background: #fafafa; padding: 2rem; text-align: center; }
+        .upload-card:hover { border-color: #999; }
+        .upload-card-icon { font-size: 3rem; color: #888; margin-bottom: 1rem; }
+        .upload-card p { margin-bottom: 1rem; color: #666; }
+        .upload-btn { display: inline-block; padding: 0.5rem 1rem; background: #009aff; color: #fff; text-decoration: none; border-radius: 0.25rem; font-size: 0.95rem; cursor: pointer; }
+        .upload-btn:hover { background: #0080e0; }
+        .upload-input { display: none; }
+
+        /* Image Preview */
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 1rem auto;
+            display: none;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Footer */
+        .footer { background-color: #222; color: #bbb; padding: 3rem 2rem; margin-top: 2rem; }
+        .footer-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .footer h3 { color: #fff; margin-bottom: 1rem; font-size: 1.1rem; }
+        .footer a { display: block; color: #bbb; text-decoration: none; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .footer a:hover { text-decoration: underline; }
+        .footer p { font-size: 0.9rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div>Loading ad data...</div>
+</div>
+
+<!-- Top Navbar -->
+<header class="navbar">
+    <div class="logo">EventSphere</div>
+    <div class="user-info">0 currency&nbsp;&nbsp;|&nbsp;&nbsp;Username</div>
+</header>
+
+<!-- Secondary Header: Edit Ads -->
+<div class="create-header">
+    <h2>Edit Ads</h2>
+    <a href="#" class="btn-submit" id="update-btn">Update</a>
+</div>
+
+<!-- Form -->
+<div class="form-container">
+    <!-- Left Column: Title & Upload -->
+    <div>
+        <div class="form-group">
+            <label for="ads-title">Ads Title:</label>
+            <input type="text" id="ads-title" name="adsTitle" placeholder="Enter ad title" />
+        </div>
+        <div class="upload-card">
+            <div class="upload-card-icon">⬆️</div>
+            <p>Upload Image</p>
+            <img id="image-preview" class="image-preview" src="" alt="Ad Image Preview">
+            <label class="upload-btn" for="file-input">Select a file</label>
+            <input type="file" id="file-input" class="upload-input" accept="image/png, image/jpeg" />
+        </div>
+    </div>
+
+    <!-- Right Column: Description -->
+    <div>
+        <div class="form-group">
+            <label for="ads-desc">Ads Description:</label>
+            <textarea id="ads-desc" name="adsDescription" placeholder="Enter ad description..."></textarea>
+        </div>
+        <!-- Hidden input to store the ID from the model -->
+        <input type="hidden" id="ad-id" th:value="${id}" />
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-container">
+        <div>
+            <h3>About EventSphere</h3>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed metus nec massa pharetra ultricies at blandit erat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque nec magna sed eros bibendum ultricies vitae id dui. Pellentesque semper nibh ut rutrum lacinia. Nunc dui nulla, lacinia vel varius eget, dictum vel enim. In non dictum felis. Curabitur interdum, libero id cursus fringilla, odio massa imperdiet nulla, in elementum nibh quam ac ligula. </p>
+        </div>
+        <div>
+            <h3>Partnerships</h3>
+            <a href="#">Merchant Sign Up</a>
+            <a href="#">Merchant Log In</a>
+            <a href="#">Affiliate Partnership</a>
+            <a href="#">Influencer Program</a>
+        </div>
+        <div>
+            <h3>Contact Us</h3>
+            <a href="#">Contact</a>
+            <a href="#">Support</a>
+            <a href="#">Contact Sales</a>
+            <a href="#">Facebook</a>
+            <a href="#">Linkedin</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+        </div>
+        <div>
+            <h3>Terms of Use</h3>
+            <a href="#">General Terms of Use</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Cookie Policy</a>
+        </div>
+    </div>
+</footer>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the ad ID from Thymeleaf model
+        const adId = document.getElementById('ad-id').value;
+
+        if (!adId) {
+            alert('No ad ID provided. Redirecting to ads list.');
+            // Redirect to ads list page
+            // window.location.href = '/ads/list';
+            document.getElementById('loading-overlay').classList.add('hidden');
+            return;
+        }
+
+        console.log("Loading ad with ID:", adId);
+
+        // API endpoint for fetching ad data
+        const apiUrl = `/api/ads/${adId}`;
+
+        // Fetch ad data from API
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(adData => {
+                // Fill form fields with data
+                document.getElementById('ads-title').value = adData.title;
+                document.getElementById('ads-desc').value = adData.description;
+
+                // Show image preview if available
+                if (adData.imageUrl) {
+                    const imagePreview = document.getElementById('image-preview');
+                    imagePreview.src = adData.imageUrl;
+                    imagePreview.style.display = 'block';
+                }
+
+                // Hide loading overlay
+                document.getElementById('loading-overlay').classList.add('hidden');
+            })
+            .catch(error => {
+                console.error('Error fetching ad data:', error);
+                alert('Failed to load ad data. Please try again.');
+                document.getElementById('loading-overlay').classList.add('hidden');
+            });
+
+        // Handle file input change
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imagePreview = document.getElementById('image-preview');
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle update button click
+        document.getElementById('update-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('ads-title').value;
+            const description = document.getElementById('ads-desc').value;
+            const fileInput = document.getElementById('file-input');
+
+            if (!title || !description) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            // Prepare JSON data for submission
+            const jsonData = {
+                title: title,
+                description: description,
+                imageUrl: document.getElementById('image-preview').src // Use current image URL
+            };
+
+            // API endpoint for updating ad
+            const updateUrl = `/api/ads/${adId}`;
+
+            // Send update request
+            fetch(updateUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Ad updated successfully!');
+                    // Redirect to ads list or details page
+                    window.location.href = '/ads/list';
+                })
+                .catch(error => {
+                    console.error('Error updating ad:', error);
+                    alert('Failed to update ad. Please try again.');
+                })
+                .finally(() => {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                });
+        });
+    });
+</script>
+</body>
+</html>
