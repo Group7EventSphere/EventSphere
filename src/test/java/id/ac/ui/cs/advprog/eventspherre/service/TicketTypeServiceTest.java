@@ -12,11 +12,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,5 +107,17 @@ public class TicketTypeServiceTest {
         when(ticketTypeRepository.findById(ticketTypeId)).thenReturn(Optional.of(ticketType));
         Optional<TicketType> found = ticketTypeService.getTicketTypeById(ticketTypeId);
         assertThat(found).isPresent().contains(ticketType);
+    }
+
+    @Test
+    @DisplayName("Should return all ticket types")
+    void testFindAllReturnsList() {
+        when(ticketTypeRepository.findAll()).thenReturn(List.of(
+                new TicketType("VIP", new BigDecimal("100.00"), 10),
+                new TicketType("Regular", new BigDecimal("50.00"), 100)
+        ));
+
+        List<TicketType> result = ticketTypeService.findAll();
+        assertEquals(2, result.size());
     }
 }

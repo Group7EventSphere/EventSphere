@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
+import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,14 +41,19 @@ class TicketTypeControllerTest {
     @Test
     @DisplayName("POST /ticket-types should save and redirect to list")
     void testCreateTicketType() throws Exception {
+        User user = new User();
+        user.setId(1);
+        user.setRole(User.Role.ORGANIZER);
+
         mockMvc.perform(post("/ticket-types")
                         .param("name", "VIP")
                         .param("price", "100.00")
-                        .param("quota", "50"))
+                        .param("quota", "50")
+                        .sessionAttr("loggedInUser", user))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ticket-types"));
 
-        verify(ticketTypeService).create(any(TicketType.class));
+        verify(ticketTypeService).create(eq("VIP"), eq(new BigDecimal("100.00")), eq(50), eq(user));
     }
 
     @Test
