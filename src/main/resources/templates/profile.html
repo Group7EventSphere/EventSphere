@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/password-visibility.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar profile-container">
+        <div class="profile-header">
+            <h2 class="profile-title">My Profile</h2>
+        </div>
+        
+        <!-- Success and error messages -->
+        <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+            Operation successful
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+            Operation failed
+        </div>
+        
+        <div class="card">
+            <div class="profile-info">
+                <h3>Profile Information</h3>
+                <form th:action="@{/profile/update}" method="post">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-control" th:value="${user.name}" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" th:value="${user.email}" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" th:value="${user.phoneNumber}" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <div>
+                            <span th:if="${user.role.name() == 'ADMIN'}" class="role-badge role-admin">Admin</span>
+                            <span th:if="${user.role.name() == 'ORGANIZER'}" class="role-badge role-organizer">Organizer</span>
+                            <span th:if="${user.role.name() == 'ATTENDEE'}" class="role-badge role-attendee">Attendee</span>
+                        </div>
+                        <p class="form-note">
+                            The account type cannot be changed. Please contact an administrator if you need a different account type.
+                        </p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-divider"></div>
+            
+            <div class="profile-info">
+                <h3>Change Password</h3>
+                <form th:action="@{/profile/change-password}" method="post">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="currentPassword" name="currentPassword" class="form-control password-input" required />
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('currentPassword')">
+                                <img th:src="@{/images/icons/eye-open.svg}" class="eye-icon show-password" alt="Show password">
+                                <img th:src="@{/images/icons/eye-closed.svg}" class="eye-icon hide-password" style="display:none" alt="Hide password">
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="newPassword" name="newPassword" class="form-control password-input" required />
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newPassword')">
+                                <img th:src="@{/images/icons/eye-open.svg}" class="eye-icon show-password" alt="Show password">
+                                <img th:src="@{/images/icons/eye-closed.svg}" class="eye-icon hide-password" style="display:none" alt="Hide password">
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control password-input" required />
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('confirmNewPassword')">
+                                <img th:src="@{/images/icons/eye-open.svg}" class="eye-icon show-password" alt="Show password">
+                                <img th:src="@{/images/icons/eye-closed.svg}" class="eye-icon hide-password" style="display:none" alt="Hide password">
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-divider"></div>
+            
+            <div class="profile-info">
+                <h3>Account Balance</h3>
+                <p><strong>Current Balance:</strong> <span th:text="${'$' + user.balance}">$0.00</span></p>
+                <p class="form-note">For questions about your balance, please contact support.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript for password visibility toggle -->
+    <script th:src="@{/js/password-visibility.js}"></script>
+</body>
+</html>
