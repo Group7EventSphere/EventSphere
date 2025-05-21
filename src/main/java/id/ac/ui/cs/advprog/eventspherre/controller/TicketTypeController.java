@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -47,11 +48,13 @@ public class TicketTypeController {
     }
 
     @PostMapping("/create")
-    public String createTicketType(@ModelAttribute TicketType ticketType, Principal principal) {
+    public String createTicketType(@RequestParam String name,
+                                   @RequestParam BigDecimal price,
+                                   @RequestParam int quota,
+                                   Principal principal) {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
-
-        ticketTypeService.create(ticketType.getName(), ticketType.getPrice(), ticketType.getQuota(), user);
+        ticketTypeService.create(name, price, quota, user);
         return "redirect:/ticket-types";
     }
 

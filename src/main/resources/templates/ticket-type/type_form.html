@@ -3,54 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Ticket Type</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 2em;
-        }
-        form {
-            max-width: 400px;
-            margin: auto;
-        }
-        label {
-            display: block;
-            margin-top: 1em;
-        }
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 0.5em;
-            margin-top: 0.3em;
-        }
-        button {
-            margin-top: 1.5em;
-            padding: 0.5em 1.5em;
-        }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 2em;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/ticketType-form.css}">
 </head>
 <body>
+<div class="ticketType-container">
+    <h2 class="ticketType-title">Create New Ticket Type</h2>
+    <hr class="ticketType-divider"/>
 
-<h2 style="text-align: center;">Create a New Ticket Type</h2>
+    <form th:action="@{/ticket-types/create}" th:object="${ticketType}" method="post" class="ticketType-form">
+        <div class="ticketType-group">
+            <label for="event">Event:</label>
+            <input type="text" id="event" name="event">
+        </div>
 
-<form th:action="@{/ticket-types}" th:object="${ticketType}" method="post">
-    <label for="name">Name:</label>
-    <input type="text" th:field="*{name}" placeholder="e.g. VIP, Regular" required />
+        <div class="ticketType-group">
+            <label for="name">Name of Type:</label>
+            <input type="text" th:field="*{name}" required>
+        </div>
 
-    <label for="price">Price:</label>
-    <input type="number" th:field="*{price}" step="0.01" placeholder="e.g. 100.00" required />
+        <div class="ticketType-group">
+            <label for="price">Price (IDR):</label>
+            <input type="number" th:field="*{price}" step="1" required>
+        </div>
 
-    <label for="quota">Quota:</label>
-    <input type="number" th:field="*{quota}" placeholder="e.g. 50" required />
+        <div class="ticketType-group">
+            <label for="quota">Quota:</label>
+            <input type="number" th:field="*{quota}" required>
+        </div>
 
-    <button type="submit">Create</button>
-</form>
-
-<a th:href="@{/ticket-types}" class="back-link">← Back to Ticket Type List</a>
-
+        <div class="ticketType-buttonContainer">
+            <button type="submit" class="ticketType-button">Create</button>
+        </div>
+    </form>
+</div>
 </body>
 </html>
