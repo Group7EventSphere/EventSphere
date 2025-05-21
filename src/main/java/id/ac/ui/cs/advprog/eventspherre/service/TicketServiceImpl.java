@@ -8,6 +8,7 @@ import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +46,7 @@ public class TicketServiceImpl implements TicketService {
 
         // Set user ID from the attendee
         ticket.setUserId(attendee.getId());
+        ticket.setDate(LocalDate.now());
 
         // Generate confirmation code if not already set
         if (ticket.getConfirmationCode() == null || ticket.getConfirmationCode().isEmpty()) {

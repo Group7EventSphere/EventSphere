@@ -3,6 +3,8 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.UUID;
 
@@ -31,6 +33,10 @@ public class Ticket {
 
     @Column(nullable = false)
     private String status = "pending";
+
+    @Column(nullable = false)
+    @DateTimeFormat(pattern = "dd MMM yyyy")
+    private LocalDate date;
 
     public Ticket() {}
 

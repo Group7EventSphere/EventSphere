@@ -1,131 +1,64 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Order</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: sans-serif;
-            background-color: #f4f4f4;
-        }
-
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 200px;
-            background-color: #e0e0e0;
-            padding: 20px;
-        }
-
-        .sidebar h2 {
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
-
-        .sidebar a {
-            display: block;
-            margin-bottom: 15px;
-            text-decoration: none;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .sidebar a:hover {
-            color: #007BFF;
-        }
-
-        .main {
-            flex: 1;
-            padding: 30px;
-            background-color: white;
-        }
-
-        .main h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        .card {
-            background-color: #f1f1f1;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .card .title {
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .card .price {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .card .status {
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .status.upcoming { color: gray; }
-        .status.success { color: green; }
-        .status.failed { color: red; }
-
-        .card .details-link {
-            text-align: right;
-        }
-
-        .card .details-link a {
-            text-decoration: none;
-            color: #007BFF;
-            font-weight: bold;
-        }
-
-        .highlight {
-            border: 2px solid #007BFF;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/order_ticket.css}">
 </head>
 <body>
-<div class="container">
-    <div class="sidebar">
-        <h2>My Order</h2>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="order-container">
+    <!-- Sidebar -->
+    <div class="order-sidebar">
         <a th:href="@{/orders}">My Order</a>
         <a th:href="@{/topup}">Top up Balance</a>
-        <a th:href="@{/logout}">Logout</a>
     </div>
-    <div class="main">
+
+    <!-- Main Content -->
+    <div class="order-main">
         <h1>My Order</h1>
 
-        <!-- First static card -->
-        <div class="card">
-            <div class="title">Event 1 Ticket (DUMMY)</div>
-            <div class="price">Rp 100.000</div>
-            <div class="status upcoming">Upcoming | 17 May 2025</div>
-            <div class="details-link"><a href="#">Details</a></div>
+        <!-- Sample static card -->
+        <div class="order-card">
+            <div class="order-title">Event 1 Ticket</div>
+            <div class="order-price">Rp 100.000</div>
+            <div class="order-line">
+                <span class="order-status upcoming">Upcoming</span> |
+                <span class="order-date">17 May 2025</span>
+            </div>
+            <div class="order-details"><a href="#">Details</a></div>
         </div>
 
-        <!-- Dynamic Thymeleaf loop for other tickets -->
+        <!-- Dynamic order loop -->
         <div th:each="ticket : ${tickets}">
-            <div class="card">
-                <div class="title" th:text="${ticket.ticketType.name}">Ticket Name</div>
-                <div class="price" th:text="'Rp ' + ${ticket.ticketType.price}">Price</div>
-                <div class="status">No status</div>
-                <div class="details-link">
-                    <span>-</span>
+            <div class="order-card" th:classappend="${ticket.status != 'Success' && ticket.status != 'Upcoming'} ? ' highlight'">
+                <div class="order-title" th:text="${ticket.ticketType.name}">Ticket Title</div>
+                <div class="order-price" th:text="'Rp ' + ${ticket.ticketType.price}">Rp Price</div>
+
+                <div class="order-line" th:if="${ticket.status != null}">
+                    <span class="order-status" th:classappend=" ' ' + ${ticket.status.toLowerCase() }"
+                          th:text="${ticket.status}">Status</span> |
+                    <span class="order-date" th:text="${#temporals.format(ticket.date, 'dd MMM yyyy')}">Date</span>
+                </div>
+
+                <div class="order-line" th:if="${ticket.status == null}">
+                    <span class="order-status">No status</span>
+                </div>
+
+                <div class="order-details">
+                    <a th:if="${ticket.status == 'Success'}" th:href="@{/tickets/{id}(id=${ticket.id})}">Details</a>
+                    <span th:if="${ticket.status != 'Success'}" class="text-light">—</span>
                 </div>
             </div>
         </div>
 
     </div>
 </div>
+
 </body>
 </html>
