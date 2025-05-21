@@ -1,14 +1,15 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
-import id.ac.ui.cs.advprog.eventspherre.service.EventManager;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,61 +18,70 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
+@WithMockUser(username = "admin", roles = {"ADMIN"})
 public class EventControllerTest {
 
     @Autowired
-    private EventController eventController;
+    private MockMvc mockMvc;
 
     @Autowired
-    private EventManager eventManager;
+    private EventManagementService eventManager;
 
-    private MockMvc mockMvc;
     private Map<String, Object> eventDetails;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(eventController).build();
         eventDetails = new HashMap<>();
         eventDetails.put("title", "Test Event");
-        eventDetails.put("date", "2024-12-31");
-        eventManager.clearAllEvents(); // Ensure the EventManager is cleared before each test
+        eventDetails.put("description", "Test Description");
+        eventDetails.put("eventDate", "2024-12-31");
+        eventDetails.put("location", "Jakarta");
+        eventDetails.put("organizerId", 1);
+        eventManager.clearAllEvents();
     }
 
     @Test
     void testCreateEvent() throws Exception {
         mockMvc.perform(post("/api/events")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"Test Event\",\"date\":\"2024-12-31\"}"))
+                .content("{\"title\":\"Test Event\",\"description\":\"Test Description\",\"eventDate\":\"2024-12-31\",\"location\":\"Jakarta\",\"organizerId\":1}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.details.title").value("Test Event"));
+                .andExpect(jsonPath("$.title").value("Test Event"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.eventDate").value("2024-12-31"))
+                .andExpect(jsonPath("$.location").value("Jakarta"))
+                .andExpect(jsonPath("$.organizerId").value(1));
     }
 
     @Test
     void testGetEvent() throws Exception {
-        Event event = eventManager.createEvent(eventDetails);
+        Event event = eventManager.createEvent(
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
 
         mockMvc.perform(get("/api/events/" + event.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(event.getId()))
-                .andExpect(jsonPath("$.details.title").value("Test Event"));
+                .andExpect(jsonPath("$.id").value(event.getId().toString()))
+                .andExpect(jsonPath("$.title").value("Test Event"));
     }
 
     @Test
-void testGetAllEvents() throws Exception {
-    eventManager.createEvent(eventDetails);
+    void testGetAllEvents() throws Exception {
+        eventManager.createEvent(
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
 
-    mockMvc.perform(get("/api/events"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.size()").value(1));
-}
+        mockMvc.perform(get("/api/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
 
     @Test
     void testDeleteEvent() throws Exception {
-        Event event = eventManager.createEvent(eventDetails);
+        Event event = eventManager.createEvent(
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
 
         mockMvc.perform(delete("/api/events/" + event.getId()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Event deleted successfully"));
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/events/" + event.getId()))
                 .andExpect(status().isNotFound());
