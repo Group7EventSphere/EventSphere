@@ -57,3 +57,20 @@
 .ticketType-button:hover {
     background-color: #cfcfcf;
 }
+
+.ticketType-backContainer {
+    margin: 20px auto;
+    max-width: 700px;
+    padding-left: 10px;
+}
+
+.ticketType-backButton {
+    text-decoration: none;
+    color: #3282B8;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.ticketType-backButton:hover {
+    text-decoration: underline;
+}
