@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,7 +62,9 @@ public class TicketRepositoryTest {
         User attendee = createUser(2, "Jane Doe", "jane@example.com");
 
         Ticket ticket1 = new Ticket(type, attendee, "TKT-001");
+        ticket1.setDate(LocalDate.now());
         Ticket ticket2 = new Ticket(type, attendee, "TKT-002");
+        ticket2.setDate(LocalDate.now());
 
         ticketRepository.save(ticket1);
         ticketRepository.save(ticket2);
@@ -108,6 +111,7 @@ public class TicketRepositoryTest {
         User attendee = createUser(5, "Alice Wonderland", "alice@example.com");
 
         Ticket ticket = new Ticket(type, attendee, "TKT-ALICE");
+        ticket.setDate(LocalDate.now());
         ticketRepository.save(ticket);
 
         Optional<Ticket> found = ticketRepository.findByConfirmationCode("TKT-ALICE");
@@ -123,7 +127,9 @@ public class TicketRepositoryTest {
         User attendee = createUser(6, "Bob Builder", "bob@example.com");
 
         Ticket t1 = new Ticket(type, attendee, "TKT-BOB1");
+        t1.setDate(LocalDate.now());
         Ticket t2 = new Ticket(type, attendee, "TKT-BOB2");
+        t2.setDate(LocalDate.now());
 
         ticketRepository.save(t1);
         ticketRepository.save(t2);
