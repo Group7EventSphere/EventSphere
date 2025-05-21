@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Ticket Type</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2em;
+        }
+        form {
+            max-width: 400px;
+            margin: auto;
+        }
+        label {
+            display: block;
+            margin-top: 1em;
+        }
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.3em;
+        }
+        button {
+            margin-top: 1.5em;
+            padding: 0.5em 1.5em;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 2em;
+        }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align: center;">Create a New Ticket Type</h2>
+
+<form th:action="@{/ticket-types}" th:object="${ticketType}" method="post">
+    <label for="name">Name:</label>
+    <input type="text" th:field="*{name}" placeholder="e.g. VIP, Regular" required />
+
+    <label for="price">Price:</label>
+    <input type="number" th:field="*{price}" step="0.01" placeholder="e.g. 100.00" required />
+
+    <label for="quota">Quota:</label>
+    <input type="number" th:field="*{quota}" placeholder="e.g. 50" required />
+
+    <button type="submit">Create</button>
+</form>
+
+<a th:href="@{/ticket-types}" class="back-link">← Back to Ticket Type List</a>
+
+</body>
+</html>
