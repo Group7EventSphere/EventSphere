@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/password-visibility.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar">
+        <div class="admin-header">
+            <h2 class="admin-title">Admin Dashboard</h2>
+            <!-- Hidden span to store current user email for JavaScript -->
+            <span style="display:none;" th:if="${currentUserEmail}" th:data-current-user="${currentUserEmail}"></span>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>User Management</h3>
+                <button class="btn btn-icon" onclick="openNewUserModal()" title="Create New User">
+                    <img th:src="@{/images/icons/plus.svg}" alt="Create New User">
+                </button>
+            </div>
+            
+            <!-- Search and Filter Section -->
+            <div class="search-filter-container">
+                <form th:action="@{/admin}" method="get" class="search-form">
+                    <div class="search-input-wrapper">
+                        <div class="search-icon-wrapper">
+                            <img th:src="@{/images/icons/search.svg}" alt="Search" class="search-icon-img">
+                        </div>
+                        <input type="text" name="search" id="searchInput" class="search-input" 
+                               placeholder="Search by name or email" th:value="${currentSearch}" 
+                               aria-label="Search users">
+                    </div>
+                    
+                    <div class="role-filter-container">
+                        <select id="roleFilter" name="role" class="role-select" onchange="this.form.submit()">
+                            <option value="">Role</option>
+                            <option th:each="role : ${availableRoles}" 
+                                    th:value="${role.name()}" 
+                                    th:text="${role.name()}" 
+                                    th:selected="${role.name() == currentRole}">ROLE</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hidden fields to preserve filter state across forms -->
+                    <input type="hidden" id="currentRole" name="currentRole" th:value="${currentRole}">
+                    <input type="hidden" id="currentSearch" name="currentSearch" th:value="${currentSearch}">
+                    
+                    <!-- Clear filters button only shown when filters are active -->
+                    <div th:if="${currentRole != null || currentSearch != null}" class="clear-filters">
+                        <a th:href="@{/admin}" class="clear-btn">Clear</a>
+                    </div>
+                </form>
+            </div>
+            
+            <div th:if="${users.empty}">
+                <p>No users found with the specified criteria.</p>
+            </div>
+            
+            <!-- Success and error messages -->
+            <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+                Operation successful
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+                Operation failed
+            </div>
+            
+            <div class="users-table-container" th:if="${!users.empty}">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.name}">John Doe</td>
+                            <td th:text="${user.email}">john@example.com</td>
+                            <td>
+                                <span th:if="${user.role.name() == 'ADMIN'}" class="badge badge-admin">Admin</span>
+                                <span th:if="${user.role.name() == 'ORGANIZER'}" class="badge badge-organizer">Organizer</span>
+                                <span th:if="${user.role.name() == 'ATTENDEE'}" class="badge badge-attendee">Attendee</span>
+                            </td>
+                            <td class="actions-cell">
+                                <!-- Edit button -->
+                                <button class="btn-action btn-edit" 
+                                        th:attr="onclick=|openEditModal(${user.id}, '${user.name}', '${user.email}', '${user.phoneNumber != null ? user.phoneNumber : ''}', '${user.role.name()}')|">
+                                    Edit
+                                </button>
+                                
+                                <!-- Delete button (disabled for current user) -->
+                                <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post" 
+                                      style="display: inline-block;"
+                                      th:if="${user.email != currentUserEmail}">
+                                    <!-- Hidden fields to preserve filter state -->
+                                    <input type="hidden" name="currentRole" th:value="${currentRole}">
+                                    <input type="hidden" name="currentSearch" th:value="${currentSearch}">
+                                    <button type="submit" class="btn-action btn-delete" 
+                                            onclick="return confirm('Are you sure you want to delete this user?')">
+                                        Delete
+                                    </button>
+                                </form>
+                                <span th:if="${user.email == currentUserEmail}" class="note-text">(current user)</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit User</h3>
+                <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Edit Profile Form -->
+                <div class="form-section">
+                    <h4>Profile Information</h4>
+                    <form id="editUserForm" action="" method="post">
+                        <div class="form-group">
+                            <label for="editName">Full Name</label>
+                            <input type="text" id="editName" name="name" class="form-control" placeholder="Enter full name" required />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editEmail">Email Address</label>
+                            <input type="email" id="editEmail" name="email" class="form-control" placeholder="Enter email address" required />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPhoneNumber">Phone Number</label>
+                            <input type="tel" id="editPhoneNumber" name="phoneNumber" class="form-control" placeholder="Enter phone number" />
+                        </div>
+                        
+                        <div class="form-group" id="roleSelectGroup">
+                            <label for="editRole">User Role</label>
+                            <select id="editRole" name="role" class="form-control">
+                                <option value="ADMIN">Admin</option>
+                                <option value="ORGANIZER">Organizer</option>
+                                <!-- ATTENDEE option removed as per requirements -->
+                            </select>
+                            <div id="roleChangeNote" style="display: none;">
+                                You cannot change your own role as an admin.
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden fields to preserve filter state -->
+                        <input type="hidden" id="editCurrentRole" name="currentRole" th:value="${currentRole}">
+                        <input type="hidden" id="editCurrentSearch" name="currentSearch" th:value="${currentSearch}">
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Update Password Form -->
+                <div class="form-section">
+                    <h4>Security</h4>
+                    <form id="updatePasswordForm" action="" method="post">
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="newPassword" name="newPassword" class="form-control password-input" placeholder="Enter new password" required />
+                                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newPassword')">
+                                    <img th:src="@{/images/icons/eye-open.svg}" class="eye-icon show-password" alt="Show password">
+                                    <img th:src="@{/images/icons/eye-closed.svg}" class="eye-icon hide-password" style="display:none" alt="Hide password">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-note">
+                            <img th:src="@{/images/icons/info-circle.svg}" style="width: 1rem; height: 1rem; display: inline-block; margin-right: 0.25rem; vertical-align: -0.125rem;">
+                            This will reset the user's password immediately.
+                        </div>
+                        
+                        <!-- Hidden fields to preserve filter state -->
+                        <input type="hidden" id="pwdCurrentRole" name="currentRole" th:value="${currentRole}">
+                        <input type="hidden" id="pwdCurrentSearch" name="currentSearch" th:value="${currentSearch}">
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create New User Modal -->
+    <div id="newUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New User</h3>
+                <span class="modal-close" onclick="closeNewUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="newUserForm" action="/admin/users/create" method="post">
+                    <div class="form-group">
+                        <label for="newUserName">Full Name</label>
+                        <input type="text" id="newUserName" name="name" class="form-control" placeholder="Enter full name" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newUserEmail">Email Address</label>
+                        <input type="email" id="newUserEmail" name="email" class="form-control" placeholder="Enter email address" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newUserPassword">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="newUserPassword" name="password" class="form-control password-input" placeholder="Enter password" required />
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newUserPassword')">
+                                <img th:src="@{/images/icons/eye-open.svg}" class="eye-icon show-password" alt="Show password">
+                                <img th:src="@{/images/icons/eye-closed.svg}" class="eye-icon hide-password" style="display:none" alt="Hide password">
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newUserPhoneNumber">Phone Number</label>
+                        <input type="tel" id="newUserPhoneNumber" name="phoneNumber" class="form-control" placeholder="Enter phone number" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newUserRole">User Role</label>
+                        <select id="newUserRole" name="role" class="form-control">
+                            <option value="ADMIN">Admin</option>
+                            <option value="ORGANIZER" selected>Organizer</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hidden fields to preserve filter state -->
+                    <input type="hidden" id="newUserCurrentRole" name="currentRole" th:value="${currentRole}">
+                    <input type="hidden" id="newUserCurrentSearch" name="currentSearch" th:value="${currentSearch}">
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeNewUserModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for password visibility toggle -->
+    <script th:src="@{/js/password-visibility.js}"></script>
+    
+    <!-- JavaScript for modal functionality -->
+    <script>
+        // Get the modals
+        const editModal = document.getElementById("editUserModal");
+        const newUserModal = document.getElementById("newUserModal");
+        
+        // When the user clicks anywhere outside of the modals, close them
+        window.onclick = function(event) {
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == newUserModal) {
+                closeNewUserModal();
+            }
+        }
+        
+        // Open the edit modal and populate form fields
+        function openEditModal(userId, name, email, phoneNumber, role) {
+            const editUserForm = document.getElementById("editUserForm");
+            const updatePasswordForm = document.getElementById("updatePasswordForm");
+            const currentUserEmail = document.querySelector("[data-current-user]")?.getAttribute("data-current-user");
+            const isCurrentUser = email === currentUserEmail;
+            
+            // Update form action URLs
+            editUserForm.action = "/admin/users/" + userId + "/update";
+            updatePasswordForm.action = "/admin/users/" + userId + "/update-password";
+            
+            // Populate form fields with transition
+            const nameField = document.getElementById("editName");
+            const emailField = document.getElementById("editEmail");
+            const phoneField = document.getElementById("editPhoneNumber");
+            
+            nameField.value = name;
+            emailField.value = email;
+            phoneField.value = phoneNumber || '';
+            
+            // Briefly add a highlight effect to show fields are populated
+            [nameField, emailField, phoneField].forEach(field => {
+                field.classList.add('highlight-field');
+                setTimeout(() => field.classList.remove('highlight-field'), 600);
+            });
+            
+            // Handle role field based on user being edited
+            const roleSelect = document.getElementById("editRole");
+            const roleChangeNote = document.getElementById("roleChangeNote");
+            
+            // If current user is editing their own account and they are an admin
+            if (isCurrentUser && role === "ADMIN") {
+                // Disable role selection for admin's own account
+                roleSelect.disabled = true;
+                roleChangeNote.style.display = "block";
+            } else {
+                // Enable role selection for other users
+                roleSelect.disabled = false;
+                roleChangeNote.style.display = "none";
+                
+                // Set the correct role option as selected
+                for (let i = 0; i < roleSelect.options.length; i++) {
+                    if (roleSelect.options[i].value === role) {
+                        roleSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // Clear password field
+            document.getElementById("newPassword").value = '';
+            
+            // Add a title attribute to the modal that shows whose account is being edited
+            document.querySelector('#editUserModal .modal-header h3').textContent = `Edit User: ${name}`;
+            
+            // Display the modal with a slight fade-in for smoothness
+            editModal.style.display = "block";
+            setTimeout(() => editModal.classList.add('modal-visible'), 10);
+        }
+        
+        // Close the edit modal
+        function closeEditModal() {
+            // Add a fade-out effect
+            editModal.classList.remove('modal-visible');
+            setTimeout(() => {
+                editModal.style.display = "none";
+            }, 200);
+        }
+        
+        // Open the new user modal
+        function openNewUserModal() {
+            // Clear form fields
+            document.getElementById("newUserForm").reset();
+            
+            // Set default role to ORGANIZER
+            document.getElementById("newUserRole").value = "ORGANIZER";
+            
+            // Display the modal with a slight fade-in for smoothness
+            newUserModal.style.display = "block";
+            setTimeout(() => newUserModal.classList.add('modal-visible'), 10);
+            
+            // Focus on the first field for better UX
+            setTimeout(() => document.getElementById("newUserName").focus(), 300);
+        }
+        
+        // Close the new user modal
+        function closeNewUserModal() {
+            // Add a fade-out effect
+            newUserModal.classList.remove('modal-visible');
+            setTimeout(() => {
+                newUserModal.style.display = "none";
+            }, 200);
+        }
+        
+        // Password visibility is handled by the external JS file
+    </script>
+</body>
+</html>

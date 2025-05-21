@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar">
+        <div class="dashboard-content">
+            <h2>Welcome to Your Dashboard</h2>
+            <p>This is where you'll manage your events and tickets.</p>
+            
+            <!-- User Profile Information -->
+            <div class="card">
+                <h3>Profile Information</h3>
+                <div class="profile-details">
+                    <p><strong>Name:</strong> <span th:text="${user.name}">User Name</span></p>
+                    <p><strong>Email:</strong> <span th:text="${user.email}">user@example.com</span></p>
+                    
+                    <!-- Show different content for guests vs authenticated users -->
+                    <div th:if="${isGuest}">
+                        <p class="guest-message">You are browsing as a guest. <a th:href="@{/login}" class="btn-link">Login</a> or <a th:href="@{/register}" class="btn-link">Register</a> to access all features.</p>
+                    </div>
+                    <div th:unless="${isGuest}">
+                        <p><strong>Phone:</strong> <span th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not provided'}">Phone Number</span></p>
+                        <p><strong>Balance:</strong> $<span th:text="${user.balance}">0.00</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Placeholder for future dashboard content -->
+            <div class="card card-highlight">
+                <h3>Coming Soon</h3>
+                <p>Event management features are under development.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
