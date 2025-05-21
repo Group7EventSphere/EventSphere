@@ -1,71 +1,76 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
-import id.ac.ui.cs.advprog.eventspherre.command.UpdateEventCommand;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
-import id.ac.ui.cs.advprog.eventspherre.observer.UserObserver;
-import id.ac.ui.cs.advprog.eventspherre.service.EventManager;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
 
     @Autowired
-    private EventManager eventManager;
+    private EventManagementService eventManagementService;
 
     @PostMapping
-    public Event createEvent(@RequestBody Map<String, Object> eventDetails) {
-        return eventManager.createEvent(eventDetails);
-    }
-    
+    public ResponseEntity<Event> createEvent(@RequestBody Map<String, Object> eventDetails) {
+        String title = (String) eventDetails.get("title");
+        String description = (String) eventDetails.get("description");
+        String eventDate = (String) eventDetails.get("eventDate");
+        String location = (String) eventDetails.get("location");
+        Integer organizerId = (Integer) eventDetails.get("organizerId");
 
-    @PutMapping("/{id}")
-    public Event updateEvent(@PathVariable int id, @RequestBody Map<String, Object> updatedDetails) {
-        Event event = eventManager.getEvent(id);
-        if (event == null) {
-            throw new IllegalArgumentException("Event not found");
-        }
-        UpdateEventCommand command = new UpdateEventCommand(event, updatedDetails);
-        eventManager.executeCommand(command);
-        return event;
-    }
+        Event event = eventManagementService.createEvent(
+                title, description, eventDate, location, organizerId);
 
-    
-
-    @PostMapping("/{id}/observers")
-    public String addObserver(@PathVariable int id, @RequestBody String username) {
-        Event event = eventManager.getEvent(id);
-        if (event == null) {
-            throw new IllegalArgumentException("Event not found");
-        }
-        UserObserver observer = new UserObserver(username);
-        eventManager.addUserToEvent(event, observer);
-        return "Observer added successfully";
+        return ResponseEntity.ok(event);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEvent(@PathVariable("id") int id) {
-    Event event = eventManager.getEvent(id);
-    if (event == null) {
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Event> getEvent(@PathVariable("id") UUID id) {
+        Event event = eventManagementService.getEvent(id);
+        if (event == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(event);
     }
-    return ResponseEntity.ok(event);
-}
 
     @GetMapping
-    public ResponseEntity<Map<Integer, Event>> getAllEvents() {
-        return ResponseEntity.ok(eventManager.getAllEvents());
+    public ResponseEntity<List<Event>> getAllEvents() {
+        return ResponseEntity.ok(eventManagementService.getAllEvents());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Event> updateEvent(@PathVariable UUID id, @RequestBody Map<String, Object> eventDetails) {
+        String title = (String) eventDetails.get("title");
+        String description = (String) eventDetails.get("description");
+        String eventDate = (String) eventDetails.get("eventDate");
+        String location = (String) eventDetails.get("location");
+        Integer organizerId = (Integer) eventDetails.get("organizerId");
+
+        Event updatedEvent = eventManagementService.updateEvent(
+                id, title, description, eventDate, location, organizerId);
+
+        if (updatedEvent == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedEvent);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteEvent(@PathVariable("id") int id) {
-        eventManager.deleteEvent(id);
+    public ResponseEntity<String> deleteEvent(@PathVariable("id") UUID id) {
+        Event event = eventManagementService.getEvent(id);
+        if (event == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        eventManagementService.deleteEvent(id);
         return ResponseEntity.ok("Event deleted successfully");
     }
-
 }
-

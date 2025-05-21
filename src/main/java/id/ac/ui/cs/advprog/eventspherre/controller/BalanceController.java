@@ -8,6 +8,8 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ATTENDEE')")
 @RequestMapping("/balance")
 public class BalanceController {
     private final PaymentChainConfig paymentChainConfig;
