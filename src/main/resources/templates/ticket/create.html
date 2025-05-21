@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy Ticket</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        form { max-width: 400px; margin: auto; }
+        label { display: block; margin-top: 1em; }
+        input, select { width: 100%; padding: 0.5em; margin-top: 0.3em; }
+        button { margin-top: 1.5em; padding: 0.5em 1.5em; }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Buy a Ticket</h2>
+
+<form th:action="@{/tickets}" th:object="${ticket}" method="post">
+    <label for="ticketType">Ticket Type:</label>
+    <select th:field="*{ticketType.id}">
+        <option th:each="type : ${ticketTypes}"
+                th:value="${type.id}"
+                th:text="${type.name + ' - $' + type.price}">
+        </option>
+    </select>
+
+    <label for="confirmationCode">Confirmation Code:</label>
+    <input type="text" th:field="*{confirmationCode}" placeholder="Auto or manual" />
+
+    <button type="submit">Purchase</button>
+</form>
+
+<a th:href="@{/tickets}" style="display:block; text-align:center; margin-top:2em;">← Back to My Tickets</a>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy Ticket</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        form { max-width: 400px; margin: auto; }
+        label { display: block; margin-top: 1em; }
+        input, select { width: 100%; padding: 0.5em; margin-top: 0.3em; }
+        button { margin-top: 1.5em; padding: 0.5em 1.5em; }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Buy a Ticket</h2>
+
+<form th:action="@{/tickets}" th:object="${ticket}" method="post">
+    <label for="ticketType">Ticket Type:</label>
+    <select th:field="*{ticketType.id}">
+        <option th:each="type : ${ticketTypes}"
+                th:value="${type.id}"
+                th:text="${type.name + ' - $' + type.price}">
+        </option>
+    </select>
+
+    <label for="confirmationCode">Confirmation Code:</label>
+    <input type="text" th:field="*{confirmationCode}" placeholder="Auto or manual" />
+
+    <button type="submit">Purchase</button>
+</form>
+
+<a th:href="@{/tickets}" style="display:block; text-align:center; margin-top:2em;">← Back to My Tickets</a>
+
+</body>
+</html>

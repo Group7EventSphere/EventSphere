@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Tickets</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        table { width: 80%; margin: auto; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 0.75em; text-align: center; }
+        th { background-color: #eee; }
+        .buy-button {
+            display: block;
+            width: fit-content;
+            margin: 2em auto;
+            padding: 0.5em 1.5em;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Your Tickets</h2>
+
+<a th:href="@{/tickets/create}" class="buy-button">+ Buy New Ticket</a>
+
+<table>
+    <thead>
+    <tr>
+        <th>Ticket Type</th>
+        <th>Price</th>
+        <th>Confirmation Code</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="ticket : ${tickets}">
+        <td th:text="${ticket.ticketType.name}">Type</td>
+        <td th:text="${ticket.ticketType.price}">Price</td>
+        <td th:text="${ticket.confirmationCode}">Code</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
