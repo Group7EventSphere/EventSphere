@@ -154,117 +154,106 @@
 
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function() {
-        // Get the ad ID from Thymeleaf model
+        // Cloudinary config
+        const CLOUDINARY_UPLOAD_PRESET = "adpro-ads";  // ganti sesuai preset Anda
+        const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5";    // ganti sesuai cloud name Anda
+        const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+        // Ambil elemen DOM
         const adId = document.getElementById('ad-id').value;
+        const titleInput = document.getElementById('ads-title');
+        const descInput  = document.getElementById('ads-desc');
+        const fileInput  = document.getElementById('file-input');
+        const previewImg = document.getElementById('image-preview');
+        const loadingOv  = document.getElementById('loading-overlay');
+        const updateBtn  = document.getElementById('update-btn');
 
         if (!adId) {
             alert('No ad ID provided. Redirecting to ads list.');
-            // Redirect to ads list page
-            // window.location.href = '/ads/list';
-            document.getElementById('loading-overlay').classList.add('hidden');
+            loadingOv.classList.add('hidden');
             return;
         }
 
-        console.log("Loading ad with ID:", adId);
-
-        // API endpoint for fetching ad data
-        const apiUrl = `/api/ads/${adId}`;
-
-        // Fetch ad data from API
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+        // Fetch data ad existing
+        fetch(`/api/ads/${adId}`)
+            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(ad => {
+                titleInput.value = ad.title;
+                descInput.value  = ad.description;
+                if (ad.imageUrl) {
+                    previewImg.src = ad.imageUrl;
+                    previewImg.style.display = 'block';
                 }
-                return response.json();
             })
-            .then(adData => {
-                // Fill form fields with data
-                document.getElementById('ads-title').value = adData.title;
-                document.getElementById('ads-desc').value = adData.description;
+            .catch(() => alert('Failed to load ad data.'))
+            .finally(() => loadingOv.classList.add('hidden'));
 
-                // Show image preview if available
-                if (adData.imageUrl) {
-                    const imagePreview = document.getElementById('image-preview');
-                    imagePreview.src = adData.imageUrl;
-                    imagePreview.style.display = 'block';
-                }
-
-                // Hide loading overlay
-                document.getElementById('loading-overlay').classList.add('hidden');
-            })
-            .catch(error => {
-                console.error('Error fetching ad data:', error);
-                alert('Failed to load ad data. Please try again.');
-                document.getElementById('loading-overlay').classList.add('hidden');
-            });
-
-        // Handle file input change
-        document.getElementById('file-input').addEventListener('change', function(e) {
+        // Saat user pilih file: upload ke Cloudinary
+        fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const imagePreview = document.getElementById('image-preview');
-                    imagePreview.src = event.target.result;
-                    imagePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            // tampilkan overlay loading
+            loadingOv.querySelector('div').innerText = 'Uploading image...';
+            loadingOv.classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                const resp = await fetch(CLOUDINARY_UPLOAD_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!resp.ok) throw new Error();
+
+                const data = await resp.json();
+                // set preview dan simpan URL
+                previewImg.src = data.secure_url;
+                previewImg.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                alert('Gagal upload gambar, silakan coba lagi.');
+            } finally {
+                loadingOv.classList.add('hidden');
+                // kembalikan teks overlay
+                loadingOv.querySelector('div').innerText = 'Loading ad data...';
             }
         });
 
-        // Handle update button click
-        document.getElementById('update-btn').addEventListener('click', function(e) {
+        // Handle update click
+        updateBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            const title = titleInput.value.trim();
+            const desc  = descInput.value.trim();
+            const imageUrl = previewImg.src;
 
-            const title = document.getElementById('ads-title').value;
-            const description = document.getElementById('ads-desc').value;
-            const fileInput = document.getElementById('file-input');
-
-            if (!title || !description) {
+            if (!title || !desc) {
                 alert('Please fill in all required fields.');
                 return;
             }
 
-            // Show loading overlay
-            document.getElementById('loading-overlay').classList.remove('hidden');
+            // show loading
+            loadingOv.classList.remove('hidden');
 
-            // Prepare JSON data for submission
-            const jsonData = {
-                title: title,
-                description: description,
-                imageUrl: document.getElementById('image-preview').src // Use current image URL
-            };
-
-            // API endpoint for updating ad
-            const updateUrl = `/api/ads/${adId}`;
-
-            // Send update request
-            fetch(updateUrl, {
+            fetch(`/api/ads/${adId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(jsonData)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description: desc, imageUrl })
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.json();
                 })
-                .then(data => {
+                .then(() => {
                     alert('Ad updated successfully!');
-                    // Redirect to ads list or details page
                     window.location.href = '/ads/list';
                 })
-                .catch(error => {
-                    console.error('Error updating ad:', error);
+                .catch(() => {
                     alert('Failed to update ad. Please try again.');
                 })
-                .finally(() => {
-                    document.getElementById('loading-overlay').classList.add('hidden');
-                });
+                .finally(() => loadingOv.classList.add('hidden'));
         });
     });
 </script>
