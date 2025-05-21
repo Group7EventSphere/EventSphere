@@ -1,26 +1,42 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
+import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
+import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@RestController
+@Controller
 @RequestMapping("/tickets")
 @RequiredArgsConstructor
 public class TicketController {
 
     private final TicketService ticketService;
+    private final TicketTypeService ticketTypeService;
 
+    // Show form to buy a ticket
+    @GetMapping("/create")
+    public String showTicketForm(Model model) {
+        model.addAttribute("ticket", new Ticket());
+        model.addAttribute("ticketTypes", ticketTypeService.findAll());
+        return "ticket/create";
+    }
+
+    // Handle form submission
     @PostMapping
-    public ResponseEntity<Ticket> createTicket(@RequestBody Ticket ticket) {
-        Ticket created = ticketService.createTicket(ticket);
-        return ResponseEntity.ok(created);
+    public String createTicket(@ModelAttribute Ticket ticket,
+                               @SessionAttribute("loggedInUser") User user) {
+        ticket.setAttendee(user);
+        ticketService.createTicket(ticket);
+        return "redirect:/tickets";
     }
 
     @GetMapping("/{id}")
@@ -34,6 +50,15 @@ public class TicketController {
     public ResponseEntity<List<Ticket>> getTicketsByAttendee(@PathVariable Integer attendeeId) {
         List<Ticket> tickets = ticketService.getTicketsByAttendeeId(attendeeId);
         return ResponseEntity.ok(tickets);
+    }
+
+    // List tickets for the logged-in user
+    @GetMapping
+    public String listUserTickets(Model model,
+                                  @SessionAttribute("loggedInUser") User user) {
+        List<Ticket> myTickets = ticketService.getTicketsByAttendeeId(user.getId());
+        model.addAttribute("tickets", myTickets);
+        return "ticket/list";
     }
 
     @DeleteMapping("/{id}")
