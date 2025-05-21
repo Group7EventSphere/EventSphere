@@ -3,58 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <title>Ticket Types</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 2em;
-        }
-        table {
-            width: 80%;
-            border-collapse: collapse;
-            margin: auto;
-        }
-        th, td {
-            border: 1px solid #999;
-            padding: 0.75em;
-            text-align: center;
-        }
-        th {
-            background-color: #eee;
-        }
-        .create-button {
-            display: block;
-            width: fit-content;
-            margin: 2em auto;
-            padding: 0.5em 1.5em;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/ticketType-list.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body>
+<body class="ticketType-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<h2 style="text-align: center;">Available Ticket Types</h2>
+<div class="ticketType-container">
+    <aside class="ticketType-sidebar">
+        <a th:href="@{/ticket-types}" class="ticketType-nav-item">See All Tickets</a>
+        <a th:href="@{/ticket-types/create}" class="ticketType-nav-item">Create Ticket</a>
+    </aside>
 
-<a th:href="@{/ticket-types/create}" class="create-button">+ Create New Ticket Type</a>
+    <main class="ticketType-main">
+        <h2 class="ticketType-title">Available Tickets</h2>
+        <table class="ticketType-table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Quota</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="ticketType : ${ticketTypes}">
+                <td th:text="${ticketType.name}">VIP</td>
+                <td th:text="${ticketType.price}">100.00</td>
+                <td th:text="${ticketType.quota}">1</td>
+                <td>
+                    <div class="action-buttons">
+                        <a th:href="@{/ticket-types/edit/{id}(id=${ticketType.id})}" class="btn-action btn-edit">Edit</a>
+                        <form th:action="@{/ticket-types/delete/{id}(id=${ticketType.id})}" method="post" style="display:inline;">
+                            <input type="hidden" name="_method" value="delete"/>
+                            <button type="submit" class="btn-action btn-delete">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
 
-<table>
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Quota</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="ticketType : ${ticketTypes}">
-        <td th:text="${ticketType.name}">Name</td>
-        <td th:text="${ticketType.price}">Price</td>
-        <td th:text="${ticketType.quota}">Quota</td>
-    </tr>
-    </tbody>
-</table>
+<!-- MODAL -->
+<div class="ticketType-modal-overlay" id="messageModal"
+     th:if="${errorMessage != null} or ${successMessage != null}">
+    <div class="ticketType-modal-content">
+        <p th:if="${successMessage}" th:text="${successMessage}" class="ticketType-success-text"></p>
+        <p th:if="${errorMessage}" th:text="${errorMessage}" class="ticketType-error-text"></p>
+        <button onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('messageModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    });
+
+    function closeModal() {
+        const modal = document.getElementById('messageModal');
+        if (modal) modal.style.display = 'none';
+    }
+</script>
 
 </body>
 </html>

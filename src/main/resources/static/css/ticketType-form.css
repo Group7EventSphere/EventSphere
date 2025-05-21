@@ -1,6 +1,7 @@
 .ticketType-container {
     max-width: 700px;
     margin: 3em auto;
+    width: 100%;
     font-family: sans-serif;
 }
 

@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class TicketTypeServiceImpl implements TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
+    private final TicketRepository ticketRepository;
 
     @Override
     public TicketType create(String name, BigDecimal price, int quota, User user) {
@@ -45,6 +47,13 @@ public class TicketTypeServiceImpl implements TicketTypeService {
         if (requester.getRole() != User.Role.ADMIN) {
             throw new IllegalArgumentException("Only admins can delete ticket types");
         }
+
+        // Check if any tickets reference this ticket type
+        if (ticketRepository.existsByTicketTypeId(id)) {
+            throw new IllegalStateException("Cannot delete ticket type with existing tickets.");
+        }
+
+        // Safe to delete
         ticketTypeRepository.deleteById(id);
     }
 

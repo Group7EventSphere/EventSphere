@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Create Ticket Type</title>
+    <title>Edit Ticket Type</title>
     <link rel="stylesheet" th:href="@{/css/ticketType-form.css}">
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
@@ -14,13 +14,13 @@
         <a href="javascript:history.back()" class="ticketType-backButton">← Back</a>
     </div>
 
-    <h2 class="ticketType-title">Create New Ticket Type</h2>
+    <h2 class="ticketType-title">Edit Ticket Type</h2>
     <hr class="ticketType-divider"/>
 
-    <form th:action="@{/ticket-types/create}" th:object="${ticketType}" method="post" class="ticketType-form">
+    <form th:action="@{/ticket-types/edit/{id}(id=${ticketType.id})}" th:object="${ticketType}" method="post" class="ticketType-form">
         <div class="ticketType-group">
             <label for="event">Event:</label>
-            <input type="text" id="event" name="event">
+            <input type="text" id="event" name="event" disabled placeholder="(not editable)">
         </div>
 
         <div class="ticketType-group">
@@ -39,7 +39,7 @@
         </div>
 
         <div class="ticketType-buttonContainer">
-            <button type="submit" class="ticketType-button">Create</button>
+            <button type="submit" class="ticketType-button">Update</button>
         </div>
     </form>
 </div>

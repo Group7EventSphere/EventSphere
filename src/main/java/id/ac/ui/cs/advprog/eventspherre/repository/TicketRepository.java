@@ -13,4 +13,5 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     List<Ticket> findAllByUserId(Integer userId);
     Optional<Ticket> findByConfirmationCode(String confirmationCode);
     long countByTicketTypeId(UUID ticketTypeId);
+    boolean existsByTicketTypeId(UUID ticketTypeId);
 }
