@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="html(title, content, extraStyles, extraScripts)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <th:block th:replace="${extraStyles} ?: _"></th:block>
+</head>
+<body>
+    <!-- Include the navbar fragment only for authenticated users -->
+    <div sec:authorize="isAuthenticated()" th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content" th:classappend="${#authorization.expression('isAuthenticated()')} ? 'with-navbar' : ''">
+        <div th:replace="${content}">
+            <!-- Content goes here -->
+        </div>
+    </div>
+    
+    <th:block th:replace="${extraScripts} ?: _"></th:block>
+</body>
+</html>
