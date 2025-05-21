@@ -29,6 +29,9 @@ public class Ticket {
     @Column(nullable = false, unique = true)
     private String confirmationCode;
 
+    @Column(nullable = false)
+    private String status = "pending";
+
     public Ticket() {}
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
