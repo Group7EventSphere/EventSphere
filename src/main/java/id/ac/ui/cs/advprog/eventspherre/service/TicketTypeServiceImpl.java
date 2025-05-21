@@ -6,6 +6,8 @@ import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +16,12 @@ import java.util.UUID;
 public class TicketTypeServiceImpl implements TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
+
+    @Override
+    public TicketType create(String name, BigDecimal price, int quota, User user) {
+        TicketType ticketType = TicketType.create(name, price, quota, user);
+        return ticketTypeRepository.save(ticketType);
+    }
 
     @Override
     public Optional<TicketType> getTicketTypeById(UUID id) {
@@ -38,5 +46,10 @@ public class TicketTypeServiceImpl implements TicketTypeService {
             throw new IllegalArgumentException("Only admins can delete ticket types");
         }
         ticketTypeRepository.deleteById(id);
+    }
+
+    @Override
+    public List<TicketType> findAll() {
+        return ticketTypeRepository.findAll();
     }
 }
