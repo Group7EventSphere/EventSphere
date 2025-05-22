@@ -38,6 +38,20 @@ class ReviewServiceTest {
     }
 
     @Test
+    void createDuplicate_throwsIllegalArgumentException() {
+        Review dup = new Review(1L, 2L, "Dup", 4);
+        when(repo.findByAttendeeIdAndEventId(2L, 1L))
+                .thenReturn(Optional.of(new Review(1L, 2L, "Old", 5)));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> svc.create(dup)
+        );
+        assertTrue(ex.getMessage().contains("already submitted"));
+        verify(repo, never()).save(any());
+    }
+
+    @Test
     void createInvalidThrows() {
         Review bad = new Review(1L, 2L, "", 8);
         assertThrows(IllegalArgumentException.class,
@@ -79,6 +93,19 @@ class ReviewServiceTest {
     }
 
     @Test
+    void updateInvalid_throwsIllegalArgument() {
+        Review existing = new Review(1L, 2L, "Okay", 3);
+        existing.setId(11L);
+        // invalid new data: rating out of bounds
+        Review bad = new Review(1L, 2L, "Bad", 10);
+
+        when(repo.findById(11L)).thenReturn(Optional.of(existing));
+        assertThrows(IllegalArgumentException.class,
+                () -> svc.update(11L, bad));
+        verify(repo, never()).save(any());
+    }
+
+    @Test
     void deleteExisting() {
         when(repo.existsById(7L)).thenReturn(true);
         assertTrue(svc.delete(7L));
@@ -92,3 +119,4 @@ class ReviewServiceTest {
         verify(repo, never()).deleteById(any());
     }
 }
+
