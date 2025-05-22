@@ -72,9 +72,9 @@
 
 <h2>Buy a Ticket</h2>
 
-<form th:action="@{/tickets}" th:object="${ticket}" method="post">
+<<form th:action="@{/tickets/select}" method="post">
     <label for="ticketType">Ticket Type:</label>
-    <select th:field="*{ticketType.id}">
+    <select name="ticketTypeId" required>
         <option th:each="type : ${ticketTypes}"
                 th:value="${type.id}"
                 th:text="${type.name + ' - IDR ' + type.price}">

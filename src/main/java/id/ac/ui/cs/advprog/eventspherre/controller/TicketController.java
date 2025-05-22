@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
+import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
@@ -50,30 +51,47 @@ public class TicketController {
     @GetMapping("/create")
     public String showTicketForm(@RequestParam("ticketTypeId") UUID ticketTypeId,
                                  @RequestParam("quota") int quota,
-                                 Model model,
-                                 Principal principal) {
+                                 Model model, Principal principal) {
         User user = userService.getUserByEmail(principal.getName());
 
+        // Get the selected ticket type
+        TicketType ticketType = ticketTypeService.getTicketTypeById(ticketTypeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid ticket type ID"));
+
+        // Prepare ticket
         Ticket ticket = new Ticket();
+        ticket.setTicketType(ticketType);
         ticket.setAttendee(user);
-        ticket.setTicketType(ticketTypeService.getTicketTypeById(ticketTypeId).orElseThrow());
 
         model.addAttribute("ticket", ticket);
         model.addAttribute("quota", quota);
+        model.addAttribute("ticketType", ticketType);
         return "ticket/create";
     }
 
-    @PostMapping
-    public String createTicket(@ModelAttribute Ticket ticket,
+    @PostMapping("/create")
+    public String createTicket(@RequestParam("ticketTypeId") UUID ticketTypeId,
+                               @RequestParam("quota") int quota,
                                Principal principal,
-                               @RequestParam int quota) {
-        User attendee = userService.getUserByEmail(principal.getName());
-        ticket.setAttendee(attendee);
+                               RedirectAttributes redirectAttributes) {
 
+        User attendee = userService.getUserByEmail(principal.getName());
+
+        // Get TicketType from service (re-hydration)
+        TicketType ticketType = ticketTypeService.getTicketTypeById(ticketTypeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid ticket type ID"));
+
+        // Build the ticket
+        Ticket ticket = new Ticket();
+        ticket.setAttendee(attendee);
+        ticket.setTicketType(ticketType);
+
+        // Create multiple tickets
         List<Ticket> tickets = ticketService.createTicket(ticket, quota);
+        redirectAttributes.addFlashAttribute("message", "Successfully purchased " + quota + " ticket(s).");
+
         return "redirect:/tickets";
     }
-
 
     // Show detail view
     @GetMapping("/{id}")

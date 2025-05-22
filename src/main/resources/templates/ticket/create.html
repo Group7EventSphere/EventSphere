@@ -10,8 +10,9 @@
 <div class="ticket-container">
     <div class="ticket-header">Do you want to Confirm your Order?</div>
 
-    <form th:action="@{/tickets}" th:object="${ticket}" method="post">
+    <form th:action="@{/tickets/create}" th:object="${ticket}" method="post">
         <!-- Pass quota as hidden field -->
+        <input type="hidden" name="ticketTypeId" th:value="${ticketType.id}" />
         <input type="hidden" name="quota" th:value="${quota}" />
 
         <div class="ticket-card">

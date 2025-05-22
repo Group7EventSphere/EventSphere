@@ -86,7 +86,7 @@ class TicketControllerTest {
     }
 
     @Test
-    @DisplayName("POST /tickets should create ticket and redirect")
+    @DisplayName("POST /tickets/create should create ticket and redirect")
     void createTicket_shouldRedirectAfterCreation() throws Exception {
         User user = mockUser();
         UUID ticketTypeId = UUID.randomUUID();
@@ -94,13 +94,18 @@ class TicketControllerTest {
         ticket.setId(UUID.randomUUID());
         ticket.setConfirmationCode("TKT-ABC123");
 
+        // Mock user and ticketType
         when(userService.getUserByEmail("test@example.com")).thenReturn(user);
-        when(ticketService.createTicket(any(Ticket.class), eq(2)))
-                .thenReturn(List.of(ticket)); // Mock list of one or more tickets
+        when(ticketTypeService.getTicketTypeById(ticketTypeId))
+                .thenReturn(Optional.of(new TicketType("VIP", new BigDecimal("500000"), 10)));
 
-        mockMvc.perform(post("/tickets")
+        // Mock ticket creation result
+        when(ticketService.createTicket(any(Ticket.class), eq(2)))
+                .thenReturn(List.of(ticket));
+
+        mockMvc.perform(post("/tickets/create")
                         .param("confirmationCode", "TKT-ABC123")
-                        .param("ticketType.id", ticketTypeId.toString())
+                        .param("ticketTypeId", ticketTypeId.toString())
                         .param("quota", "2")
                         .with(user("test@example.com"))
                         .with(csrf()))
