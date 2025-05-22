@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,5 +40,30 @@ class ReviewRepositoryTest {
 
         Optional<Review> found = repo.findById(id);
         assertFalse(found.isPresent(), "Review should be gone after delete");
+    }
+
+    @Test
+    void findByEventId_returnsAllMatchingReviews() {
+        Review a = repo.save(new Review(100L, 10L, "First", 5));
+        Review b = repo.save(new Review(100L, 11L, "Second", 4));
+        repo.save(new Review(101L, 10L, "Other event", 3));
+
+        List<Review> list = repo.findByEventId(100L);
+
+        assertEquals(2, list.size(), "Should return exactly 2 reviews for event 100");
+        assertTrue(list.stream().anyMatch(r -> r.getId().equals(a.getId())));
+        assertTrue(list.stream().anyMatch(r -> r.getId().equals(b.getId())));
+    }
+
+    @Test
+    void findByAttendeeIdAndEventId_returnsMatchingReview() {
+        Review a = repo.save(new Review(200L, 20L, "Mine", 2));
+        repo.save(new Review(200L, 21L, "Not mine", 3));
+
+        Optional<Review> opt = repo.findByAttendeeIdAndEventId(20L, 200L);
+
+        assertTrue(opt.isPresent(), "Should find the review by attendee 20 on event 200");
+        assertEquals(a.getId(), opt.get().getId());
+        assertEquals("Mine", opt.get().getReviewText());
     }
 }
