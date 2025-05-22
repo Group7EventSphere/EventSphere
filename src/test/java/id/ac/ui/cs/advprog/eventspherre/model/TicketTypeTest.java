@@ -20,10 +20,13 @@ class TicketTypeTest {
     }
 
     @Test
-    void testGetIdIsNotNull() {
+    void testTicketTypeConstructorAndFields() {
         TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
-        assertNotNull(ticketType.getId());
-        assertInstanceOf(UUID.class, ticketType.getId());
+
+        assertEquals("VIP", ticketType.getName());
+        assertEquals(new BigDecimal("100.00"), ticketType.getPrice());
+        assertEquals(10, ticketType.getQuota());
+        assertNull(ticketType.getId()); // Because it hasn’t been persisted
     }
 
     @Test
