@@ -5,13 +5,15 @@ import id.ac.ui.cs.advprog.eventspherre.repository.ReviewRepository;
 import id.ac.ui.cs.advprog.eventspherre.validation.ReviewValidator;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
-    private static final String INVALID_MSG = "Invalid review: Review text cannot be empty and rating must be between 1 and 5.";
+    private static final String INVALID_MSG =
+            "Invalid review: Review text cannot be empty and rating must be between 1 and 5.";
     private static final String NOT_FOUND_MSG = "Review not found";
 
     private final ReviewRepository repo;
@@ -27,6 +29,13 @@ public class ReviewServiceImpl implements ReviewService {
         if (!validator.isValid(review)) {
             throw new IllegalArgumentException(INVALID_MSG);
         }
+
+        Optional<Review> existing =
+                repo.findByAttendeeIdAndEventId(review.getAttendeeId(), review.getEventId());
+        if (existing.isPresent()) {
+            throw new IllegalStateException("You have already submitted a review for this event.");
+        }
+
         return repo.save(review);
     }
 
@@ -37,10 +46,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Review update(Long id, Review newData) {
-        Review existing = repo.findById(id).orElseThrow(() -> new NoSuchElementException(NOT_FOUND_MSG));
+        Review existing = repo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException(NOT_FOUND_MSG));
+
         if (!validator.isValid(newData)) {
             throw new IllegalArgumentException(INVALID_MSG);
         }
+
         existing.setReviewText(newData.getReviewText());
         existing.setRating(newData.getRating());
         return repo.save(existing);
@@ -55,5 +67,9 @@ public class ReviewServiceImpl implements ReviewService {
         return false;
     }
 
+    @Override
+    public List<Review> findByEventId(Long eventId) {
+        return repo.findByEventId(eventId);
+    }
 }
 
