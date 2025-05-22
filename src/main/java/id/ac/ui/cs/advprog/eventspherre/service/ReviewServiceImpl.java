@@ -5,8 +5,10 @@ import id.ac.ui.cs.advprog.eventspherre.repository.ReviewRepository;
 import id.ac.ui.cs.advprog.eventspherre.validation.ReviewValidator;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -55,5 +57,10 @@ public class ReviewServiceImpl implements ReviewService {
         return false;
     }
 
-}
+    @Override
+    public List<Review> getReviewsByEventId(UUID eventId) {
+        // Convert UUID to String to match with our eventUuid field in the database
+        return repo.findByEventUuid(eventId.toString());
+    }
 
+}

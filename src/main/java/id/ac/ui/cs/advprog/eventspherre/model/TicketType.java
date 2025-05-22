@@ -25,6 +25,9 @@ public class TicketType {
     @Column(nullable = false)
     private int quota;
 
+    @Column(name = "event_uuid")
+    private String eventUuid;
+
     // Constructor
     public TicketType() {}
 
@@ -51,4 +54,9 @@ public class TicketType {
         return new TicketType(name, price, quota);
     }
 
+    public static TicketType create(String name, BigDecimal price, int quota, User user, UUID eventId) {
+        TicketType ticketType = create(name, price, quota, user);
+        ticketType.setEventUuid(eventId.toString());
+        return ticketType;
+    }
 }

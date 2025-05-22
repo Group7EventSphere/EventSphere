@@ -14,4 +14,7 @@ public interface TicketTypeService {
     TicketType updateTicketType(UUID id, TicketType updated, User editor);
     void deleteTicketType(UUID id, User requester);
     List<TicketType> findAll();
+
+    List<TicketType> findByEventId(UUID eventId);
+    void associateWithEvent(UUID ticketTypeId, UUID eventId);
 }
