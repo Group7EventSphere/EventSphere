@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TicketService {
-    Ticket createTicket(Ticket ticket);
+    List<Ticket> createTicket(Ticket ticket, int quantity);
     Optional<Ticket> getTicketById(UUID id);
     List<Ticket> getTicketsByAttendeeId(Integer attendeeId);
     void deleteTicket(UUID id);

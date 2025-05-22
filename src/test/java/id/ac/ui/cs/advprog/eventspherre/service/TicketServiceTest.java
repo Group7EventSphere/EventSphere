@@ -58,20 +58,33 @@ public class TicketServiceTest {
     @Test
     @DisplayName("Should create ticket and decrement quota")
     void createTicket_shouldSaveTicketAndDecreaseQuota() {
+        // Given
         TicketType type = new TicketType("Standard", new BigDecimal("50.00"), 10);
+        UUID typeId = UUID.randomUUID();
+        type.setId(typeId);
+
         User user = new User();
         user.setId(5);
 
-        Ticket ticket = new Ticket(type, user, "TKT-ABC123");
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(type);
+        ticket.setAttendee(user);
 
-        when(ticketTypeRepository.findById(type.getId())).thenReturn(Optional.of(type));
-        when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
+        // Mocking
+        when(ticketTypeRepository.findById(typeId)).thenReturn(Optional.of(type));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
+            Ticket t = invocation.getArgument(0);
+            t.setId(UUID.randomUUID());
+            return t;
+        });
 
-        Ticket saved = ticketService.createTicket(ticket);
+        // When
+        List<Ticket> savedTickets = ticketService.createTicket(ticket, 1);
 
-        assertThat(saved).isEqualTo(ticket);
-        assertEquals(9, type.getQuota());
-        verify(ticketRepository).save(ticket);
+        // Then
+        assertEquals(1, savedTickets.size());
+        assertEquals(9, type.getQuota()); // 10 - 1
+        verify(ticketRepository, times(1)).save(any(Ticket.class));
     }
 
     @Test
@@ -87,7 +100,7 @@ public class TicketServiceTest {
 
         when(ticketTypeRepository.findById(ticketType.getId())).thenReturn(Optional.of(ticketType));
 
-        assertThrows(IllegalStateException.class, () -> ticketService.createTicket(ticket));
+        assertThrows(IllegalStateException.class, () -> ticketService.createTicket(ticket, 1));
         verify(ticketRepository, never()).save(any());
     }
 
@@ -102,7 +115,7 @@ public class TicketServiceTest {
 
         when(ticketTypeRepository.findById(ticketType.getId())).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> ticketService.createTicket(ticket));
+        assertThrows(IllegalArgumentException.class, () -> ticketService.createTicket(ticket, 1));
     }
 
     @Test
@@ -165,5 +178,43 @@ public class TicketServiceTest {
         long count = ticketService.countTicketsByType(type.getId());
 
         assertEquals(5L, count);
+    }
+
+    @Test
+    @DisplayName("Should create multiple tickets and reduce quota")
+    void createMultipleTickets_shouldSucceed() {
+        // Setup ticket type with initial quota
+        TicketType type = new TicketType();
+        type.setId(UUID.randomUUID());
+        type.setName("Standard");
+        type.setPrice(new BigDecimal("100000"));
+        type.setQuota(10); // starting quota
+
+        // Setup mock user
+        User mockUser = new User();
+        mockUser.setId(1);
+        mockUser.setName("Test User");
+        mockUser.setEmail("test@example.com");
+
+        // Prepare ticket input
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(type);
+        ticket.setAttendee(mockUser);
+
+        // Mock repo behavior
+        when(ticketTypeRepository.findById(type.getId())).thenReturn(Optional.of(type));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
+            Ticket t = invocation.getArgument(0);
+            t.setId(UUID.randomUUID());
+            return t;
+        });
+
+        // Execute
+        List<Ticket> created = ticketService.createTicket(ticket, 3);
+
+        // Assertions
+        assertEquals(3, created.size());
+        verify(ticketRepository, times(3)).save(any(Ticket.class));
+        assertEquals(7, type.getQuota()); // 10 - 3
     }
 }

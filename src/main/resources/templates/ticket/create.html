@@ -2,14 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Buy Ticket</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        form { max-width: 400px; margin: auto; }
-        label { display: block; margin-top: 1em; }
-        input, select { width: 100%; padding: 0.5em; margin-top: 0.3em; }
-        button { margin-top: 1.5em; padding: 0.5em 1.5em; }
-    </style>
+    <title>Purchase Ticket</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/ticket.css}"> <!-- new ticket-specific styles -->
 </head>
 <body>
 
@@ -60,8 +55,8 @@
         </option>
     </select>
 
-    <label for="confirmationCode">Confirmation Code:</label>
-    <input type="text" th:field="*{confirmationCode}" placeholder="Auto or manual" />
+    <label for="quantity">Quantity:</label>
+    <input type="number" name="quantity" min="1" value="1" required />
 
     <button type="submit">Purchase</button>
 </form>

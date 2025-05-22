@@ -40,11 +40,14 @@ public class TicketController {
 
     // Handle form submission
     @PostMapping
-    public String createTicket(@ModelAttribute Ticket ticket, Principal principal) {
-        User user = userService.getUserByEmail(principal.getName());
-        ticket.setAttendee(user);
-        ticketService.createTicket(ticket);
-        return "redirect:/tickets";
+    public String createTicket(@ModelAttribute Ticket ticket, Principal principal, @RequestParam int quota) {
+        User attendee = userService.getUserByEmail(principal.getName());
+        ticket.setAttendee(attendee);
+
+        List<Ticket> tickets = ticketService.createTicket(ticket, quota);
+
+        // Redirect to confirmation of first ticket (or ticket list, your choice)
+        return "redirect:/tickets/confirm/" + tickets.get(0).getId();
     }
 
     // Show detail view

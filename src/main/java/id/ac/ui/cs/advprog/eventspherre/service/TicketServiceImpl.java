@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,41 +21,38 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final TicketTypeRepository ticketTypeRepository;
 
-
     @Override
-    public Ticket createTicket(Ticket ticket) {
-        // Validate ticketType
+    public List<Ticket> createTicket(Ticket ticket, int quota) {
         TicketType ticketType = ticket.getTicketType();
 
-        // Fetch latest from DB to prevent stale data
         TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Ticket type not found"));
 
-        if (existingType.getQuota() <= 0) {
-            throw new IllegalStateException("No tickets left for this type");
+        if (existingType.getQuota() < quota) {
+            throw new IllegalStateException("Not enough tickets left");
         }
 
-        // Decrement quota
-        existingType.setQuota(existingType.getQuota() - 1);
+        existingType.setQuota(existingType.getQuota() - quota);
         ticketTypeRepository.save(existingType);
 
-        // Extract user info from ticket
         User attendee = ticket.getAttendee();
         if (attendee == null || attendee.getId() == null || attendee.getId() <= 0) {
             throw new IllegalArgumentException("Attendee must be specified with a valid user ID");
         }
 
-        // Set user ID from the attendee
-        ticket.setUserId(attendee.getId());
-        ticket.setDate(LocalDate.now());
+        List<Ticket> tickets = new ArrayList<>();
 
-        // Generate confirmation code if not already set
-        if (ticket.getConfirmationCode() == null || ticket.getConfirmationCode().isEmpty()) {
-            String confirmationCode = "TKT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            ticket.setConfirmationCode(confirmationCode);
+        for (int i = 0; i < quota; i++) {
+            Ticket t = new Ticket();
+            t.setTicketType(existingType);
+            t.setAttendee(attendee);
+            t.setUserId(attendee.getId());
+            t.setDate(LocalDate.now());
+            t.setConfirmationCode("TKT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            tickets.add(ticketRepository.save(t));
         }
 
-        return ticketRepository.save(ticket);
+        return tickets;
     }
 
     @Override
