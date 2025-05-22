@@ -105,7 +105,7 @@ class TicketControllerTest {
                         .with(user("test@example.com"))
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/tickets/confirm/" + ticket.getId()));
+                .andExpect(redirectedUrl("/tickets"));
 
         verify(ticketService).createTicket(any(Ticket.class), eq(2));
     }

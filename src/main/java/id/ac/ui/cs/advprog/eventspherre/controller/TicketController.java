@@ -47,7 +47,7 @@ public class TicketController {
         List<Ticket> tickets = ticketService.createTicket(ticket, quota);
 
         // Redirect to confirmation of first ticket (or ticket list, your choice)
-        return "redirect:/tickets/confirm/" + tickets.get(0).getId();
+        return "redirect:/tickets";
     }
 
     // Show detail view

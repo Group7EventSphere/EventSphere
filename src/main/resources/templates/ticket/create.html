@@ -2,66 +2,92 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Purchase Ticket</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-    <link rel="stylesheet" th:href="@{/css/ticket.css}"> <!-- new ticket-specific styles -->
-</head>
-<body>
-
-<h2 style="text-align:center;">Buy a Ticket</h2>
-
-<form th:action="@{/tickets}" th:object="${ticket}" method="post">
-    <label for="ticketType">Ticket Type:</label>
-    <select th:field="*{ticketType.id}">
-        <option th:each="type : ${ticketTypes}"
-                th:value="${type.id}"
-                th:text="${type.name + ' - $' + type.price}">
-        </option>
-    </select>
-
-    <label for="confirmationCode">Confirmation Code:</label>
-    <input type="text" th:field="*{confirmationCode}" placeholder="Auto or manual" />
-
-    <button type="submit">Purchase</button>
-</form>
-
-<a th:href="@{/tickets}" style="display:block; text-align:center; margin-top:2em;">← Back to My Tickets</a>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy Ticket</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; }
-        form { max-width: 400px; margin: auto; }
-        label { display: block; margin-top: 1em; }
-        input, select { width: 100%; padding: 0.5em; margin-top: 0.3em; }
-        button { margin-top: 1.5em; padding: 0.5em 1.5em; }
+        body {
+            font-family: sans-serif;
+            margin: 2em;
+            background-color: #f9fafb;
+        }
+
+        form {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.3em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 1.5em;
+            width: 100%;
+            padding: 0.75em;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4338ca;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 2em;
+            color: #4b5563;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-<h2 style="text-align:center;">Buy a Ticket</h2>
+<h2>Buy a Ticket</h2>
 
 <form th:action="@{/tickets}" th:object="${ticket}" method="post">
     <label for="ticketType">Ticket Type:</label>
     <select th:field="*{ticketType.id}">
         <option th:each="type : ${ticketTypes}"
                 th:value="${type.id}"
-                th:text="${type.name + ' - $' + type.price}">
+                th:text="${type.name + ' - IDR ' + type.price}">
         </option>
     </select>
 
-    <label for="quantity">Quantity:</label>
-    <input type="number" name="quantity" min="1" value="1" required />
+    <label for="quota">Quantity:</label>
+    <input type="number" name="quota" min="1" value="1" required />
 
     <button type="submit">Purchase</button>
 </form>
 
-<a th:href="@{/tickets}" style="display:block; text-align:center; margin-top:2em;">← Back to My Tickets</a>
+<a th:href="@{/tickets}" class="back-link">← Back to My Tickets</a>
 
 </body>
 </html>
