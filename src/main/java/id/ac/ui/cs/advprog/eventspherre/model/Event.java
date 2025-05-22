@@ -15,8 +15,8 @@ import java.util.UUID;
 @Table(name = "events")
 public class Event {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @Column(nullable = false)
     private String title;
@@ -43,8 +43,11 @@ public class Event {
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> details;
 
-    public Event(UUID id, Map<String, Object> details) {
-        this.id = id;
+    @Column(name = "uuid_key", unique = true)
+    private UUID uuidKey;
+
+    public Event(UUID uuidKey, Map<String, Object> details) {
+        this.uuidKey = uuidKey;
         this.details = details;
 
         // Extract common fields from details
@@ -68,4 +71,10 @@ public class Event {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+
+    // Add this getter method to support using UUID as external identifier
+    public UUID getId() {
+        return this.uuidKey;
+    }
 }
+
