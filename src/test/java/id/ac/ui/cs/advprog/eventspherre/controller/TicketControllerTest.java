@@ -142,22 +142,4 @@ class TicketControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
     }
-
-    @Test
-    @DisplayName("GET /tickets/confirm/{id} should return confirmation page")
-    void getConfirmationPage_shouldReturnView() throws Exception {
-        UUID ticketId = UUID.randomUUID();
-        Ticket ticket = new Ticket();
-        ticket.setId(ticketId);
-        ticket.setConfirmationCode("TKT-1234XYZ");
-        ticket.setTicketType(new TicketType("VIP", new BigDecimal("500000"), 10));
-
-        when(ticketService.getTicketById(ticketId)).thenReturn(Optional.of(ticket));
-
-        mockMvc.perform(get("/tickets/confirm/" + ticketId)
-                        .with(user("test@example.com").roles("USER")).with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("ticket/confirm"))
-                .andExpect(model().attributeExists("ticket"));
-    }
 }

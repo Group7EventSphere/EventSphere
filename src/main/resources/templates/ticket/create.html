@@ -2,92 +2,69 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy Ticket</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 2em;
-            background-color: #f9fafb;
-        }
-
-        form {
-            max-width: 400px;
-            margin: auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-top: 1rem;
-            font-weight: bold;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 0.5em;
-            margin-top: 0.3em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            margin-top: 1.5em;
-            width: 100%;
-            padding: 0.75em;
-            background-color: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #4338ca;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 2em;
-            color: #4b5563;
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <title>Confirm Your Order</title>
+    <link rel="stylesheet" th:href="@{/css/ticket-create.css}" />
 </head>
 <body>
 
-<h2>Buy a Ticket</h2>
+<div class="ticket-container">
+    <div class="ticket-header">Do you want to Confirm your Order?</div>
 
-<form th:action="@{/tickets}" th:object="${ticket}" method="post">
-    <label for="ticketType">Ticket Type:</label>
-    <select th:field="*{ticketType.id}">
-        <option th:each="type : ${ticketTypes}"
-                th:value="${type.id}"
-                th:text="${type.name + ' - IDR ' + type.price}">
-        </option>
-    </select>
+    <form th:action="@{/tickets}" th:object="${ticket}" method="post">
+        <!-- Pass quota as hidden field -->
+        <input type="hidden" name="quota" th:value="${quota}" />
 
-    <label for="quota">Quantity:</label>
-    <input type="number" name="quota" min="1" value="1" required />
+        <div class="ticket-card">
+            <div class="ticket-event-picture"># Event Picture</div>
 
-    <button type="submit">Purchase</button>
-</form>
+            <div class="ticket-event-details">
+                <h3 th:text="${ticket.ticketType != null ? ticket.ticketType.name : 'Unknown'}">Event Name</h3>
+                <p><strong th:text="${ticket.ticketType != null ? ticket.ticketType.name : 'Regular'}">Regular A</strong></p>
+                <p th:text="${quota} + ' Ticket(s) | ' + quota + ' Pax'">1 Ticket | 1 Pax</p>
 
-<a th:href="@{/tickets}" class="back-link">← Back to My Tickets</a>
+                <p><strong>Date</strong><br/>Event Date</p>
+
+                <p><span class="ticket-details-icon">📭</span> Refund not allowed</p>
+                <p><span class="ticket-details-icon">⚡</span> Instant Confirmation</p>
+                <p><span class="ticket-details-icon">💺</span> Seat selection available<br/>Select the seat before making a payment.</p>
+                <p><span class="ticket-details-icon">⏳</span> Valid on the selected date</p>
+            </div>
+        </div>
+
+        <div class="ticket-footer">
+            <span>Total Payment</span>
+            <span id="total-price"
+                  th:attr="data-ticket-price=${ticket.ticketType != null ? ticket.ticketType.price : 0}"
+                  th:text="'IDR ' + (${ticket.ticketType != null ? ticket.ticketType.price : 0} * ${quota})">
+                IDR 0
+            </span>
+        </div>
+
+        <div class="ticket-footer">
+            <button type="submit">Buy</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const quotaInput = document.querySelector('input[name="quota"]');
+        const priceElement = document.querySelector('[data-ticket-price]');
+        const totalDisplay = document.querySelector('#total-price');
+
+        function updateTotal() {
+            const quota = parseInt(quotaInput.value) || 0;
+            const price = parseFloat(priceElement.dataset.ticketPrice) || 0;
+            const total = quota * price;
+            totalDisplay.textContent = "IDR " + total.toLocaleString();
+        }
+
+        if (quotaInput && priceElement && totalDisplay) {
+            updateTotal();
+            quotaInput.addEventListener("input", updateTotal);
+        }
+    });
+</script>
 
 </body>
 </html>

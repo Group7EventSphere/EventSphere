@@ -1,0 +1,88 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.ticket-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.ticket-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+.ticket-card {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background-color: #fff;
+    margin-bottom: 1rem;
+}
+
+.ticket-event-picture {
+    width: 200px;
+    height: 240px;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+    border-radius: 8px;
+}
+
+.ticket-event-details {
+    flex: 1;
+}
+
+.ticket-event-details h3 {
+    margin: 0 0 0.5rem;
+}
+
+.ticket-event-details p {
+    margin: 0.3rem 0;
+    font-size: 0.95rem;
+}
+
+.ticket-details-icon {
+    margin-right: 0.5rem;
+}
+
+.ticket-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    font-weight: bold;
+}
+
+.ticket-footer span {
+    font-size: 1.1rem;
+}
+
+.ticket-footer button {
+    background-color: #444;
+    color: white;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.ticket-footer button:hover {
+    background-color: #333;
+}

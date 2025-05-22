@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.List;
@@ -29,26 +30,50 @@ public class TicketController {
         this.userService = userService;
     }
 
-    // Show form to buy a ticket
-    @GetMapping("/create")
-    public String showTicketForm(Model model, Principal principal) {
+    @GetMapping("/select")
+    public String showTicketSelection(Model model, Principal principal) {
         User user = userService.getUserByEmail(principal.getName());
         model.addAttribute("ticket", new Ticket());
         model.addAttribute("ticketTypes", ticketTypeService.findAll());
+        return "ticket/select";
+    }
+
+    @PostMapping("/select")
+    public String handleTicketSelection(@RequestParam("ticketTypeId") UUID ticketTypeId,
+                                        @RequestParam("quota") int quota,
+                                        RedirectAttributes redirectAttributes) {
+        redirectAttributes.addAttribute("ticketTypeId", ticketTypeId);
+        redirectAttributes.addAttribute("quota", quota);
+        return "redirect:/tickets/create";
+    }
+
+    @GetMapping("/create")
+    public String showTicketForm(@RequestParam("ticketTypeId") UUID ticketTypeId,
+                                 @RequestParam("quota") int quota,
+                                 Model model,
+                                 Principal principal) {
+        User user = userService.getUserByEmail(principal.getName());
+
+        Ticket ticket = new Ticket();
+        ticket.setAttendee(user);
+        ticket.setTicketType(ticketTypeService.getTicketTypeById(ticketTypeId).orElseThrow());
+
+        model.addAttribute("ticket", ticket);
+        model.addAttribute("quota", quota);
         return "ticket/create";
     }
 
-    // Handle form submission
     @PostMapping
-    public String createTicket(@ModelAttribute Ticket ticket, Principal principal, @RequestParam int quota) {
+    public String createTicket(@ModelAttribute Ticket ticket,
+                               Principal principal,
+                               @RequestParam int quota) {
         User attendee = userService.getUserByEmail(principal.getName());
         ticket.setAttendee(attendee);
 
         List<Ticket> tickets = ticketService.createTicket(ticket, quota);
-
-        // Redirect to confirmation of first ticket (or ticket list, your choice)
         return "redirect:/tickets";
     }
+
 
     // Show detail view
     @GetMapping("/{id}")
