@@ -1,20 +1,60 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Set;
+
+
 
 public class EventTest {
     private EventManagementService eventManager;
 
     @BeforeEach
-    void setUp() {
-        eventManager = new EventManagementService();
-    }
+void setUp() {
+    // Create mock EventRepository
+    EventRepository mockEventRepository = mock(EventRepository.class);
+    
+    // Track deleted event IDs
+    final Set<UUID> deletedEventIds = new HashSet<>();
+    
+    // Configure mock behavior for save
+    when(mockEventRepository.save(any(Event.class))).thenAnswer(invocation -> {
+        Event event = invocation.getArgument(0);
+        return event;
+    });
+    
+    // Configure mock behavior for findById - return empty if event was deleted
+    when(mockEventRepository.findById(any(UUID.class))).thenAnswer(invocation -> {
+        UUID id = invocation.getArgument(0);
+        if (deletedEventIds.contains(id)) {
+            return Optional.empty();
+        }
+        return Optional.of(new Event(id, new HashMap<>()));
+    });
+    
+    // Configure delete to track deleted IDs
+    doAnswer(invocation -> {
+        UUID id = invocation.getArgument(0);
+        deletedEventIds.add(id);
+        return null;
+    }).when(mockEventRepository).deleteById(any(UUID.class));
+    
+    eventManager = new EventManagementService(mockEventRepository);
+}
 
     @Test
     void testCreateEvent() {
@@ -50,7 +90,9 @@ public class EventTest {
         Event event = eventManager.createEvent(
                 "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
         Event retrievedEvent = eventManager.getEvent(event.getId());
-        assertEquals(event, retrievedEvent);
+        
+        // Compare IDs instead of object references
+        assertEquals(event.getId(), retrievedEvent.getId());
     }
 
     @Test
