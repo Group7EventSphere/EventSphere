@@ -96,12 +96,13 @@ public class EventController {
     public String createEvent(@ModelAttribute EventForm eventForm,
                               Principal principal,
                               RedirectAttributes redirectAttributes) {
+        Event savedEvent; // Declare here to be accessible in different catch blocks if needed
         try {
             // Get the current user
             User currentUser = userService.getUserByEmail(principal.getName());
 
             // Create the event using the service with individual parameters
-            Event savedEvent = eventManagementService.createEvent(
+            savedEvent = eventManagementService.createEvent(
                     eventForm.getTitle(),
                     eventForm.getDescription(),
                     eventForm.getEventDate(),    // Corrected: Pass eventDate from form
@@ -109,24 +110,45 @@ public class EventController {
                     currentUser.getId()          // Corrected: Pass organizerId from current user
             );
 
-            // Then process and save each ticket type
-            if (eventForm.getTicketTypes() != null) {
-                for (TicketTypeForm ticketTypeForm : eventForm.getTicketTypes()) {
-                    ticketTypeService.create(
-                            ticketTypeForm.getName(),
-                            ticketTypeForm.getPrice(),
-                            ticketTypeForm.getAvailableSeats(),
-                            currentUser
-                    );
+            // Then process and save each ticket type, if any
+            if (eventForm.getTicketTypes() != null && !eventForm.getTicketTypes().isEmpty()) {
+                try {
+                    for (TicketTypeForm ticketTypeForm : eventForm.getTicketTypes()) {
+                        // Assuming ticketTypeService.create might throw an exception
+                        // if currentUser is ADMIN but not ORGANIZER and tries to create tickets.
+                        // Note: If ticket types need to be linked to the event,
+                        // savedEvent.getId() should ideally be passed to ticketTypeService.create.
+                        // The current signature uses currentUser.
+                        ticketTypeService.create(
+                                ticketTypeForm.getName(),
+                                ticketTypeForm.getPrice(),
+                                ticketTypeForm.getAvailableSeats(),
+                                currentUser
+                        );
+                    }
+                    redirectAttributes.addFlashAttribute("successMessage", "Event and associated ticket types created successfully!");
+                } catch (Exception ticketException) {
+                    // Handle specific permission error for ticket types more gracefully
+                    if (ticketException.getMessage() != null && ticketException.getMessage().contains("Only organizers can create ticket types")) {
+                        logger.warning("Event '" + (savedEvent != null ? savedEvent.getTitle() : "Unknown") + "' created, but ticket types were not: " + ticketException.getMessage() + ". User: " + principal.getName());
+                        redirectAttributes.addFlashAttribute("warningMessage", "Event created successfully, but ticket types could not be created: " + ticketException.getMessage() + " This action may be restricted to organizers.");
+                    } else {
+                        // Handle other errors during ticket creation
+                        logger.log(java.util.logging.Level.SEVERE, "Event '" + (savedEvent != null ? savedEvent.getTitle() : "Unknown") + "' created, but an error occurred during ticket type creation: " + ticketException.getMessage(), ticketException);
+                        redirectAttributes.addFlashAttribute("errorMessage", "Event created, but failed to create some/all ticket types due to an unexpected error.");
+                    }
                 }
+            } else {
+                // Event created, no ticket types were provided or to process
+                redirectAttributes.addFlashAttribute("successMessage", "Event created successfully!");
             }
+            return "redirect:/events/manage"; // Redirect after successful event creation (and attempted ticket creation)
 
-            redirectAttributes.addFlashAttribute("successMessage", "Event created successfully!");
-            return "redirect:/events/manage";
         } catch (Exception e) {
-            logger.severe("Error creating event: " + e.getMessage());
+            // This catch block now primarily handles errors from userService.getUserByEmail or eventManagementService.createEvent
+            logger.log(java.util.logging.Level.SEVERE, "Critical error during the event creation process (before or during event saving): " + e.getMessage(), e);
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to create event: " + e.getMessage());
-            return "redirect:/events/create";
+            return "redirect:/events/create"; // Redirect back to create form on critical failure
         }
     }
 

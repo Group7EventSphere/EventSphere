@@ -31,7 +31,7 @@ public class TicketTypeViewController {
     private UserService userService;
 
     @GetMapping
-    public String listTicketTypes(@PathVariable("eventId") UUID eventId, Model model) {
+    public String listTicketTypes(@PathVariable("eventId") int eventId, Model model) {
         Event event = eventService.getEvent(eventId);
         if (event == null) {
             return "redirect:/events/view";
@@ -44,7 +44,7 @@ public class TicketTypeViewController {
     }
 
     @GetMapping("/create")
-    public String showCreateForm(@PathVariable("eventId") UUID eventId, Model model, Principal principal) {
+    public String showCreateForm(@PathVariable("eventId") int eventId, Model model, Principal principal) {
         Event event = eventService.getEvent(eventId);
         if (event == null) {
             return "redirect:/events/view";
@@ -60,7 +60,7 @@ public class TicketTypeViewController {
 
     @PostMapping("/create")
     public String createTicketType(
-            @PathVariable("eventId") UUID eventId,
+            @PathVariable("eventId") int eventId,
             @RequestParam String name,
             @RequestParam BigDecimal price,
             @RequestParam int quota,
@@ -82,7 +82,7 @@ public class TicketTypeViewController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(
-            @PathVariable("eventId") UUID eventId,
+            @PathVariable("eventId") int eventId,
             @PathVariable("id") UUID id,
             Model model,
             Principal principal) {
@@ -103,7 +103,7 @@ public class TicketTypeViewController {
 
     @PostMapping("/edit/{id}")
     public String updateTicketType(
-            @PathVariable("eventId") UUID eventId,
+            @PathVariable("eventId") int eventId,
             @PathVariable("id") UUID id,
             @ModelAttribute TicketType updatedTicketType,
             Principal principal) {

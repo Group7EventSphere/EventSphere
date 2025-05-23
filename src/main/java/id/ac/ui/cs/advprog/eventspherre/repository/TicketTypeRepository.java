@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface TicketTypeRepository extends JpaRepository<TicketType, UUID> {
     boolean existsById(UUID id);
-    List<TicketType> findByEventUuid(String eventUuid);
+    List<TicketType> findByEventId(int eventId);
 }

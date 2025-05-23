@@ -16,10 +16,7 @@ public class Review {
     private Long id;
 
     @Column(name = "event_id")
-    private Long eventId;
-
-    @Column(name = "event_uuid")
-    private String eventUuid;
+    private int eventId; // Changed from Long to int
 
     private Long attendeeId;
     private String reviewText;
@@ -27,18 +24,12 @@ public class Review {
 
     public Review() { }
 
-    public Review(UUID eventUuid, Long attendeeId, String reviewText, int rating) {
-        this.eventUuid = eventUuid.toString();
-        this.attendeeId = attendeeId;
-        this.reviewText = reviewText;
-        this.rating = rating;
-    }
-
-    // For backward compatibility with existing data
-    public Review(Long eventId, Long attendeeId, String reviewText, int rating) {
+    // Constructor updated to use int eventId
+    public Review(int eventId, Long attendeeId, String reviewText, int rating) {
         this.eventId = eventId;
         this.attendeeId = attendeeId;
         this.reviewText = reviewText;
         this.rating = rating;
     }
 }
+

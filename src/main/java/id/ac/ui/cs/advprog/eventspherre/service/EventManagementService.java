@@ -28,8 +28,8 @@ public class EventManagementService {
         details.put("location", location);
         details.put("organizerId", organizerId);
 
-        UUID uuidKey = UUID.randomUUID();
-        Event event = new Event(uuidKey, details);
+        Event event = new Event();
+        event.setDetails(details);
         event.setTitle(title);
         event.setDescription(description);
         event.setEventDate(eventDate);
@@ -40,7 +40,7 @@ public class EventManagementService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
-    public Event getEvent(UUID id) {
+    public Event getEvent(int id) {
         return eventRepository.findById(id).orElse(null);
     }
 
@@ -50,7 +50,7 @@ public class EventManagementService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public Event updateEvent(UUID id, String title, String description,
+    public Event updateEvent(int id, String title, String description,
                              String eventDate, String location, Integer organizerId) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
         if (optionalEvent.isPresent()) {
@@ -75,7 +75,7 @@ public class EventManagementService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public void deleteEvent(UUID id) {
+    public void deleteEvent(int id) {
         eventRepository.deleteById(id);
     }
 
