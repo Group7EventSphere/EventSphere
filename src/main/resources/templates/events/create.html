@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event - EventSphere</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<!-- Include navbar if you have one -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Create New Event</h1>
+
+    <!-- Display error message if present -->
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/events/create}" th:object="${eventForm}" method="post">
+        <div class="form-section">
+            <h2>Event Details</h2>
+
+            <div class="form-group">
+                <label for="title">Event Title*</label>
+                <input type="text" id="title" th:field="*{title}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description*</label>
+                <textarea id="description" th:field="*{description}" rows="4" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location*</label>
+                <input type="text" id="location" th:field="*{location}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="eventDate">Event Date*</label>
+                <input type="datetime-local" id="eventDate" th:field="*{eventDate}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="capacity">Capacity</label>
+                <input type="number" id="capacity" th:field="*{capacity}" min="1">
+            </div>
+
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="isPublic" th:field="*{public}">
+                <label for="isPublic">Make this event public</label>
+            </div>
+        </div>
+
+        <!-- Ticket Types Section -->
+        <div class="form-section">
+            <h2>Ticket Types</h2>
+            <div id="ticketTypesContainer">
+                <!-- This will be populated by JavaScript -->
+            </div>
+            <button type="button" id="addTicketType" class="btn btn-secondary">Add Ticket Type</button>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Event</button>
+            <a th:href="@{/events/manage}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('ticketTypesContainer');
+        const addButton = document.getElementById('addTicketType');
+        let ticketIndex = 0;
+
+        // Add ticket type function
+        function addTicketType() {
+            const ticketRow = document.createElement('div');
+            ticketRow.className = 'ticket-type-row';
+            ticketRow.innerHTML = `
+                    <div class="form-group">
+                        <label for="ticketTypes${ticketIndex}.name">Ticket Name*</label>
+                        <input type="text" id="ticketTypes${ticketIndex}.name" name="ticketTypes[${ticketIndex}].name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${ticketIndex}.price">Price*</label>
+                        <input type="number" id="ticketTypes${ticketIndex}.price" name="ticketTypes[${ticketIndex}].price" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${ticketIndex}.availableSeats">Available Seats*</label>
+                        <input type="number" id="ticketTypes${ticketIndex}.availableSeats" name="ticketTypes[${ticketIndex}].availableSeats" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${ticketIndex}.description">Description</label>
+                        <textarea id="ticketTypes${ticketIndex}.description" name="ticketTypes[${ticketIndex}].description"></textarea>
+                    </div>
+                    <button type="button" class="remove-ticket-btn">Remove</button>
+                `;
+            container.appendChild(ticketRow);
+
+            // Add event listener to remove button
+            ticketRow.querySelector('.remove-ticket-btn').addEventListener('click', function() {
+                container.removeChild(ticketRow);
+            });
+
+            ticketIndex++;
+        }
+
+        // Add initial ticket type
+        addTicketType();
+
+        // Add event listener to add button
+        addButton.addEventListener('click', addTicketType);
+    });
+</script>
+</body>
+</html>

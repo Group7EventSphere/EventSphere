@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Include the navbar fragment -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="main-content with-navbar">
+    <div class="container">
+        <h1 class="page-title">Explore Events</h1>
+
+        <!-- Display error message if present -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}">
+            Error message goes here
+        </div>
+
+        <div class="events-container">
+            <!-- If no events exist -->
+            <div th:if="${#lists.isEmpty(events)}" class="empty-state">
+                <h3>No events available at the moment</h3>
+                <p>Check back later for upcoming events!</p>
+            </div>
+
+            <!-- Events list -->
+            <div th:unless="${#lists.isEmpty(events)}" class="events-grid">
+                <div th:each="event : ${events}" class="event-card">
+                    <div class="event-card-content">
+                        <h3 th:text="${event.title}">Event Title</h3>
+                        <p class="event-date" th:text="${event.eventDate}">Event Date</p>
+                        <p class="event-location" th:text="${event.location}">Location</p>
+                        <p class="event-description" th:text="${event.description}">Description</p>
+                        <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer can be added here -->
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

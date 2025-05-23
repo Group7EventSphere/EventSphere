@@ -15,8 +15,8 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id", columnDefinition = "uuid")
-    private Long eventId;
+    @Column(name = "event_id")
+    private int eventId; // Changed from Long to int
 
     private Long attendeeId;
     private String reviewText;
@@ -24,7 +24,8 @@ public class Review {
 
     public Review() { }
 
-    public Review(long eventId, Long attendeeId, String reviewText, int rating) {
+    // Constructor updated to use int eventId
+    public Review(int eventId, Long attendeeId, String reviewText, int rating) {
         this.eventId = eventId;
         this.attendeeId = attendeeId;
         this.reviewText = reviewText;

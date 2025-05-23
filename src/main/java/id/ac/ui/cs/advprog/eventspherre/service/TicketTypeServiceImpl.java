@@ -61,4 +61,19 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     public List<TicketType> findAll() {
         return ticketTypeRepository.findAll();
     }
+
+    @Override
+    public List<TicketType> findByEventId(int eventId) {
+        // Use eventId toString to match with our eventUuid field in the database
+        return ticketTypeRepository.findByEventId(eventId);
+    }
+
+    @Override
+    public void associateWithEvent(UUID ticketTypeId, int eventId) {
+        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+
+        ticketType.setEventId(eventId);
+        ticketTypeRepository.save(ticketType);
+    }
 }

@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    List<Review> findByEventId(long eventId);
+    // Method to find reviews by event ID (original integer ID)
+    List<Review> findByEventId(int eventId);
 
-    Optional<Review> findByAttendeeIdAndEventId(Long attendeeId, Long eventId);
+    Optional<Review> findByAttendeeIdAndEventId(Long attendeeId, int eventId);
 }

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Event - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Include the navbar fragment -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="main-content with-navbar">
+    <div class="container">
+        <h1 class="page-title">Edit Event</h1>
+
+        <!-- Flash messages -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${warningMessage}" class="alert alert-warning" th:text="${warningMessage}"></div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <form th:action="@{/events/{eventId}/edit(eventId=${eventId})}"
+              th:object="${eventForm}"
+              method="post"
+              class="form-container">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title" th:field="*{title}" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" th:field="*{description}" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" id="location" th:field="*{location}" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="eventDate">Event Date and Time:</label>
+                <input type="datetime-local" id="eventDate" th:field="*{eventDate}" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="capacity">Capacity:</label>
+                <input type="number" id="capacity" th:field="*{capacity}" class="form-control" min="0">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="isPublic" th:field="*{public}" class="form-check-input">
+                <label for="isPublic" class="form-check-label">Public Event</label>
+            </div>
+
+            <!-- Ticket Types Section -->
+            <h2>Ticket Types</h2>
+            <div id="ticket-types-container">
+                <div th:each="ticketType, iterStat : *{ticketTypes}" class="ticket-type-form-group">
+                    <h3 th:text="'Ticket Type ' + ${iterStat.count}">Ticket Type</h3>
+
+                    <div class="form-group">
+                        <label th:for="${'ticketTypes' + iterStat.index + 'Name'}">Name:</label>
+                        <input type="text"
+                               th:id="${'ticketTypes' + iterStat.index + 'Name'}"
+                               th:field="*{ticketTypes[__${iterStat.index}__].name}"
+                               class="form-control"
+                               required />
+                    </div>
+                    <div class="form-group">
+                        <label th:for="${'ticketTypes' + iterStat.index + 'Price'}">Price:</label>
+                        <input type="number"
+                               step="0.01"
+                               th:id="${'ticketTypes' + iterStat.index + 'Price'}"
+                               th:field="*{ticketTypes[__${iterStat.index}__].price}"
+                               class="form-control"
+                               required />
+                    </div>
+                    <div class="form-group">
+                        <label th:for="${'ticketTypes' + iterStat.index + 'AvailableSeats'}">Available Seats:</label>
+                        <input type="number"
+                               th:id="${'ticketTypes' + iterStat.index + 'AvailableSeats'}"
+                               th:field="*{ticketTypes[__${iterStat.index}__].availableSeats}"
+                               class="form-control"
+                               min="0"
+                               required />
+                    </div>
+                    <div class="form-group">
+                        <label th:for="${'ticketTypes' + iterStat.index + 'Description'}">Description:</label>
+                        <textarea th:id="${'ticketTypes' + iterStat.index + 'Description'}"
+                                  th:field="*{ticketTypes[__${iterStat.index}__].description}"
+                                  class="form-control"
+                                  rows="2"></textarea>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-danger btn-sm remove-ticket-type"
+                            th:if="${iterStat.size > 1}">
+                        Remove Ticket Type
+                    </button>
+                    <hr th:if="!${iterStat.last}">
+                </div>
+            </div>
+            <button type="button" id="add-ticket-type" class="btn btn-info btn-sm">Add Ticket Type</button>
+            <!-- End Ticket Types Section -->
+
+            <br/>
+            <button type="submit" class="btn btn-primary">Update Event</button>
+            <a th:href="@{/events/manage}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<!-- Include the footer fragment -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/scripts.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addBtn = document.getElementById('add-ticket-type');
+        const container = document.getElementById('ticket-types-container');
+        let idx = document.querySelectorAll('.ticket-type-form-group').length;
+
+        addBtn.addEventListener('click', () => {
+            const html = `
+                <div class="ticket-type-form-group">
+                    <h3>New Ticket Type</h3>
+                    <div class="form-group">
+                        <label for="ticketTypes${idx}Name">Name:</label>
+                        <input type="text" id="ticketTypes${idx}Name" name="ticketTypes[${idx}].name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${idx}Price">Price:</label>
+                        <input type="number" step="0.01" id="ticketTypes${idx}Price" name="ticketTypes[${idx}].price" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${idx}AvailableSeats">Available Seats:</label>
+                        <input type="number" id="ticketTypes${idx}AvailableSeats" name="ticketTypes[${idx}].availableSeats" class="form-control" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticketTypes${idx}Description">Description:</label>
+                        <textarea id="ticketTypes${idx}Description" name="ticketTypes[${idx}].description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-ticket-type">Remove Ticket Type</button>
+                    <hr>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            idx++;
+            attachRemove();
+        });
+
+        function attachRemove() {
+            document.querySelectorAll('.remove-ticket-type').forEach(btn => {
+                btn.removeEventListener('click', handleRemove);
+                btn.addEventListener('click', handleRemove);
+            });
+        }
+        function handleRemove(e) {
+            e.target.closest('.ticket-type-form-group').remove();
+        }
+        attachRemove();
+    });
+</script>
+</body>
+</html>
