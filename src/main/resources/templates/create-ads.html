@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -120,12 +120,7 @@
                 <div class="upload-card-icon">⬆️</div>
                 <p>Upload Image</p>
                 <label class="upload-btn" for="file-input">Select a file</label>
-                <input
-                        type="file"
-                        id="file-input"
-                        class="upload-input"
-                        accept="image/png, image/jpeg"
-                />
+                <input type="file" id="file-input" class="upload-input" accept="image/png, image/jpeg" />
                 <div class="upload-preview" id="image-preview">
                     <img id="preview-image" src="" alt="Preview">
                 </div>
@@ -138,12 +133,7 @@
         <div>
             <div class="form-group">
                 <label for="ads-desc">Ads Description:</label>
-                <textarea
-                        id="ads-desc"
-                        name="description"
-                        placeholder="Enter ad description..."
-                        required
-                ></textarea>
+                <textarea id="ads-desc" name="description" placeholder="Enter ad description..." required></textarea>
             </div>
         </div>
     </div>
@@ -182,146 +172,92 @@
     </div>
 </footer>
 
-<!-- SCRIPT for Cloudinary upload + submit -->
-<script>
-    // DOM elements
-    const fileInput = document.getElementById("file-input");
-    const imageUrl = document.getElementById("image-url");
-    const submitBtn = document.getElementById("submit-btn");
-    const uploadLoading = document.getElementById("upload-loading");
-    const imagePreview = document.getElementById("image-preview");
-    const previewImage = document.getElementById("preview-image");
-    const uploadStatus = document.getElementById("upload-status");
-    const adForm = document.getElementById("ad-form");
-    const adsTitle = document.getElementById("ads-title");
-    const adsDesc = document.getElementById("ads-desc");
+<!-- INLINE ASYNC HANDLERS -->
+<script type="module" th:inline="javascript">
+  document.addEventListener('DOMContentLoaded', () => {
+    const fileInput     = document.getElementById('file-input');
+    const imageUrlIn    = document.getElementById('image-url');
+    const submitBtn     = document.getElementById('submit-btn');
+    const uploadLoading = document.getElementById('upload-loading');
+    const imagePreview  = document.getElementById('image-preview');
+    const previewImg    = document.getElementById('preview-image');
+    const uploadStatus  = document.getElementById('upload-status');
+    const adsTitle      = document.getElementById('ads-title');
+    const adsDesc       = document.getElementById('ads-desc');
+    const adForm        = document.getElementById('ad-form');
 
-    // Cloudinary upload configuration
-    const CLOUDINARY_UPLOAD_PRESET = "adpro-ads"; // Replace with your upload preset
-    const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5"; // Replace with your cloud name
-    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+    const CLOUDINARY_UPLOAD_PRESET = 'adpro-ads';
+    const CLOUDINARY_CLOUD_NAME    = 'dgtd4i3r5';
+    const CLOUDINARY_UPLOAD_URL    = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-    // Check if form is valid
     function checkFormValidity() {
-        if (adsTitle.value && adsDesc.value && imageUrl.value) {
-            submitBtn.disabled = false;
-        } else {
-            submitBtn.disabled = true;
-        }
+      submitBtn.disabled = !(adsTitle.value.trim() && adsDesc.value.trim() && imageUrlIn.value);
     }
 
-    // Add event listeners for input fields
-    adsTitle.addEventListener("input", checkFormValidity);
-    adsDesc.addEventListener("input", checkFormValidity);
-
-    // Show status message
-    function showStatus(message, isError = false) {
-        uploadStatus.innerText = message;
-        uploadStatus.style.display = "block";
-
-        if (isError) {
-            uploadStatus.className = "status-message status-error";
-        } else {
-            uploadStatus.className = "status-message status-success";
-        }
-
-        // Hide after 5 seconds
-        setTimeout(() => {
-            uploadStatus.style.display = "none";
-        }, 5000);
+    function showStatus(msg, isErr = false) {
+      uploadStatus.textContent = msg;
+      uploadStatus.className   = isErr
+                               ? 'status-message status-error'
+                               : 'status-message status-success';
+      uploadStatus.style.display = 'block';
+      setTimeout(() => uploadStatus.style.display = 'none', 5000);
     }
 
-    // Upload file to Cloudinary when a file is selected
-    fileInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    [adsTitle, adsDesc].forEach(el => el.addEventListener('input', checkFormValidity));
 
-        // Show loading indicator
-        uploadLoading.style.display = "flex";
-        imagePreview.style.display = "none";
-
-        try {
-            // Create FormData for Cloudinary upload
-            const data = new FormData();
-            data.append("file", file);
-            data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-            // Upload to Cloudinary
-            const response = await fetch(CLOUDINARY_UPLOAD_URL, {
-                method: "POST",
-                body: data
-            });
-
-            if (!response.ok) {
-                throw new Error("Cloudinary upload failed");
-            }
-
-            const cloudinaryData = await response.json();
-
-            // Set the secure URL in the hidden input
-            imageUrl.value = cloudinaryData.secure_url;
-
-            // Show preview
-            previewImage.src = cloudinaryData.secure_url;
-            imagePreview.style.display = "block";
-
-            // Show success message
-            showStatus("Image uploaded successfully!");
-
-            // Check if form can be submitted
-            checkFormValidity();
-
-        } catch (error) {
-            console.error("Upload error:", error);
-            showStatus("Failed to upload image. Please try again.", true);
-        } finally {
-            // Hide loading indicator
-            uploadLoading.style.display = "none";
-        }
+    fileInput.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      uploadLoading.style.display = 'flex';
+      imagePreview.style.display  = 'none';
+      try {
+        const data = new FormData();
+        data.append('file', file);
+        data.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: data });
+        if (!res.ok) throw new Error();
+        const json = await res.json();
+        imageUrlIn.value    = json.secure_url;
+        previewImg.src      = json.secure_url;
+        imagePreview.style.display = 'block';
+        showStatus('Image uploaded successfully!');
+        checkFormValidity();
+      } catch {
+        showStatus('Upload failed. Try again.', true);
+      } finally {
+        uploadLoading.style.display = 'none';
+      }
     });
 
-    // Submit form to your API endpoint
-    adForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        // Disable submit button during submission
-        submitBtn.disabled = true;
-
-        try {
-            const payload = {
-                title: adsTitle.value,
-                description: adsDesc.value,
-                imageUrl: imageUrl.value
-            };
-
-            // Submit to your API
-            const response = await fetch("/api/ads", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error("API submission failed");
-            }
-
-            // Show success message
-            alert("Ad created successfully!");
-
-            // Reset form
-            adForm.reset();
-            imageUrl.value = "";
-            imagePreview.style.display = "none";
-            submitBtn.disabled = true;
-
-        } catch (error) {
-            console.error("Submission error:", error);
-            alert("Failed to create ad. Please try again.");
-        } finally {
-            // Re-enable submit button
-            submitBtn.disabled = false;
-        }
+    adForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      try {
+        const payload = {
+          title:       adsTitle.value.trim(),
+          description: adsDesc.value.trim(),
+          imageUrl:    imageUrlIn.value
+        };
+        const res = await fetch('/api/ads', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error();
+        alert('Ad created successfully!');
+        adForm.reset();
+        imageUrlIn.value = '';
+        imagePreview.style.display = 'none';
+        checkFormValidity();
+      } catch {
+        alert('Create failed. Try again.');
+      } finally {
+        submitBtn.disabled = false;
+      }
     });
+
+    checkFormValidity();
+  });
 </script>
 </body>
 </html>
