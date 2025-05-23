@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/").permitAll() // Allow access to dashboard without authentication
                 .requestMatchers("/admin/**").hasRole("ADMIN") // Require ADMIN role for admin pages
                 .requestMatchers("/events/manage/**").hasAnyRole("ADMIN", "ORGANIZER") // Require ADMIN or ORGANIZER role for managing events
+                .requestMatchers("/balance/**").hasAnyRole("ATTENDEE", "ORGANIZER") // Require ATTENDEE or ORGANIZER role for balance pages
                 .anyRequest().authenticated()
             .and()
             .formLogin()
