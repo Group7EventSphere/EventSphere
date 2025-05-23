@@ -7,7 +7,6 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 
 @Getter @Setter
 @NoArgsConstructor
@@ -40,14 +39,11 @@ public class Event {
     private Instant updatedAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column
     private Map<String, Object> details;
 
-    @Column(name = "uuid_key", unique = true)
-    private UUID uuidKey;
-
-    public Event(UUID uuidKey, Map<String, Object> details) {
-        this.uuidKey = uuidKey;
+    public Event(Integer id, Map<String, Object> details) {
+        this.id = id;
         this.details = details;
 
         // Extract common fields from details
@@ -70,11 +66,6 @@ public class Event {
 
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
-    }
-
-    // Add this getter method to support using UUID as external identifier
-    public UUID getId() {
-        return this.uuidKey;
     }
 }
 
