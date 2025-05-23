@@ -34,6 +34,8 @@ public class PaymentTransaction {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "request_id", nullable = false, updatable = false)
+    private UUID requestId;
 
     @Transient
     private User user;

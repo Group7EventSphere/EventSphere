@@ -1,81 +1,99 @@
 package id.ac.ui.cs.advprog.eventspherre.handler;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest.PaymentType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+
+import java.util.Optional;
 
 class TopUpHandlerTest {
-    private User user;
+
+    private UserRepository              userRepo;
+    private PaymentRequestRepository    requestRepo;
+    private TopUpHandler                handler;
 
     @BeforeEach
     void setUp() {
-        user = new User();
+        userRepo    = mock(UserRepository.class);
+        requestRepo = mock(PaymentRequestRepository.class);
+        handler     = new TopUpHandler(userRepo, requestRepo);
+    }
+
+    @Test
+    void handle_withValidTopUp_updatesBalance_marksProcessed_andSaves() {
+        User user = new User();
         user.setId(1);
-        user.setName("TopUp User");
-        user.setEmail("topup@example.com");
-        user.setPassword("password");
-        user.setRole(User.Role.ATTENDEE);
         user.setBalance(100.0);
+
+        // Create a TOPUP request for 50.0
+        PaymentRequest req = new PaymentRequest();
+        req.setUser(user);
+        req.setPaymentType(PaymentType.TOPUP);
+        req.setAmount(50.0);
+
+        // Stub repository lookup
+        when(userRepo.findById(1)).thenReturn(Optional.of(user));
+
+        handler.handle(req);
+
+        // Assert
+        // - user balance increased
+        assertEquals(150.0, user.getBalance(), 0.0001);
+        // - request marked processed
+        assertTrue(req.isProcessed());
+        // - message set
+        assertEquals("Top-up successful", req.getMessage());
+        // - saved exactly once
+        verify(requestRepo, times(1)).save(req);
     }
 
     @Test
-    void testTopUpHandlerProcessesTopUpRequest() {
-        double topUpAmount = 50.0;
-        PaymentRequest request = new PaymentRequest(user, topUpAmount, PaymentRequest.PaymentType.TOPUP);
+    void handle_withTopUpButZeroOrNegativeAmount_delegatesToNext() {
+        PaymentRequest req = new PaymentRequest();
+        req.setPaymentType(PaymentType.TOPUP);
+        req.setAmount(0.0);
 
-        TopUpHandler topUpHandler = new TopUpHandler();
-        DummyHandler dummy = new DummyHandler();
-        topUpHandler.setNext(dummy);
+        PaymentHandler next = mock(PaymentHandler.class);
+        handler.setNext(next);
 
-        topUpHandler.handle(request);
+        handler.handle(req);
 
-
-        assertTrue(request.isProcessed());
-        assertEquals("Top-up successful: balance added", request.getMessage());
-        assertEquals(150.0, user.getBalance(), 0.001);
-
-        assertFalse(dummy.wasCalled());
-    }
-
-    // Dummy handler for verifying that the chain does not proceed.
-    private static class DummyHandler implements PaymentHandler {
-        private boolean called = false;
-
-        @Override
-        public void setNext(PaymentHandler handler) {
-
-            // Have not decided proper chain as of yet
-
-        }
-
-        @Override
-        public void handle(PaymentRequest request) {
-            called = true;
-        }
-
-        boolean wasCalled() {
-            return called;
-        }
+        verify(next, times(1)).handle(req);
+        verifyNoInteractions(userRepo);
+        verifyNoInteractions(requestRepo);
     }
 
     @Test
-    void testUserBalanceIncreasesAfterTopUp() {
-        double initialBalance = user.getBalance();
-        double topUpAmount = 75.0;
-        PaymentRequest request = new PaymentRequest(user, topUpAmount, PaymentRequest.PaymentType.TOPUP);
+    void handle_withNonTopUp_delegatesToNext() {
+        PaymentRequest req = new PaymentRequest();
+        req.setPaymentType(PaymentType.PURCHASE);
+        req.setAmount(20.0);
 
-        TopUpHandler topUpHandler = new TopUpHandler();
-        // Using a dummy handler to check that the chain stops.
-        DummyHandler dummy = new DummyHandler();
-        topUpHandler.setNext(dummy);
+        PaymentHandler next = mock(PaymentHandler.class);
+        handler.setNext(next);
 
-        // Process top-up.
-        topUpHandler.handle(request);
+        handler.handle(req);
 
-        double expectedBalance = initialBalance + topUpAmount;
-        assertEquals(expectedBalance, user.getBalance(), 0.001);
-        assertTrue(user.getBalance() > initialBalance);
+        verify(next, times(1)).handle(req);
+        verifyNoInteractions(userRepo);
+        verifyNoInteractions(requestRepo);
+    }
+
+    @Test
+    void handle_withNoNext_andNonTopUp_doesNothing() {
+        PaymentRequest req = new PaymentRequest();
+        req.setPaymentType(PaymentType.PURCHASE);
+        req.setAmount(20.0);
+
+        assertDoesNotThrow(() -> handler.handle(req));
+        verifyNoInteractions(userRepo);
+        verifyNoInteractions(requestRepo);
     }
 }

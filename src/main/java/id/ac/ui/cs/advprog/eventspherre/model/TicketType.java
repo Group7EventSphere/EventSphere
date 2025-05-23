@@ -25,6 +25,9 @@ public class TicketType {
     @Column(nullable = false)
     private int quota;
 
+    @Column(name = "event_id") // Renamed from event_uuid to event_id
+    private Integer eventId; // Changed from String to int
+
     // Constructor
     public TicketType() {}
 
@@ -51,4 +54,9 @@ public class TicketType {
         return new TicketType(name, price, quota);
     }
 
+    public static TicketType create(String name, BigDecimal price, int quota, User user, int eventId) { // Changed eventId from UUID to int
+        TicketType ticketType = create(name, price, quota, user);
+        ticketType.setEventId(eventId); // Changed from setEventUuid to setEventId
+        return ticketType;
+    }
 }

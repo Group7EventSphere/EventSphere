@@ -1,10 +1,11 @@
 package id.ac.ui.cs.advprog.eventspherre.config;
 
-import id.ac.ui.cs.advprog.eventspherre.handler.DeductBalanceHandler;
-import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
-import id.ac.ui.cs.advprog.eventspherre.handler.SufficientBalanceHandler;
-import id.ac.ui.cs.advprog.eventspherre.handler.TopUpHandler;
-import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+import id.ac.ui.cs.advprog.eventspherre.handler.*;
+import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
+import org.springframework.context.annotation.Primary;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,7 +13,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
+@RequiredArgsConstructor
 public class PaymentChainConfig {
+
+    private final UserRepository           userRepo;
+    private final PaymentRequestRepository requestRepo;
 
     @Bean
     public ExecutorService paymentExecutor() {
@@ -20,23 +25,25 @@ public class PaymentChainConfig {
     }
 
     @Bean
-    public PaymentHandler paymentHandlerChain(ExecutorService exec) {
+    public TopUpHandler topUpHandler() {
+        return new TopUpHandler(userRepo, requestRepo);
+    }
+
+    @Bean
+    @Primary
+
+    public PaymentHandler paymentHandlerChain(ExecutorService executor,
+                                              TopUpHandler    topUp) {
         SufficientBalanceHandler sufficient = new SufficientBalanceHandler();
-        DeductBalanceHandler deduct         = new DeductBalanceHandler();
-        TopUpHandler topUp                  = new TopUpHandler();
+        DeductBalanceHandler     deduct     = new DeductBalanceHandler();
 
         sufficient.setNext(deduct);
         deduct.setNext(topUp);
 
         return new PaymentHandler() {
-            @Override
-            public void setNext(PaymentHandler handler) {
-                sufficient.setNext(handler);
-            }
-
-            @Override
-            public void handle(PaymentRequest request) {
-                exec.submit(() -> sufficient.handle(request));
+            @Override public void setNext(PaymentHandler h) { sufficient.setNext(h); }
+            @Override public void handle(id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest r) {
+                executor.submit(() -> sufficient.handle(r));
             }
         };
     }

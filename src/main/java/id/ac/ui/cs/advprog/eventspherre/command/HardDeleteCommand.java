@@ -6,10 +6,11 @@ import id.ac.ui.cs.advprog.eventspherre.repository.PaymentTransactionRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
 import java.util.UUID;
 
 @RequiredArgsConstructor
-public class SoftDeleteCommand implements AuditCommand {
+public class HardDeleteCommand implements AuditCommand {
 
     private final UUID                         txId;
     private final PaymentTransactionRepository txRepo;
@@ -18,15 +19,8 @@ public class SoftDeleteCommand implements AuditCommand {
 
     @Override @Transactional
     public void execute() {
-        txRepo.findById(txId).ifPresent(tx -> {
-            tx.setStatus("SOFT_DELETED");
 
-            reqRepo.findById(tx.getRequestId()).ifPresent(req -> {
-                req.setAmount(-req.getAmount());
-                req.setProcessed(false);
-                req.setMessage("ADMIN-DELETE: SOFT_DELETED");
-                reqRepo.save(req);
-            });
+        txRepo.findById(txId).ifPresent(tx -> {
 
             userRepo.findById(tx.getUserId()).ifPresent(u -> {
                 if (tx.getType() == PaymentRequest.PaymentType.TOPUP)
@@ -34,6 +28,12 @@ public class SoftDeleteCommand implements AuditCommand {
                 else
                     u.topUp(tx.getAmount());
             });
+
+            UUID reqId = tx.getRequestId();   // capture before deleting
+
+            txRepo.delete(tx);
+
+            reqRepo.findById(reqId).ifPresent(reqRepo::delete);
         });
     }
 }

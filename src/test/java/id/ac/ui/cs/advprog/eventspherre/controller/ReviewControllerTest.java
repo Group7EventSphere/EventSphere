@@ -67,8 +67,8 @@ class ReviewControllerTest {
 
     @Test
     void createReview_returnsCreated() throws Exception {
-        Review in  = new Review(1L, 0L, "Nice!", 4);
-        Review out = new Review(1L, 2L, "Nice!", 4);
+        Review in  = new Review(1, 0L, "Nice!", 4);
+        Review out = new Review(1, 2L, "Nice!", 4);
         out.setId(5L);
 
         when(service.create(any(Review.class))).thenReturn(out);
@@ -83,7 +83,7 @@ class ReviewControllerTest {
 
     @Test
     void getReview_returnsOk() throws Exception {
-        Review r = new Review(3L, 0L, "Ok", 3);
+        Review r = new Review(3, 0L, "Ok", 3);
         r.setId(7L);
         when(service.findById(7L)).thenReturn(Optional.of(r));
 
@@ -94,9 +94,9 @@ class ReviewControllerTest {
 
     @Test
     void getByEvent_returnsList() throws Exception {
-        Review a = new Review(7L, 0L, "Good", 5); a.setId(1L);
-        Review b = new Review(7L, 0L, "Bad", 1);  b.setId(2L);
-        when(service.findByEventId(7L)).thenReturn(List.of(a, b));
+        Review a = new Review(7, 0L, "Good", 5); a.setId(1L);
+        Review b = new Review(7, 0L, "Bad", 1);  b.setId(2L);
+        when(service.findByEventId(7)).thenReturn(List.of(a, b));
 
         mvc.perform(get("/reviews/event/7"))
                 .andExpect(status().isOk())
@@ -107,8 +107,8 @@ class ReviewControllerTest {
 
     @Test
     void updateReview_returnsOk() throws Exception {
-        Review in  = new Review(1L, 0L, "X", 4);
-        Review out = new Review(1L, 2L, "X", 4);
+        Review in  = new Review(1, 0L, "X", 4);
+        Review out = new Review(1, 2L, "X", 4);
         out.setId(1L);
         when(service.update(eq(1L), any(Review.class))).thenReturn(out);
 
@@ -122,7 +122,7 @@ class ReviewControllerTest {
 
     @Test
     void updateMissing_returnsNotFound() throws Exception {
-        Review in = new Review(1L, 0L, "Y", 5);
+        Review in = new Review(1, 0L, "Y", 5);
         when(service.update(eq(2L), any(Review.class)))
                 .thenThrow(new NoSuchElementException("Review not found"));
 
