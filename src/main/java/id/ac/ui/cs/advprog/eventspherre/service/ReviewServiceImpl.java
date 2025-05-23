@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -68,8 +69,18 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<Review> findByEventId(Long eventId) {
+
+    public List<Review> getReviewsByEventId(UUID eventId) {
+        return List.of();
+    }
+
+    @Override
+    public List<Review> findByEventId(int eventId) {
+        return List.of();
+    }
+
+    public List<Review> getReviewsByEventId(int eventId) {
+        // Convert UUID to String to match with our eventUuid field in the database
         return repo.findByEventId(eventId);
     }
 }
-

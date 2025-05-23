@@ -40,4 +40,10 @@ public class AdminTransactionController {
         auditService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{id}/hard")
+    public ResponseEntity<Void> hardDelete(@PathVariable UUID id) {
+        auditService.hardDelete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

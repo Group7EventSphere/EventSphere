@@ -23,6 +23,7 @@ public class PaymentService {
                 .type(saved.getType())
                 .status(status)
                 .createdAt(saved.getCreatedAt())
+                .requestId(saved.getId())
                 .build();
         return txRepo.save(tx);
     }

@@ -24,7 +24,7 @@ public class ReviewController {
 
     @PostMapping("/create/{eventId}")
     public ResponseEntity<Review> create(
-            @PathVariable Long eventId,
+            @PathVariable int eventId,
             @RequestBody Review review,
             @AuthenticationPrincipal User user
     ) {
@@ -45,7 +45,7 @@ public class ReviewController {
     }
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<Review>> getByEventId(@PathVariable Long eventId) {
+    public ResponseEntity<List<Review>> getByEventId(@PathVariable int eventId) {
         return ResponseEntity.ok(service.findByEventId(eventId));
     }
 

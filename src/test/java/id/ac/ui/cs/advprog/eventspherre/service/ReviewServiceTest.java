@@ -25,8 +25,8 @@ class ReviewServiceTest {
 
     @Test
     void createAndSave() {
-        Review toSave = new Review(1L, 2L, "Nice!", 5);
-        Review saved  = new Review(1L, 2L, "Nice!", 5);
+        Review toSave = new Review(1, 2L, "Nice!", 5);
+        Review saved  = new Review(1, 2L, "Nice!", 5);
         saved.setId(42L);
 
         when(repo.save(toSave)).thenReturn(saved);
@@ -39,9 +39,9 @@ class ReviewServiceTest {
 
     @Test
     void createDuplicate_throwsIllegalArgumentException() {
-        Review dup = new Review(1L, 2L, "Dup", 4);
-        when(repo.findByAttendeeIdAndEventId(2L, 1L))
-                .thenReturn(Optional.of(new Review(1L, 2L, "Old", 5)));
+        Review dup = new Review(1, 2L, "Dup", 4);
+        when(repo.findByAttendeeIdAndEventId(2L, 1))
+                .thenReturn(Optional.of(new Review(1, 2L, "Old", 5)));
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
@@ -53,7 +53,7 @@ class ReviewServiceTest {
 
     @Test
     void createInvalidThrows() {
-        Review bad = new Review(1L, 2L, "", 8);
+        Review bad = new Review(1, 2L, "", 8);
         assertThrows(IllegalArgumentException.class,
                 () -> svc.create(bad));
         verify(repo, never()).save(any());
@@ -61,7 +61,7 @@ class ReviewServiceTest {
 
     @Test
     void findById() {
-        Review r = new Review(1L, 2L, "OK", 4);
+        Review r = new Review(1, 2L, "OK", 4);
         r.setId(5L);
         when(repo.findById(5L)).thenReturn(Optional.of(r));
 
@@ -72,9 +72,9 @@ class ReviewServiceTest {
 
     @Test
     void updateReview() {
-        Review original = new Review(1L, 2L, "Old", 2);
+        Review original = new Review(1, 2L, "Old", 2);
         original.setId(10L);
-        Review update = new Review(1L, 2L, "New", 4);
+        Review update = new Review(1, 2L, "New", 4);
 
         when(repo.findById(10L)).thenReturn(Optional.of(original));
         when(repo.save(original)).thenReturn(original);
@@ -89,15 +89,15 @@ class ReviewServiceTest {
     void updateNonExistingThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());
         assertThrows(NoSuchElementException.class,
-                () -> svc.update(99L, new Review(0L,0L,"X",1)));
+                () -> svc.update(99L, new Review(0,0L,"X",1)));
     }
 
     @Test
     void updateInvalid_throwsIllegalArgument() {
-        Review existing = new Review(1L, 2L, "Okay", 3);
+        Review existing = new Review(1, 2L, "Okay", 3);
         existing.setId(11L);
         // invalid new data: rating out of bounds
-        Review bad = new Review(1L, 2L, "Bad", 10);
+        Review bad = new Review(1, 2L, "Bad", 10);
 
         when(repo.findById(11L)).thenReturn(Optional.of(existing));
         assertThrows(IllegalArgumentException.class,

@@ -8,14 +8,14 @@ public class ReviewValidatorTest {
 
     @Test
     public void testValidReview() {
-        Review review = new Review(1L, 101L, "Excellent event!", 5);
+        Review review = new Review(1, 101L, "Excellent event!", 5);
         DefaultReviewValidator validator = new DefaultReviewValidator();
         assertTrue(validator.isValid(review));
     }
 
     @Test
     public void testInvalidReviewEmptyText() {
-        Review review = new Review(1L, 101L, "", 5);
+        Review review = new Review(1, 101L, "", 5);
         DefaultReviewValidator validator = new DefaultReviewValidator();
         assertFalse(validator.isValid(review));
         assertEquals("Invalid review: Review text cannot be empty and rating must be between 1 and 5.", validator.getErrorMessage());
@@ -23,7 +23,7 @@ public class ReviewValidatorTest {
 
     @Test
     public void testInvalidReviewRatingOutOfRange() {
-        Review review = new Review(1L, 101L, "Not bad", 8);
+        Review review = new Review(1, 101L, "Not bad", 8);
         DefaultReviewValidator validator = new DefaultReviewValidator();
         assertFalse(validator.isValid(review));
     }
