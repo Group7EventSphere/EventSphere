@@ -4,17 +4,19 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <title>Admin Audit Dashboard</title>
-    <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"
-            rel="stylesheet"/>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"
+          rel="stylesheet"/>
 </head>
 <body>
+
 <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
-        <span class="navbar-brand">Audit Dashboard</span>
+        <span class="navbar-brand">Audit&nbsp;Dashboard</span>
+
         <div class="text-white">
             <label class="me-2">
-                Show All <input type="checkbox" id="showAllToggle"/>
+                Show&nbsp;All&nbsp;<input type="checkbox" id="showAllToggle"/>
             </label>
             <button class="btn btn-sm btn-outline-light" id="refreshBtn">Refresh</button>
         </div>
@@ -23,10 +25,10 @@
 
 <div class="container mt-4">
     <table class="table table-striped table-sm" id="txTable">
-        <thead>
+        <thead class="table-dark">
         <tr>
-            <th>ID</th><th>User ID</th><th>Amount</th>
-            <th>Type</th><th>Status</th><th>Created At</th><th>Actions</th>
+            <th>ID</th><th>User&nbsp;ID</th><th>Amount</th>
+            <th>Type</th><th>Status</th><th>Created&nbsp;At</th><th style="width:210px;">Actions</th>
         </tr>
         </thead>
         <tbody></tbody>
@@ -34,62 +36,70 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    // Thymeleaf will replace this with the actual URL at render time
-    const base = /*[[ @{/api/v1/admin/transactions} ]]*/ '/api/v1/admin/transactions';
-    /*]]>*/
 
-    const tbody      = document.querySelector('#txTable tbody');
-    const toggle     = document.getElementById('showAllToggle');
-    const refreshBtn = document.getElementById('refreshBtn');
+<script th:inline="javascript">
+/*<![CDATA[*/
+    /** Backend base URL is resolved by Thymeleaf when rendered */
+    const BASE = /*[[ @{/api/v1/admin/transactions} ]]*/ '/api/v1/admin/transactions';
+/*]]>*/
+
+    const tbody   = document.querySelector('#txTable tbody');
+    const toggle  = document.getElementById('showAllToggle');
+    const refresh = document.getElementById('refreshBtn');
 
     async function loadData() {
-        const url = toggle.checked ? `${base}?all=true` : base;
-        const res = await fetch(url, {
-            headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) {
-            console.error('Failed to fetch transactions', res.status);
-            return;
-        }
-        const dtos = await res.json();  // Expecting PaymentTransactionDTO[]
+        const url = toggle.checked ? `${BASE}?all=true` : BASE;
+        const res = await fetch(url, { headers: { Accept:'application/json' } });
+        if (!res.ok) { console.error('Failed to fetch', res.status); return; }
+
+        const rows = await res.json();             // PaymentTransactionDTO[]
         tbody.innerHTML = '';
 
-        dtos.forEach(dto => {
+        rows.forEach(dto => {
             const { id, userId, amount, type, status, createdAt } = dto;
-            const tr = document.createElement('tr');
+
+            const tr      = document.createElement('tr');
+            const created = new Date(createdAt).toLocaleString();
+
             tr.innerHTML = `
-        <td>${id}</td>
-        <td>${userId}</td>
-        <td>${amount.toFixed(2)}</td>
-        <td>${type}</td>
-        <td>${status}</td>
-        <td>${new Date(createdAt).toLocaleString()}</td>
-        <td>
-          <button class="btn btn-warning btn-sm me-1"
-                  onclick="markFailed('${id}')">Fail</button>
-          <button class="btn btn-danger btn-sm"
-                  onclick="softDelete('${id}')">Delete</button>
-        </td>`;
+  <td>${id}</td>
+  <td>${userId}</td>
+  <td>${amount.toFixed(2)}</td>
+  <td>${type}</td>
+  <td>${status}</td>
+  <td>${created}</td>
+  <td class="d-flex gap-1">
+      <button class="btn btn-warning btn-sm flex-fill"
+              onclick="markFailed('${id}')">Fail</button>
+      <button class="btn btn-danger  btn-sm flex-fill"
+              onclick="softDelete('${id}')">Soft&nbsp;Delete</button>
+      <button class="btn btn-outline-danger btn-sm flex-fill"
+              onclick="hardDelete('${id}')">Hard&nbsp;Delete</button>
+  </td>`;
             tbody.appendChild(tr);
         });
     }
 
     async function markFailed(id) {
-        await fetch(`${base}/${id}/failed`, { method: 'PUT' });
+        await fetch(`${BASE}/${id}/failed`, { method:'PUT' });
         loadData();
     }
 
     async function softDelete(id) {
-        await fetch(`${base}/${id}`, { method: 'DELETE' });
+        await fetch(`${BASE}/${id}`, { method:'DELETE' });
         loadData();
     }
 
-    toggle.addEventListener('change', loadData);
-    refreshBtn.addEventListener('click', loadData);
+    async function hardDelete(id) {
+        await fetch(`${BASE}/${id}/hard`, { method:'DELETE' });
+        loadData();
+    }
 
-    loadData();
+
+    toggle .addEventListener('change', loadData);
+    refresh.addEventListener('click',   loadData);
+
+    loadData();               // initial bootstrap
 </script>
 </body>
 </html>
