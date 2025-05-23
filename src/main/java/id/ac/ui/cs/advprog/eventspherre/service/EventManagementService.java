@@ -51,7 +51,7 @@ public class EventManagementService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public Event updateEvent(int id, String title, String description,
-                             String eventDate, String location, Integer organizerId) {
+                             String eventDate, String location, Integer organizerId, boolean aPublic) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
         if (optionalEvent.isPresent()) {
             Event event = optionalEvent.get();
@@ -82,5 +82,10 @@ public class EventManagementService {
     // Optional: for test cleanup
     public void clearAllEvents() {
         eventRepository.deleteAll();
+    }
+
+    public Event getEventById(Integer eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new NoSuchElementException("Event not found with ID: " + eventId));
     }
 }

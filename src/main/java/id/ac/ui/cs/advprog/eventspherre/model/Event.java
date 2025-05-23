@@ -67,5 +67,13 @@ public class Event {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+
+    public Integer getCapacity() {
+        return (Integer) details.getOrDefault("capacity", 0);
+    }
+
+    public boolean isPublic() {
+        return (Boolean) details.getOrDefault("isPublic", false);
+    }
 }
 
