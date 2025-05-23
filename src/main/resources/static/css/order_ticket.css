@@ -1,0 +1,149 @@
+.order-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.order-sidebar {
+    margin-top: 40px;
+    width: 200px;
+    background-color: #e0e0e0;
+    padding: 20px;
+}
+
+.order-sidebar a {
+    display: block;
+    margin-bottom: 15px;
+    text-decoration: none;
+    color: #000;
+    font-weight: bold;
+}
+
+.order-sidebar a:hover {
+    background-color: #cfcfcf;  /* darker grey */
+    border-radius: 5px;
+    padding-left: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.order-main {
+    flex: 1;
+    padding: 40px 60px;
+    background-color: #fff;
+}
+
+.order-main h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.order-card {
+    background-color: #e4e4e4;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.order-card.highlight {
+    border: 2px solid #007BFF;
+    background-color: #fff;
+}
+
+.order-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.order-price {
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.order-status {
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.order-status.success {
+    color: #10b981;
+}
+
+.order-status.failed {
+    color: #ef4444;
+}
+
+.order-status.upcoming {
+    color: #6b7280;
+}
+
+.order-details {
+    text-align: right;
+}
+
+.order-details a {
+    color: #007BFF;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.order-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.order-price {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.order-line {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.order-status.success {
+    color: #10b981;
+}
+
+.order-status.failed {
+    color: #ef4444;
+}
+
+.order-status.upcoming {
+    color: #6b7280;
+}
+
+.order-date {
+    color: #333;
+}
+
+.order-card {
+    display: flex;
+    flex-direction: column;
+    background-color: #e4e4e4;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.order-card.highlight {
+    border: 2px solid #007BFF;
+    background-color: white;
+}
+
+.order-details {
+    text-align: right;
+}
+
+.order-details a {
+    color: #007BFF;
+    font-weight: bold;
+    text-decoration: none;
+}

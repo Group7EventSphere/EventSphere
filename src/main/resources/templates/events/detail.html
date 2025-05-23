@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${event.title} + ' - EventSphere'">Event Details</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Include the navbar fragment -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="main-content with-navbar">
+    <div class="container event-detail-container">
+        <h1 class="event-title" th:text="${event.title}">Event Title</h1>
+
+        <!-- Display error message if present -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}">
+            Error message goes here
+        </div>
+
+        <div class="event-meta">
+            <p class="event-date"><strong>Date:</strong> <span th:text="${#temporals.format(event.eventDate, 'dd MMMM yyyy')}">Event Date</span></p>
+            <p class="event-location"><strong>Location:</strong> <span th:text="${event.location}">Location</span></p>
+        </div>
+
+        <div class="event-description-full">
+            <h2>Description</h2>
+            <p th:text="${event.description}">Full event description goes here.</p>
+        </div>
+
+        <!-- Ticket types section -->
+        <div class="ticket-info" th:if="${not #lists.isEmpty(ticketTypes)}">
+            <h2>Tickets</h2>
+            <div class="ticket-types-grid">
+                <div class="ticket-type-card" th:each="ticketType : ${ticketTypes}">
+                    <h3 class="ticket-type-name" th:text="${ticketType.name}">Ticket Name</h3>
+                    <p class="ticket-type-price" th:text="${'Rp' + #numbers.formatDecimal(ticketType.price, 0, 'COMMA', 0, 'POINT')}">Rp100,000</p>
+                    <p class="ticket-type-quota" th:text="${'Available: ' + ticketType.quota}">Available: 100</p>
+                    <form th:if="${ticketType.quota > 0}" th:action="@{/tickets/purchase}" method="post" class="ticket-purchase-form">
+                        <input type="hidden" name="ticketTypeId" th:value="${ticketType.id}" />
+                        <div class="form-group">
+                            <label for="quantity">Quantity:</label>
+                            <input type="number" id="quantity" name="quantity" min="1" th:max="${ticketType.quota}" value="1" class="form-control" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Purchase</button>
+                    </form>
+                    <p class="ticket-sold-out" th:if="${ticketType.quota <= 0}">Sold Out</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- No tickets available message -->
+        <div class="ticket-info" th:if="${#lists.isEmpty(ticketTypes)}">
+            <h2>Tickets</h2>
+            <p>Ticket information will be available soon.</p>
+        </div>
+
+        <div class="event-actions">
+            <!-- Edit event link, visible only to authorized users -->
+            <a th:href="@{/events/edit/{id}(id=${event.id})}" class="btn btn-primary" sec:authorize="hasRole('ROLE_ADMIN')">Edit Event</a>
+            <a th:href="@{/events}" class="btn btn-secondary">Back to Events</a>
+        </div>
+    </div>
+</div>
+
+<!-- Include the footer fragment -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

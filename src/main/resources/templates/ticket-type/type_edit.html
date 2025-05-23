@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Ticket Type</title>
+    <link rel="stylesheet" th:href="@{/css/ticketType-form.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="ticketType-container">
+    <div class="ticketType-backContainer">
+        <a href="javascript:history.back()" class="ticketType-backButton">← Back</a>
+    </div>
+
+    <h2 class="ticketType-title">Edit Ticket Type</h2>
+    <hr class="ticketType-divider"/>
+
+    <form th:action="@{/ticket-types/edit/{id}(id=${ticketType.id})}" th:object="${ticketType}" method="post" class="ticketType-form">
+        <div class="ticketType-group">
+            <label for="event">Event:</label>
+            <input type="text" id="event" name="event" disabled placeholder="(not editable)">
+        </div>
+
+        <div class="ticketType-group">
+            <label for="name">Name of Type:</label>
+            <input type="text" th:field="*{name}" required>
+        </div>
+
+        <div class="ticketType-group">
+            <label for="price">Price (IDR):</label>
+            <input type="number" th:field="*{price}" step="1" required>
+        </div>
+
+        <div class="ticketType-group">
+            <label for="quota">Quota:</label>
+            <input type="number" th:field="*{quota}" required>
+        </div>
+
+        <div class="ticketType-buttonContainer">
+            <button type="submit" class="ticketType-button">Update</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

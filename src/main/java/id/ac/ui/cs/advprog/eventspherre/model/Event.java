@@ -7,7 +7,6 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 
 @Getter @Setter
 @NoArgsConstructor
@@ -15,8 +14,8 @@ import java.util.UUID;
 @Table(name = "events")
 public class Event {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @Column(nullable = false)
     private String title;
@@ -40,10 +39,10 @@ public class Event {
     private Instant updatedAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column
     private Map<String, Object> details;
 
-    public Event(UUID id, Map<String, Object> details) {
+    public Event(Integer id, Map<String, Object> details) {
         this.id = id;
         this.details = details;
 
@@ -68,4 +67,13 @@ public class Event {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+
+    public Integer getCapacity() {
+        return (Integer) details.getOrDefault("capacity", 0);
+    }
+
+    public boolean isPublic() {
+        return (Boolean) details.getOrDefault("isPublic", false);
+    }
 }
+
