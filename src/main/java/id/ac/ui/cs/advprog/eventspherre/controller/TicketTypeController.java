@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -103,5 +104,13 @@ public class TicketTypeController {
         ticketTypeService.updateTicketType(id, updatedTicketType, currentUser);
 
         return "redirect:/ticket-types";
+    }
+
+    @GetMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<TicketType> getTicketType(@PathVariable UUID id) {
+        return ticketTypeService.getTicketTypeById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
