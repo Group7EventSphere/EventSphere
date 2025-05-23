@@ -3,10 +3,12 @@ package id.ac.ui.cs.advprog.eventspherre.service;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EventManagementService {
@@ -19,8 +21,9 @@ public class EventManagementService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public Event createEvent(String title, String description, String eventDate,
-                             String location, Integer organizerId) {
+    @Async
+    public CompletableFuture<Event> createEvent(String title, String description, String eventDate,
+                                                String location, Integer organizerId) {
         Map<String, Object> details = new HashMap<>();
         details.put("title", title);
         details.put("description", description);
@@ -36,7 +39,7 @@ public class EventManagementService {
         event.setLocation(location);
         event.setOrganizerId(organizerId);
 
-        return eventRepository.save(event);
+        return CompletableFuture.completedFuture(eventRepository.save(event));
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
@@ -89,3 +92,4 @@ public class EventManagementService {
                 .orElseThrow(() -> new NoSuchElementException("Event not found with ID: " + eventId));
     }
 }
+

@@ -18,6 +18,9 @@ import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -131,66 +134,43 @@ public class EventController {
     }
 
     @PostMapping("/create")
-    public String createEvent(@ModelAttribute("eventForm") EventForm eventForm,
-                              Principal principal,
-                              RedirectAttributes ra) {
-        User currentUser = null;
-        try {
-            currentUser = userService.getUserByEmail(principal.getName());
+    public Callable<String> createEvent(@ModelAttribute("eventForm") EventForm eventForm,
+                                        Principal principal,
+                                        RedirectAttributes ra) {
+        return () -> {
+            User currentUser = null;
+            try {
+                currentUser = userService.getUserByEmail(principal.getName());
 
-            // This line will cause a NullPointerException if currentUser is null,
-            // which is the scenario set up by the createEvent_shouldDenyAccessForNonOrganizers test.
-            // The variable name "currentUser" is used to match the expected NPE message in the test.
-            Integer organizerId = currentUser.getId();
+                Integer organizerId = currentUser.getId();
 
-            // Role check for users who are found (not null)
-            if (currentUser.getRole() != User.Role.ORGANIZER && currentUser.getRole() != User.Role.ADMIN) {
-                ra.addFlashAttribute("errorMessage", "You are not authorized to create events.");
+                // Role check for users who are found (not null)
+                if (currentUser.getRole() != User.Role.ORGANIZER && currentUser.getRole() != User.Role.ADMIN) {
+                    ra.addFlashAttribute("errorMessage", "You are not authorized to create events.");
+                    return "redirect:/events/create";
+                }
+
+                CompletableFuture<Event> futureEvent = eventManagementService.createEvent(
+                        eventForm.getTitle(),
+                        eventForm.getDescription(),
+                        eventForm.getEventDate(),
+                        eventForm.getLocation(),
+                        organizerId
+                );
+
+                futureEvent.get();
+
+                ra.addFlashAttribute("successMessage", "Event created successfully!");
+                return "redirect:/events/manage";
+
+            } catch (NullPointerException e) {
+                logger.log(Level.WARNING, "NullPointerException during event creation by principal " + (principal != null ? principal.getName() : "null") + ": " + e.getMessage(), e);
+                ra.addFlashAttribute("errorMessage", e.getMessage());
                 return "redirect:/events/create";
-            }
-
-            eventManagementService.createEvent(
-                    eventForm.getTitle(),
-                    eventForm.getDescription(),
-                    eventForm.getEventDate(),
-                    eventForm.getLocation(),
-                    organizerId
-                    // Note: capacity, isPublic, and ticketTypes from eventForm are not passed here
-                    // to align with the 5-argument mock in the createEvent_shouldRedirectAfterCreation test.
-                    // If these are needed, the service method and its mock should be updated.
-            );
-            ra.addFlashAttribute("successMessage", "Event created successfully!");
-            return "redirect:/events/manage";
-
-        } catch (NullPointerException e) {
-            // This catch block is specifically for the test createEvent_shouldDenyAccessForNonOrganizers
-            logger.log(Level.WARNING, "NullPointerException during event creation by principal " + (principal != null ? principal.getName() : "null") + ": " + e.getMessage(), e);
-            ra.addFlashAttribute("errorMessage", e.getMessage()); // e.getMessage() will be the NPE detail string
-            return "redirect:/events/create";
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error creating event by principal " + (principal != null ? principal.getName() : "null") + ": " + e.getMessage(), e);
-            ra.addFlashAttribute("errorMessage", "Could not create event: " + e.getMessage());
-            return "redirect:/events/create";
-        }
-    }
-
-    // --- Form backing objects ---
-
-    public static class EventForm {
-        @Getter @Setter private String title;
-        @Getter @Setter private String description;
-        @Getter @Setter private String location;
-        @Getter @Setter private String eventDate;
-        @Getter @Setter private Integer capacity;
-        @Getter @Setter private boolean isPublic;
-        @Getter @Setter private List<TicketTypeForm> ticketTypes = new ArrayList<>();
-    }
-
-    @Getter @Setter
-    public static class TicketTypeForm {
-        private String name;
-        private BigDecimal price;
-        private Integer availableSeats;
-        private String description;
-    }
-}
+            } catch (InterruptedException | ExecutionException e) {
+                Throwable cause = e.getCause();
+                String errorMessage = (cause != null && cause.getMessage() != null) ? cause.getMessage() : e.getMessage();
+                if (errorMessage == null && cause != null) {
+                    errorMessage = "An unexpected error occurred during event creation: " + cause.getClass().getSimpleName();
+                } else if (errorMessage == null) {
+                    errorMessage = "An unexpected error occurred during event creation: " + e.getClass().getSimple
