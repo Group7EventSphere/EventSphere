@@ -17,32 +17,34 @@
 
     <main class="ticketType-main">
         <h2 class="ticketType-title">Available Tickets</h2>
-        <table class="ticketType-table">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Quota</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="ticketType : ${ticketTypes}">
-                <td th:text="${ticketType.name}">VIP</td>
-                <td th:text="${ticketType.price}">100.00</td>
-                <td th:text="${ticketType.quota}">1</td>
-                <td>
-                    <div class="action-buttons">
-                        <a th:href="@{/ticket-types/edit/{id}(id=${ticketType.id})}" class="btn-action btn-edit">Edit</a>
-                        <form th:action="@{/ticket-types/delete/{id}(id=${ticketType.id})}" method="post" style="display:inline;">
-                            <input type="hidden" name="_method" value="delete"/>
-                            <button type="submit" class="btn-action btn-delete">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+
+        <div class="ticketType-pagination-wrapper">
+            <div class="ticketType-card-container">
+                <div class="ticketType-card"
+                     th:each="entry, stat : ${eventTicketList}"
+                     th:attr="data-page=${stat.index / 6}">
+                    <h3 class="ticketType-event-name">
+                        <a th:href="@{/events/{eventId}/ticket-types(eventId=${entry.event.id})}"
+                           th:text="${entry.event.title}">Event A</a>
+                    </h3>
+                    <ul class="ticketType-list">
+                        <li th:each="type : ${entry.ticketTypes}" class="ticketType-item">
+                            <span>
+                                <span th:text="${type.name}">VIP</span>
+                                <span class="ticketType-quota" th:text="'(' + ${type.quota} + ' left)'">(50 left)</span>
+                            </span>
+                            <span class="ticketType-price" th:text="'IDR ' + ${#numbers.formatInteger(type.price, 0, 'COMMA')}">IDR 500,000</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ticketType-pagination">
+                <button class="page-btn" onclick="changePage(-1)">‹</button>
+                <span id="pagination-indicator">Page 1</span>
+                <button class="page-btn" onclick="changePage(1)">›</button>
+            </div>
+        </div>
     </main>
 </div>
 
@@ -62,11 +64,38 @@
         if (modal) {
             modal.style.display = 'flex';
         }
+        updatePagination();
     });
 
     function closeModal() {
         const modal = document.getElementById('messageModal');
         if (modal) modal.style.display = 'none';
+    }
+
+    let currentPage = 0;
+    const cardsPerPage = 6;
+
+    function updatePagination() {
+        const cards = document.querySelectorAll('.ticketType-card');
+        const totalPages = Math.ceil(cards.length / cardsPerPage);
+
+        cards.forEach(card => {
+            const page = parseInt(card.getAttribute('data-page'));
+            card.style.display = (page === currentPage) ? 'flex' : 'none';
+        });
+
+        document.getElementById('pagination-indicator').innerText = `Page ${currentPage + 1}`;
+    }
+
+    function changePage(direction) {
+        const cards = document.querySelectorAll('.ticketType-card');
+        const totalPages = Math.ceil(cards.length / cardsPerPage);
+        currentPage += direction;
+
+        if (currentPage < 0) currentPage = 0;
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+
+        updatePagination();
     }
 </script>
 
