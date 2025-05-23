@@ -42,6 +42,14 @@ public class EventTest {
             eventToStoreAndReturn.setLocation(eventArg.getLocation());
             eventToStoreAndReturn.setOrganizerId(eventArg.getOrganizerId());
 
+            // Ensure details map is initialized for the event being stored/returned by the mock
+            if (eventToStoreAndReturn.getDetails() == null) {
+                eventToStoreAndReturn.setDetails(new HashMap<>());
+            }
+            // Persist the isPublic status from eventArg into eventToStoreAndReturn's details map
+            // eventArg.isPublic() will get the value from eventArg's details map.
+            eventToStoreAndReturn.getDetails().put("isPublic", eventArg.isPublic());
+
             eventDatabase.put(currentId, eventToStoreAndReturn);
             return eventToStoreAndReturn;
         });
@@ -82,9 +90,10 @@ public class EventTest {
         assertNotNull(event);
         assertNotNull(event.getId());
         int eventId = event.getId();
+        boolean originalIsPublic = event.isPublic(); // Store original isPublic status
 
         Event updated = eventManager.updateEvent(
-                eventId, "Updated Event", "Updated Description", "2025-01-01", "Bandung", 2);
+                eventId, "Updated Event", "Updated Description", "2025-01-01", "Bandung", 2, originalIsPublic); // Use stored originalIsPublic
         assertNotNull(updated);
         assertEquals(eventId, updated.getId());
         assertEquals("Updated Event", updated.getTitle());
@@ -92,10 +101,16 @@ public class EventTest {
         assertEquals("2025-01-01", updated.getEventDate());
         assertEquals("Bandung", updated.getLocation());
         assertEquals(2, updated.getOrganizerId());
+        assertEquals(originalIsPublic, updated.isPublic()); // Assert isPublic on the 'updated' object
 
         Event retrievedEvent = eventManager.getEvent(eventId);
         assertNotNull(retrievedEvent);
         assertEquals("Updated Event", retrievedEvent.getTitle());
+        assertEquals("Updated Description", retrievedEvent.getDescription()); // Added assertion
+        assertEquals("2025-01-01", retrievedEvent.getEventDate()); // Added assertion
+        assertEquals("Bandung", retrievedEvent.getLocation()); // Added assertion
+        assertEquals(2, retrievedEvent.getOrganizerId()); // Added assertion
+        assertEquals(originalIsPublic, retrievedEvent.isPublic()); // Added assertion for isPublic
     }
 
     @Test
