@@ -68,7 +68,10 @@ public class TicketTypeController {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
 
+        List<Event> events = eventManagementService.getAllEvents();
+        model.addAttribute("events", events);
         model.addAttribute("ticketType", new TicketType());
+        model.addAttribute("isGeneralForm", Boolean.TRUE);
         return "ticket-type/type_form";
     }
 
@@ -76,10 +79,13 @@ public class TicketTypeController {
     public String createTicketType(@RequestParam String name,
                                    @RequestParam BigDecimal price,
                                    @RequestParam int quota,
+                                   @RequestParam int eventId,
                                    Principal principal) {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
-        ticketTypeService.create(name, price, quota, user);
+
+        ticketTypeService.create(name, price, quota, user, eventId);
+
         return "redirect:/ticket-types";
     }
 

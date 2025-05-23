@@ -55,6 +55,7 @@ public class TicketTypeViewController {
 
         model.addAttribute("event", event);
         model.addAttribute("ticketType", new TicketType());
+        model.addAttribute("isGeneralForm", false);
         return "ticket-type/type_form";
     }
 
@@ -72,7 +73,7 @@ public class TicketTypeViewController {
         }
 
         User user = userService.getUserByEmail(principal.getName());
-        TicketType ticketType = ticketTypeService.create(name, price, quota, user);
+        TicketType ticketType = ticketTypeService.create(name, price, quota, user, eventId);
 
         // Associate ticket type with event
         ticketTypeService.associateWithEvent(ticketType.getId(), eventId);

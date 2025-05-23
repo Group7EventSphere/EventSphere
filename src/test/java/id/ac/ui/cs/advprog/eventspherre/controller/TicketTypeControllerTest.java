@@ -102,6 +102,7 @@ class TicketTypeControllerTest {
                         .param("name", "Premium")
                         .param("price", "200.00")
                         .param("quota", "20")
+                        .param("eventId", "1")
                         .principal(() -> "admin@example.com"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ticket-types"));
@@ -110,7 +111,8 @@ class TicketTypeControllerTest {
                 eq("Premium"),
                 eq(new BigDecimal("200.00")),
                 eq(20),
-                eq(mockUser)
+                eq(mockUser),
+                eq(1)
         );
     }
 

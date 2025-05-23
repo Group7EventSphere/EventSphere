@@ -22,7 +22,7 @@
 /* Medium screens: slightly narrower */
 @media (max-width: 992px) {
     .ticketType-sidebar {
-        width: 200px;
+        width: 225px;
     }
 }
 
@@ -270,4 +270,22 @@
     font-weight: bold;
     font-size: 16px;
 }
+
+.ticketType-button {
+    align-items: center;
+    margin-top: 20px;
+    display: inline-block;
+    padding: 10px 16px;
+    background-color: #72c2a4;
+    color: white;
+    border-radius: 6px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.ticketType-button:hover {
+    background-color: #2b6c4f;
+}
+
 
