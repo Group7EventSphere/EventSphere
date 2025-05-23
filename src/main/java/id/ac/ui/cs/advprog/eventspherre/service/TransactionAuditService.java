@@ -10,4 +10,5 @@ public interface TransactionAuditService {
     List<PaymentTransaction> getAll();          // full audit
     void flagFailed(UUID id);
     void softDelete(UUID id);
+    void hardDelete  (UUID id);
 }
