@@ -95,7 +95,7 @@
 
             async function fetchTicketDetails(ticketTypeId) {
                 try {
-                    const response = await fetch(`/api/ticket-types/${ticketTypeId}`);
+                    const response = await fetch(`/tickets/${ticketTypeId}`);
                     if (!response.ok) throw new Error("Ticket type not found");
                     const data = await response.json();
                     priceDisplay.textContent = data.price.toLocaleString("en-US", { style: "currency", currency: "IDR" });
