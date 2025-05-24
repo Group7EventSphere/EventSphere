@@ -31,10 +31,10 @@ class TicketServiceTest {
     @InjectMocks
     private TicketServiceImpl ticketService;
 
-    private User user;
-    private User adminUser;
-    private Ticket sampleTicket;
-    private UUID ticketId;
+    private User    user;
+    private User    adminUser;
+    private Ticket  sampleTicket;
+    private UUID    ticketId;
 
     @BeforeEach
     void setUp() {
@@ -206,5 +206,94 @@ class TicketServiceTest {
         assertEquals(3, created.size());
         verify(ticketRepository, times(3)).save(any(Ticket.class));
         assertEquals(7, type.getQuota()); // 10 - 3
+    }
+
+    @Test
+    @DisplayName("createTicket - should throw when attendee is null")
+    void createTicket_shouldThrow_whenAttendeeIsNull() {
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(sampleTicket.getTicketType());
+        ticket.setAttendee(null); // null attendee
+
+        when(ticketTypeRepository.findById(any())).thenReturn(Optional.of(sampleTicket.getTicketType()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                ticketService.createTicket(ticket, 1)
+        );
+
+        assertEquals("Attendee must be specified with a valid user ID", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createTicket - should throw when attendee has null ID")
+    void createTicket_shouldThrow_whenAttendeeIdIsNull() {
+        User invalidUser = new User(); // id is null
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(sampleTicket.getTicketType());
+        ticket.setAttendee(invalidUser);
+
+        when(ticketTypeRepository.findById(any())).thenReturn(Optional.of(sampleTicket.getTicketType()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                ticketService.createTicket(ticket, 1)
+        );
+
+        assertEquals("Attendee must be specified with a valid user ID", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createTicket - should throw when attendee ID <= 0")
+    void createTicket_shouldThrow_whenAttendeeIdIsZeroOrNegative() {
+        User invalidUser = new User();
+        invalidUser.setId(0); // invalid ID
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(sampleTicket.getTicketType());
+        ticket.setAttendee(invalidUser);
+
+        when(ticketTypeRepository.findById(any())).thenReturn(Optional.of(sampleTicket.getTicketType()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                ticketService.createTicket(ticket, 1)
+        );
+
+        assertEquals("Attendee must be specified with a valid user ID", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("deleteTicketsByTicketTypeId - should call repository delete method")
+    void deleteTicketsByTicketTypeId_shouldCallRepository() {
+        UUID ticketTypeId = UUID.randomUUID();
+
+        ticketService.deleteTicketsByTicketTypeId(ticketTypeId);
+
+        verify(ticketRepository, times(1)).deleteByTicketTypeId(ticketTypeId);
+    }
+
+    @Test
+    @DisplayName("updateTicket - should update and save when ticket exists")
+    void updateTicket_shouldUpdateAndSave_whenTicketExists() {
+        TicketType newType = new TicketType("Updated", new BigDecimal("150.00"), 50);
+        Ticket updated = new Ticket(newType, user, "NEW-CODE");
+
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(sampleTicket)); // Ticket found
+        when(ticketRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Ticket result = ticketService.updateTicket(ticketId, updated);
+
+        assertEquals(newType, result.getTicketType());
+        assertEquals("NEW-CODE", result.getConfirmationCode());
+        verify(ticketRepository).save(sampleTicket);
+    }
+
+    @Test
+    @DisplayName("updateTicket - should throw when ticket not found")
+    void updateTicket_shouldThrow_whenTicketNotFound() {
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                ticketService.updateTicket(ticketId, sampleTicket)
+        );
+
+        assertEquals("Ticket not found", ex.getMessage());
     }
 }
