@@ -38,11 +38,12 @@
                     <h3 class="ticket-type-name" th:text="${ticketType.name}">Ticket Name</h3>
                     <p class="ticket-type-price" th:text="${'Rp' + #numbers.formatDecimal(ticketType.price, 0, 'COMMA', 0, 'POINT')}">Rp100,000</p>
                     <p class="ticket-type-quota" th:text="${'Available: ' + ticketType.quota}">Available: 100</p>
-                    <form th:if="${ticketType.quota > 0}" th:action="@{/tickets/purchase}" method="post" class="ticket-purchase-form">
-                        <input type="hidden" name="ticketTypeId" th:value="${ticketType.id}"/>
+                    <form th:action="@{/tickets/select}" method="post">
+                        <input type="hidden" name="ticketTypeId" th:value="${ticketType.id}" />
+                        <input type="hidden" name="eventId" th:value="${event.id}" />
                         <div class="form-group">
-                            <label for="quantity">Quantity:</label>
-                            <input type="number" id="quantity" name="quantity" min="1" th:max="${ticketType.quota}" value="1" class="form-control" />
+                            <label>Quantity:</label>
+                            <input type="number" name="quota" min="1" th:max="${ticketType.quota}" value="1" class="form-control" />
                         </div>
                         <button type="submit" class="btn btn-primary">Purchase</button>
                     </form>
