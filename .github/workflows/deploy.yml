@@ -38,9 +38,12 @@ jobs:
       - name: Push to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/eventsphere:latest
 
+
   deploy:
-    name: Deploy on EC2 (self-hosted runner)
-    runs-on: self-hosted
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
     needs: build
     steps:
       - name: Log in to Docker Hub
