@@ -28,7 +28,7 @@
         <thead class="table-dark">
         <tr>
             <th>ID</th><th>User&nbsp;ID</th><th>Amount</th>
-            <th>Type</th><th>Status</th><th>Created&nbsp;At</th><th style="width:210px;">Actions</th>
+            <th>Type</th><th>Status</th><th>Created&nbsp;At</th><th style="width:355px;">Actions</th>
         </tr>
         </thead>
         <tbody></tbody>
@@ -39,7 +39,6 @@
 
 <script th:inline="javascript">
 /*<![CDATA[*/
-    /** Backend base URL is resolved by Thymeleaf when rendered */
     const BASE = /*[[ @{/api/v1/admin/transactions} ]]*/ '/api/v1/admin/transactions';
 /*]]>*/
 
@@ -48,58 +47,63 @@
     const refresh = document.getElementById('refreshBtn');
 
     async function loadData() {
-        const url = toggle.checked ? `${BASE}?all=true` : BASE;
-        const res = await fetch(url, { headers: { Accept:'application/json' } });
+        const url  = toggle.checked ? `${BASE}?all=true` : BASE;
+        const res  = await fetch(url, { headers:{ Accept:'application/json' } });
         if (!res.ok) { console.error('Failed to fetch', res.status); return; }
 
-        const rows = await res.json();             // PaymentTransactionDTO[]
+        const rows = await res.json();          // PaymentTransactionDTO[]
         tbody.innerHTML = '';
 
         rows.forEach(dto => {
             const { id, userId, amount, type, status, createdAt } = dto;
-
-            const tr      = document.createElement('tr');
             const created = new Date(createdAt).toLocaleString();
 
-            tr.innerHTML = `
+            /* buttons */
+            const btnFail     = `<button class="btn btn-warning  btn-sm flex-fill" onclick="markFailed('${id}')">Fail</button>`;
+            const btnUnfail   = `<button class="btn btn-success  btn-sm flex-fill" onclick="unFail('${id}')">Un-Fail</button>`;
+            const btnSoft     = `<button class="btn btn-danger   btn-sm flex-fill" onclick="softDelete('${id}')">Soft&nbsp;Delete</button>`;
+            const btnUnsoft   = `<button class="btn btn-success  btn-sm flex-fill" onclick="unSoftDelete('${id}')">Un-Soft</button>`;
+            const btnHard     = `<button class="btn btn-outline-danger btn-sm flex-fill" onclick="hardDelete('${id}')">Hard&nbsp;Delete</button>`;
+            const btnSuccess  = `<button class="btn btn-primary  btn-sm flex-fill" onclick="markSuccess('${id}')">Success</button>`;
+
+            /* choose visible actions */
+            let actionHTML = '';
+            switch (status) {
+                case 'FAILED':        // already failed → no “Fail” button
+                    actionHTML = `${btnSuccess} ${btnUnfail} ${btnSoft} ${btnHard}`;
+                    break;
+                case 'SOFT_DELETED':  // already soft-deleted → no “Soft Delete” button
+                    actionHTML = `${btnSuccess} ${btnFail} ${btnUnsoft} ${btnHard}`;
+                    break;
+                default:              // ACTIVE or anything else
+                    actionHTML = `${btnFail} ${btnSoft} ${btnHard}`;
+            }
+
+            tbody.insertAdjacentHTML('beforeend', `
+<tr>
   <td>${id}</td>
   <td>${userId}</td>
   <td>${amount.toFixed(2)}</td>
   <td>${type}</td>
   <td>${status}</td>
   <td>${created}</td>
-  <td class="d-flex gap-1">
-      <button class="btn btn-warning btn-sm flex-fill"
-              onclick="markFailed('${id}')">Fail</button>
-      <button class="btn btn-danger  btn-sm flex-fill"
-              onclick="softDelete('${id}')">Soft&nbsp;Delete</button>
-      <button class="btn btn-outline-danger btn-sm flex-fill"
-              onclick="hardDelete('${id}')">Hard&nbsp;Delete</button>
-  </td>`;
-            tbody.appendChild(tr);
+  <td class="d-flex gap-1">${actionHTML}</td>
+</tr>`);
         });
     }
 
-    async function markFailed(id) {
-        await fetch(`${BASE}/${id}/failed`, { method:'PUT' });
-        loadData();
-    }
+    /* REST helpers */
+    async function markFailed   (id){ await fetch(`${BASE}/${id}/failed`,  { method:'PUT' });  loadData(); }
+    async function unFail       (id){ await fetch(`${BASE}/${id}/unfail`,  { method:'PUT' });  loadData(); }
+    async function softDelete   (id){ await fetch(`${BASE}/${id}`,         { method:'DELETE'}); loadData(); }
+    async function unSoftDelete (id){ await fetch(`${BASE}/${id}/restore`, { method:'PUT' });  loadData(); }
+    async function hardDelete   (id){ await fetch(`${BASE}/${id}/hard`,    { method:'DELETE'}); loadData(); }
+    async function markSuccess  (id){ await fetch(`${BASE}/${id}/success`, { method:'PUT' });  loadData(); }
 
-    async function softDelete(id) {
-        await fetch(`${BASE}/${id}`, { method:'DELETE' });
-        loadData();
-    }
-
-    async function hardDelete(id) {
-        await fetch(`${BASE}/${id}/hard`, { method:'DELETE' });
-        loadData();
-    }
-
-
+    /* listeners + first load */
     toggle .addEventListener('change', loadData);
-    refresh.addEventListener('click',   loadData);
-
-    loadData();               // initial bootstrap
+    refresh.addEventListener('click',  loadData);
+    loadData();
 </script>
 </body>
 </html>
