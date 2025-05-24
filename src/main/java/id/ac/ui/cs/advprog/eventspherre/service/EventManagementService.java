@@ -3,12 +3,10 @@ package id.ac.ui.cs.advprog.eventspherre.service;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EventManagementService {
@@ -21,15 +19,16 @@ public class EventManagementService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    @Async
-    public CompletableFuture<Event> createEvent(String title, String description, String eventDate,
-                                                String location, Integer organizerId) {
+    public Event createEvent(String title, String description, String eventDate,
+                             String location, Integer organizerId, Integer capacity, Boolean isPublic) {
         Map<String, Object> details = new HashMap<>();
         details.put("title", title);
         details.put("description", description);
         details.put("date", eventDate);
         details.put("location", location);
         details.put("organizerId", organizerId);
+        details.put("capacity", capacity);
+        details.put("isPublic", isPublic);
 
         Event event = new Event();
         event.setDetails(details);
@@ -38,8 +37,10 @@ public class EventManagementService {
         event.setEventDate(eventDate);
         event.setLocation(location);
         event.setOrganizerId(organizerId);
+        event.setCapacity(capacity);  // Explicitly set capacity
+        event.setPublic(isPublic);    // Explicitly set isPublic
 
-        return CompletableFuture.completedFuture(eventRepository.save(event));
+        return eventRepository.save(event);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
@@ -54,7 +55,7 @@ public class EventManagementService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public Event updateEvent(int id, String title, String description,
-                             String eventDate, String location, Integer organizerId, boolean aPublic) {
+                             String eventDate, String location, Integer capacity, boolean isPublic) {
         Optional<Event> optionalEvent = eventRepository.findById(id);
         if (optionalEvent.isPresent()) {
             Event event = optionalEvent.get();
@@ -63,14 +64,16 @@ public class EventManagementService {
             details.put("description", description);
             details.put("date", eventDate);
             details.put("location", location);
-            details.put("organizerId", organizerId);
+            details.put("capacity", capacity);
+            details.put("isPublic", isPublic);
             event.setDetails(details);
 
             event.setTitle(title);
             event.setDescription(description);
             event.setEventDate(eventDate);
             event.setLocation(location);
-            event.setOrganizerId(organizerId);
+            event.setCapacity(capacity);
+            event.setPublic(isPublic);
             event.setUpdatedAt(java.time.Instant.now());
             return eventRepository.save(event);
         }
