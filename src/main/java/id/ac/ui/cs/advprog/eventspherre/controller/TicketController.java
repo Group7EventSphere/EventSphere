@@ -1,8 +1,10 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,19 +28,28 @@ public class TicketController {
     private final TicketService ticketService;
     private final TicketTypeService ticketTypeService;
     private final UserService userService;
+    private final EventManagementService eventManagementService;
 
-    public TicketController(TicketService ticketService, TicketTypeService ticketTypeService, UserService userService) {
+    public TicketController(TicketService ticketService, TicketTypeService ticketTypeService, UserService userService, EventManagementService eventManagementService) {
         this.ticketService = ticketService;
         this.ticketTypeService = ticketTypeService;
         this.userService = userService;
+        this.eventManagementService = eventManagementService;
     }
 
-    @GetMapping("/select")
-    public String showTicketSelection(Model model, Principal principal) {
+    @GetMapping("/select/{eventId}")
+    public String showTicketSelection(@PathVariable("eventId") int eventId, Model model, Principal principal) {
         User user = userService.getUserByEmail(principal.getName());
-        model.addAttribute("ticket", new Ticket());
-        model.addAttribute("ticketTypes", ticketTypeService.findAll());
-        return "ticket/select";
+        Event event = eventManagementService.getEvent(eventId);
+        if (event == null) {
+            return "redirect:/events"; // or show error page
+        }
+
+        List<TicketType> ticketTypes = ticketTypeService.findByEventId(eventId);
+
+        model.addAttribute("event", event);
+        model.addAttribute("ticketTypes", ticketTypes);
+        return "ticket/select"; // same select.html
     }
 
     @PostMapping("/select")
@@ -58,6 +71,10 @@ public class TicketController {
         TicketType ticketType = ticketTypeService.getTicketTypeById(ticketTypeId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid ticket type ID"));
 
+        Event event = eventManagementService.getEvent(ticketType.getEventId());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        LocalDateTime parsedDate = LocalDateTime.parse(event.getEventDate(), formatter);
+
         // Prepare ticket
         Ticket ticket = new Ticket();
         ticket.setTicketType(ticketType);
@@ -66,6 +83,11 @@ public class TicketController {
         model.addAttribute("ticket", ticket);
         model.addAttribute("quota", quota);
         model.addAttribute("ticketType", ticketType);
+
+        // Handling events
+        model.addAttribute("event", event);
+        model.addAttribute("eventDateFormatted", parsedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy HH:mm")));
+
         return "ticket/create";
     }
 

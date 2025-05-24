@@ -1,23 +1,41 @@
 package id.ac.ui.cs.advprog.eventspherre.command;
 
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentTransactionRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
-/**
- * Marks a transaction as FAILED.
- */
 @RequiredArgsConstructor
 public class FlagFailedCommand implements AuditCommand {
-    private final UUID transactionId;
-    private final PaymentTransactionRepository repo;
 
-    @Override
+    private final UUID                         txId;
+    private final PaymentTransactionRepository txRepo;
+    private final PaymentRequestRepository     reqRepo;
+    private final UserRepository               userRepo;
+
+    @Override @Transactional
     public void execute() {
-        repo.findById(transactionId)
-            .ifPresent(tx -> {
-                tx.setStatus("FAILED");
+        txRepo.findById(txId).ifPresent(tx -> {
+            tx.setStatus("FAILED");
+
+            // fetch exact originating request via FK
+            reqRepo.findById(tx.getRequestId()).ifPresent(req -> {
+                req.setAmount(-req.getAmount());
+                req.setProcessed(false);
+                req.setMessage("ADMIN-FLAG: FAILED");
+                reqRepo.save(req);
             });
+
+            userRepo.findById(tx.getUserId()).ifPresent(u -> {
+                if (tx.getType() == PaymentRequest.PaymentType.TOPUP)
+                    u.deduct(tx.getAmount());   // cancel a top-up
+                else
+                    u.topUp(tx.getAmount());    // refund a purchase
+            });
+        });
     }
 }

@@ -1,7 +1,9 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,6 +42,9 @@ class TicketTypeControllerTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private EventManagementService eventManagementService;
+
     private User mockUser;
 
     @BeforeEach
@@ -53,16 +59,26 @@ class TicketTypeControllerTest {
     @DisplayName("GET /ticket-types should return list view")
     void testListTicketTypes() throws Exception {
         when(userService.getUserByEmail(anyString())).thenReturn(mockUser);
-        when(ticketTypeService.findAll()).thenReturn(List.of(
-                new TicketType("Standard", new BigDecimal("50.00"), 100),
-                new TicketType("VIP", new BigDecimal("150.00"), 10)
-        ));
+
+        Event event = new Event();
+        event.setId(1);
+        event.setTitle("Mock Event");
+
+        TicketType standard = new TicketType("Standard", new BigDecimal("50.00"), 100);
+        standard.setEventId(event.getId());
+
+        TicketType vip = new TicketType("VIP", new BigDecimal("150.00"), 10);
+        vip.setEventId(event.getId());
+
+        when(eventManagementService.getAllEvents()).thenReturn(List.of(event));
+        when(ticketTypeService.findAll()).thenReturn(List.of(standard, vip));
 
         mockMvc.perform(get("/ticket-types"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ticket-type/type_list"))
-                .andExpect(model().attributeExists("ticketTypes"));
+                .andExpect(model().attributeExists("eventTicketList")); // fixed
     }
+
 
     @Test
     @DisplayName("GET /ticket-types/create should show form")
@@ -86,6 +102,7 @@ class TicketTypeControllerTest {
                         .param("name", "Premium")
                         .param("price", "200.00")
                         .param("quota", "20")
+                        .param("eventId", "1")
                         .principal(() -> "admin@example.com"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ticket-types"));
@@ -94,7 +111,8 @@ class TicketTypeControllerTest {
                 eq("Premium"),
                 eq(new BigDecimal("200.00")),
                 eq(20),
-                eq(mockUser)
+                eq(mockUser),
+                eq(1)
         );
     }
 

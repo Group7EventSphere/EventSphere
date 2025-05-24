@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,15 +14,19 @@ import java.util.UUID;
 @Table(name = "ticket_types")
 public class TicketType {
     @Id
+    @JsonProperty("id")
     @GeneratedValue
     private UUID id;
 
+    @JsonProperty("name")
     @Column(nullable = false, unique = true)
     private String name;
 
+    @JsonProperty("price")
     @Column(nullable = false)
     private BigDecimal price;
 
+    @JsonProperty("quota")
     @Column(nullable = false)
     private int quota;
 
@@ -35,6 +40,7 @@ public class TicketType {
         this.name = name;
         this.price = price;
         this.quota = quota;
+        this.eventId = eventId;
     }
 
     public void reduceQuota(int quantity) {
