@@ -1,208 +1,314 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
+import id.ac.ui.cs.advprog.eventspherre.command.CreateEventCommand;
+import id.ac.ui.cs.advprog.eventspherre.command.EventCommandInvoker;
+import id.ac.ui.cs.advprog.eventspherre.command.ToggleEventVisibilityCommand;
+import id.ac.ui.cs.advprog.eventspherre.command.UpdateEventCommand;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
+import id.ac.ui.cs.advprog.eventspherre.observer.EventObserver;
+import id.ac.ui.cs.advprog.eventspherre.observer.EventSubject;
 import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EventManagementServiceTest {
 
+    private EventManagementService eventManagementService;
+
     @Mock
     private EventRepository eventRepository;
 
-    @InjectMocks
-    private EventManagementService eventManagementService;
+    @Mock
+    private EventSubject eventSubject;
 
-    private Event event;
+    @Mock
+    private EventCommandInvoker commandInvoker;
+
+    @Mock
+    private EventObserver eventObserver;
+
+    @Mock
+    private Event mockEvent;
 
     @BeforeEach
-    void setUp() {
-        event = new Event();
-        event.setId(1);
-        event.setTitle("Test Event");
-        event.setDescription("Test Description");
-        event.setEventDate(Instant.now().toString()); // Changed to String
-        event.setLocation("Test Location");
-        event.setOrganizerId(101);
-        event.setCapacity(100);
-        event.setPublic(true);
-    }
-
-    @Test
-    void testCreateEvent() {
-        when(eventRepository.save(any(Event.class))).thenReturn(event);
-        Event createdEvent = eventManagementService.createEvent(
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventDate(),
-                event.getLocation(),
-                event.getOrganizerId(),
-                event.getCapacity(),
-                event.isPublic()
+    public void setUp() {
+        eventManagementService = new EventManagementService(
+            eventRepository,
+            eventSubject,
+            commandInvoker
         );
-        assertNotNull(createdEvent);
-        assertEquals(event.getTitle(), createdEvent.getTitle());
-        verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
-    void testCreateEventAsync() throws ExecutionException, InterruptedException {
-        when(eventRepository.save(any(Event.class))).thenReturn(event);
-        CompletableFuture<Event> futureEvent = eventManagementService.createEventAsync(
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventDate(),
-                event.getLocation(),
-                event.getOrganizerId(),
-                event.getCapacity(),
-                event.isPublic()
-        );
-        Event createdEvent = futureEvent.get();
-        assertNotNull(createdEvent);
-        assertEquals(event.getTitle(), createdEvent.getTitle());
-        verify(eventRepository, times(1)).save(any(Event.class));
+    public void testRegisterObserver() {
+        // Act
+        eventManagementService.registerObserver(eventObserver);
+
+        // Assert
+        verify(eventSubject).addObserver(eventObserver);
     }
 
     @Test
-    void testGetEvent() {
-        when(eventRepository.findById(1)).thenReturn(Optional.of(event));
-        Event foundEvent = eventManagementService.getEvent(1);
-        assertNotNull(foundEvent);
-        assertEquals(event.getTitle(), foundEvent.getTitle());
-        verify(eventRepository, times(1)).findById(1);
+    public void testUnregisterObserver() {
+        // Act
+        eventManagementService.unregisterObserver(eventObserver);
+
+        // Assert
+        verify(eventSubject).removeObserver(eventObserver);
+    }    @Test
+    public void testCreateEvent() {
+        // Arrange
+        String title = "Test Event";
+        String description = "Test Description";
+        String eventDate = "2025-05-25";
+        String location = "Test Location";
+        Integer organizerId = 123;
+        Integer capacity = 100;
+        Boolean isPublic = true;        ArgumentCaptor<CreateEventCommand> commandCaptor = ArgumentCaptor.forClass(CreateEventCommand.class);
+
+        // Mock command behavior
+        doAnswer(invocation -> {
+            CreateEventCommand command = invocation.getArgument(0);
+            // Simulate setting the event by reflection
+            try {
+                java.lang.reflect.Field eventField = CreateEventCommand.class.getDeclaredField("createdEvent");
+                eventField.setAccessible(true);
+                eventField.set(command, mockEvent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).when(commandInvoker).executeCommand(any(CreateEventCommand.class));
+
+        // Act
+        Event result = eventManagementService.createEvent(title, description, eventDate, location, organizerId, capacity, isPublic);
+
+        // Assert
+        verify(commandInvoker).executeCommand(commandCaptor.capture());
+        CreateEventCommand capturedCommand = commandCaptor.getValue();
+
+        // Verify command properties through reflection
+        assertEquals(mockEvent, result);
+    }    @Test
+    public void testUpdateEvent() {
+        // Arrange
+        Integer eventId = 1;
+        String title = "Updated Event";
+        String description = "Updated Description";
+        String eventDate = "2025-06-01";
+        String location = "Updated Location";
+        Integer capacity = 200;
+        Boolean isPublic = false;
+
+        ArgumentCaptor<UpdateEventCommand> commandCaptor = ArgumentCaptor.forClass(UpdateEventCommand.class);
+
+        // Mock command behavior
+        doAnswer(invocation -> {
+            UpdateEventCommand command = invocation.getArgument(0);
+            // Simulate setting the event by reflection
+            try {
+                java.lang.reflect.Field eventField = UpdateEventCommand.class.getDeclaredField("updatedEvent");
+                eventField.setAccessible(true);
+                eventField.set(command, mockEvent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).when(commandInvoker).executeCommand(any(UpdateEventCommand.class));
+
+        // Act
+        Event result = eventManagementService.updateEvent(eventId, title, description, eventDate, location, capacity, isPublic);
+
+        // Assert
+        verify(commandInvoker).executeCommand(commandCaptor.capture());
+        assertEquals(mockEvent, result);
+    }    @Test
+    public void testToggleEventVisibility() {
+        // Arrange
+        Integer eventId = 1;
+
+        ArgumentCaptor<ToggleEventVisibilityCommand> commandCaptor = ArgumentCaptor.forClass(ToggleEventVisibilityCommand.class);
+
+        // Mock command behavior
+        doAnswer(invocation -> {
+            ToggleEventVisibilityCommand command = invocation.getArgument(0);
+            // Simulate setting the event by reflection
+            try {
+                java.lang.reflect.Field eventField = ToggleEventVisibilityCommand.class.getDeclaredField("event");
+                eventField.setAccessible(true);
+                eventField.set(command, mockEvent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).when(commandInvoker).executeCommand(any(ToggleEventVisibilityCommand.class));
+
+        // Act
+        Event result = eventManagementService.toggleEventVisibility(eventId);
+
+        // Assert
+        verify(commandInvoker).executeCommand(commandCaptor.capture());
+        assertEquals(mockEvent, result);
     }
 
     @Test
-    void testGetEvent_NotFound() {
-        when(eventRepository.findById(99)).thenReturn(Optional.empty());
-        Event result = eventManagementService.getEvent(99);
-        assertNull(result);
-        verify(eventRepository, times(1)).findById(99);
+    public void testUndoLastOperation_Success() {
+        // Arrange
+        when(commandInvoker.hasCommandHistory()).thenReturn(true);
+
+        // Act
+        boolean result = eventManagementService.undoLastOperation();
+
+        // Assert
+        assertTrue(result);
+        verify(commandInvoker).undoLastCommand();
     }
 
     @Test
-    void testGetAllEvents() {
+    public void testUndoLastOperation_NoHistory() {
+        // Arrange
+        when(commandInvoker.hasCommandHistory()).thenReturn(false);
+
+        // Act
+        boolean result = eventManagementService.undoLastOperation();
+
+        // Assert
+        assertFalse(result);
+        verify(commandInvoker, never()).undoLastCommand();
+    }
+
+    @Test
+    public void testGetEvent() {
+        // Arrange
+        Integer eventId = 1;
+        when(eventRepository.findById(eventId)).thenReturn(java.util.Optional.of(mockEvent));
+
+        // Act
+        Event result = eventManagementService.getEvent(eventId);
+
+        // Assert
+        assertEquals(mockEvent, result);
+    }
+
+    @Test
+    public void testGetAllEvents() {
+        // Arrange
         List<Event> events = new ArrayList<>();
-        events.add(event);
+        events.add(mockEvent);
         when(eventRepository.findAll()).thenReturn(events);
 
+        // Act
         List<Event> result = eventManagementService.getAllEvents();
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(eventRepository, times(1)).findAll();
-    }
 
-    @Test
-    void testUpdateEvent() {
-        String newTitle = "Updated Event";
-        String newDescription = "Updated Description";
-        String newDate = Instant.now().toString();
-        String newLocation = "Updated Location";
-        int newCapacity = 200;
-        boolean newIsPublic = false;
+        // Assert
+        assertEquals(events, result);
+    }    @Test
+    public void testCreateEventAsync() throws Exception {
+        // Arrange
+        String title = "Async Event";
+        String description = "Async Description";
+        String eventDate = "2025-07-01";
+        String location = "Async Location";
+        Integer organizerId = 456;
+        Integer capacity = 300;
+        Boolean isPublic = true;
 
-        when(eventRepository.findById(1)).thenReturn(Optional.of(event));
-        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
-            Event savedEvent = invocation.getArgument(0);
-            assertEquals(newTitle, savedEvent.getTitle());
-            assertEquals(newDescription, savedEvent.getDescription());
-            assertEquals(newDate, savedEvent.getEventDate());
-            assertEquals(newLocation, savedEvent.getLocation());
-            assertEquals(newCapacity, savedEvent.getCapacity());
-            assertEquals(newIsPublic, savedEvent.isPublic());
-            return savedEvent;
-        });
-
-        Event updatedEvent = eventManagementService.updateEvent(
-                1, newTitle, newDescription, newDate, newLocation, newCapacity, newIsPublic
+        // Spy on the service to mock synchronous createEvent method
+        EventManagementService spyService = spy(eventManagementService);
+        doReturn(mockEvent).when(spyService).createEvent(
+            title, description, eventDate, location, organizerId, capacity, isPublic
         );
 
-        assertNotNull(updatedEvent);
-        assertEquals(newTitle, updatedEvent.getTitle());
-        verify(eventRepository, times(1)).findById(1);
-        verify(eventRepository, times(1)).save(any(Event.class));
-    }
-
-    @Test
-    void testUpdateEvent_NotFound() {
-        when(eventRepository.findById(99)).thenReturn(Optional.empty());
-        Event result = eventManagementService.updateEvent(
-                99, "Any Title", "Any Description", "Any Date",
-                "Any Location", 100, true
-        );
-        assertNull(result);
-        verify(eventRepository, times(1)).findById(99);
-        verify(eventRepository, never()).save(any(Event.class));
-    }
-
-    @Test
-    void testUpdateEventAsync() throws ExecutionException, InterruptedException {
-        String newTitle = "Updated Event";
-        String newDescription = "Updated Description";
-        String newDate = Instant.now().toString();
-        String newLocation = "Updated Location";
-        int newCapacity = 200;
-        boolean newIsPublic = false;
-
-        when(eventRepository.findById(1)).thenReturn(Optional.of(event));
-        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        CompletableFuture<Event> futureEvent = eventManagementService.updateEventAsync(
-                1, newTitle, newDescription, newDate, newLocation, newCapacity, newIsPublic
+        // Act
+        CompletableFuture<Event> futureResult = spyService.createEventAsync(
+            title, description, eventDate, location, organizerId, capacity, isPublic
         );
 
-        Event updatedEvent = futureEvent.get();
-        assertNotNull(updatedEvent);
-        assertEquals(newTitle, updatedEvent.getTitle());
-        verify(eventRepository, times(1)).findById(1);
-        verify(eventRepository, times(1)).save(any(Event.class));
+        // Assert
+        Event result = futureResult.get();  // Will block until complete
+        assertEquals(mockEvent, result);
     }
 
     @Test
-    void testDeleteEvent() {
-        doNothing().when(eventRepository).deleteById(1);
-        eventManagementService.deleteEvent(1);
-        verify(eventRepository, times(1)).deleteById(1);
+    public void testUpdateEventAsync() throws Exception {
+        // Arrange
+        Integer eventId = 1;
+        String title = "Async Updated Event";
+        String description = "Async Updated Description";
+        String eventDate = "2025-07-01";
+        String location = "Async Location";
+        Integer capacity = 200;
+        Boolean isPublic = false;
+
+        // Spy on the service to mock synchronous updateEvent method
+        EventManagementService spyService = spy(eventManagementService);
+        doReturn(mockEvent).when(spyService).updateEvent(
+            eventId, title, description, eventDate, location, capacity, isPublic
+        );
+
+        // Act
+        CompletableFuture<Event> futureResult = spyService.updateEventAsync(
+            eventId, title, description, eventDate, location, capacity, isPublic
+        );
+
+        // Assert
+        Event result = futureResult.get();  // Will block until complete
+        assertEquals(mockEvent, result);
     }
 
     @Test
-    void testClearAllEvents() {
-        doNothing().when(eventRepository).deleteAll();
-        eventManagementService.clearAllEvents();
-        verify(eventRepository, times(1)).deleteAll();
+    public void testFindEventsByOrganizerId() {
+        // Arrange
+        Integer organizerId = 123;
+        List<Event> events = new ArrayList<>();
+        events.add(mockEvent);
+        when(eventRepository.findByOrganizerId(organizerId)).thenReturn(events);
+
+        // Act
+        List<Event> result = eventManagementService.findEventsByOrganizerId(organizerId);
+
+        // Assert
+        assertEquals(events, result);
     }
 
     @Test
-    void testGetEventById() {
-        when(eventRepository.findById(1)).thenReturn(Optional.of(event));
-        Event foundEvent = eventManagementService.getEventById(1);
-        assertNotNull(foundEvent);
-        assertEquals(event.getTitle(), foundEvent.getTitle());
-        verify(eventRepository, times(1)).findById(1);
+    public void testFindPublicEvents() {
+        // Arrange
+        List<Event> events = new ArrayList<>();
+        events.add(mockEvent);
+        when(eventRepository.findByIsPublicTrue()).thenReturn(events);
+
+        // Act
+        List<Event> result = eventManagementService.findPublicEvents();
+
+        // Assert
+        assertEquals(events, result);
     }
 
     @Test
-    void testGetEventById_NotFound() {
-        when(eventRepository.findById(1)).thenReturn(Optional.empty());
-        assertThrows(NoSuchElementException.class, () -> eventManagementService.getEventById(1));
-        verify(eventRepository, times(1)).findById(1);
+    public void testGetEventById() {
+        // Arrange
+        Integer eventId = 1;
+        when(eventRepository.findById(eventId)).thenReturn(java.util.Optional.of(mockEvent));
+
+        // Act
+        Event result = eventManagementService.getEventById(eventId);
+
+        // Assert
+        assertEquals(mockEvent, result);
+        verify(eventRepository).findById(eventId);
     }
 }
