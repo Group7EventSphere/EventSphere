@@ -76,4 +76,9 @@ public class TicketTypeServiceImpl implements TicketTypeService {
         ticketType.setEventId(eventId);
         ticketTypeRepository.save(ticketType);
     }
+
+    @Override
+    public List<TicketType> getTicketTypesByEventId(Integer eventId) {
+        return List.of();
+    }
 }
