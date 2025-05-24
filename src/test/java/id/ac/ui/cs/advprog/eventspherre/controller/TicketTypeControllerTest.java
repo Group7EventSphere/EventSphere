@@ -154,7 +154,7 @@ class TicketTypeControllerTest {
 
         when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
         doThrow(new IllegalStateException(errorMsg))
-                .when(ticketTypeService).deleteTicketType(eq(id), eq(mockUser));
+                .when(ticketTypeService).deleteTicketType(id, mockUser);
 
         mockMvc.perform(post("/ticket-types/delete/" + id)
                         .with(csrf())

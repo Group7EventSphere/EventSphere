@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(WebSecurityTestConfig.class)
 @ActiveProfiles("test")
 @WithMockUser(username = "admin@example.com", roles = "ORGANIZER")
-public class TicketTypeViewControllerTest {
+class TicketTypeViewControllerTest {
     @Autowired
     MockMvc mockMvc;
 
@@ -135,7 +135,7 @@ public class TicketTypeViewControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/1/ticket-types"));
 
-        verify(ticketTypeService).associateWithEvent(eq(typeId), eq(1));
+        verify(ticketTypeService).associateWithEvent(typeId, 1);
     }
 
     @Test
@@ -239,7 +239,8 @@ public class TicketTypeViewControllerTest {
     @DisplayName("POST /events/{eventId}/ticket-types/delete/{id} - should redirect with error message on failure")
     void deleteTicketType_shouldRedirectWithError_whenExceptionThrown() throws Exception {
         when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
-        doThrow(new IllegalStateException("Cannot delete")).when(ticketTypeService).deleteTicketType(eq(typeId), eq(mockUser));
+        doThrow(new IllegalStateException("Cannot delete")).when(ticketTypeService)
+                .deleteTicketType(typeId, mockUser);
 
         mockMvc.perform(post("/events/1/ticket-types/delete/" + typeId)
                         .with(csrf())
