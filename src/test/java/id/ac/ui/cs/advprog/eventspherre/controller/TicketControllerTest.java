@@ -16,6 +16,7 @@ import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,8 +27,11 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +61,10 @@ class TicketControllerTest {
     @MockBean AuthenticationProvider   authenticationProvider;
     @MockBean PaymentHandler           paymentHandler;
     @MockBean PaymentService           paymentService;
+
+    @InjectMocks
+    TicketController ticketController;
+
 
     private User     attendee;
     private UUID     typeId;
@@ -316,7 +324,7 @@ class TicketControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
     @DisplayName("Should filter out ticket when TicketType is null")
     void listUserTickets_shouldSkipTicketIfTypeIsNull() throws Exception {
         Ticket ticketWithoutType = new Ticket();
@@ -333,7 +341,7 @@ class TicketControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
     @DisplayName("Should filter out ticket when event is null")
     void listUserTickets_shouldSkipTicketIfEventIsNull() throws Exception {
         Ticket ticket = new Ticket();
@@ -351,7 +359,7 @@ class TicketControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
     @DisplayName("Should return 404 Not Found when ticket with confirmation code does not exist")
     void getByConfirmationCode_shouldReturnNotFoundIfTicketMissing() throws Exception {
         String missingCode = "TKT-MISSING";
@@ -361,5 +369,28 @@ class TicketControllerTest {
 
         mockMvc.perform(get("/tickets/code/" + missingCode))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("POST /tickets/create - should redirect with error when payment fails")
+    void createTicket_shouldRedirectWithError_whenPaymentFails() throws Exception {
+        // Mock user and ticketType
+        when(userService.getUserByEmail(attendee.getEmail())).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+
+        // Don't change the processed flag – simulates failed payment
+        doAnswer(invocation -> null).when(paymentHandler).handle(any(PaymentRequest.class));
+
+        // Perform the request
+        mockMvc.perform(post("/tickets/create")
+                        .param("ticketTypeId", typeId.toString())
+                        .param("quota", "2")
+                        .with(csrf())
+                        .principal(() -> attendee.getEmail()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tickets/create?ticketTypeId=" + typeId + "&quota=2"))
+                .andExpect(flash().attribute("error", "Insufficient balance. Please top up your account."))
+                .andExpect(model().attributeDoesNotExist("ticket"));  // optional
     }
 }
