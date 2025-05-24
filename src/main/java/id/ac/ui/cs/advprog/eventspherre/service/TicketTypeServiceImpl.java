@@ -20,8 +20,8 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     private final TicketRepository ticketRepository;
 
     @Override
-    public TicketType create(String name, BigDecimal price, int quota, User user) {
-        TicketType ticketType = TicketType.create(name, price, quota, user);
+    public TicketType create(String name, BigDecimal price, int quota, User user, int eventId) {
+        TicketType ticketType = TicketType.create(name, price, quota, user, eventId);
         return ticketTypeRepository.save(ticketType);
     }
 

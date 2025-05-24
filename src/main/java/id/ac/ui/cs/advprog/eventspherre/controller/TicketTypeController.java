@@ -1,11 +1,15 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping("/ticket-types")
@@ -26,17 +29,37 @@ public class TicketTypeController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private EventManagementService eventManagementService;
+
     public TicketTypeController(TicketTypeService ticketTypeService) {
         this.ticketTypeService = ticketTypeService;
     }
 
     @GetMapping
-    public String listTicketTypes(Model model, Principal principal) {
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
+    public String showTicketOverview(Model model, Principal principal) {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
 
-        List<TicketType> ticketTypes = ticketTypeService.findAll();
-        model.addAttribute("ticketTypes", ticketTypes);
+        List<Event> allEvents = eventManagementService.getAllEvents();
+        List<TicketType> allTicketTypes = ticketTypeService.findAll();
+
+        Map<Integer, List<TicketType>> ticketsByEventId = new HashMap<>();
+        for (TicketType type : allTicketTypes) {
+            int eventId = type.getEventId();
+            ticketsByEventId.computeIfAbsent(eventId, k -> new ArrayList<>()).add(type);
+        }
+
+        List<Map<String, Object>> eventTicketList = new ArrayList<>();
+        for (Event event : allEvents) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("event", event);
+            map.put("ticketTypes", ticketsByEventId.getOrDefault(event.getId(), List.of()));
+            eventTicketList.add(map);
+        }
+
+        model.addAttribute("eventTicketList", eventTicketList);
         return "ticket-type/type_list";
     }
 
@@ -45,7 +68,10 @@ public class TicketTypeController {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
 
+        List<Event> events = eventManagementService.getAllEvents();
+        model.addAttribute("events", events);
         model.addAttribute("ticketType", new TicketType());
+        model.addAttribute("isGeneralForm", Boolean.TRUE);
         return "ticket-type/type_form";
     }
 
@@ -53,10 +79,13 @@ public class TicketTypeController {
     public String createTicketType(@RequestParam String name,
                                    @RequestParam BigDecimal price,
                                    @RequestParam int quota,
+                                   @RequestParam int eventId,
                                    Principal principal) {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
-        ticketTypeService.create(name, price, quota, user);
+
+        ticketTypeService.create(name, price, quota, user, eventId);
+
         return "redirect:/ticket-types";
     }
 
@@ -103,5 +132,13 @@ public class TicketTypeController {
         ticketTypeService.updateTicketType(id, updatedTicketType, currentUser);
 
         return "redirect:/ticket-types";
+    }
+
+    @GetMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<TicketType> getTicketType(@PathVariable UUID id) {
+        return ticketTypeService.getTicketTypeById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
