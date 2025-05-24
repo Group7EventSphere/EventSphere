@@ -1,259 +1,219 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Ads - EventSphere</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Edit Ads — EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; }
-
-        /* Top Navbar (Dark) */
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2rem; background: #2d2d2d; }
-        .navbar .logo { font-weight: bold; font-size: 1.2rem; color: #fff; }
-        .navbar .user-info { font-size: 0.9rem; color: #ccc; }
-
-        /* Secondary Header */
-        .create-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fff; border-bottom: 1px solid #e0e0e0; }
-        .create-header h2 { font-size: 1.5rem; font-weight: 500; color: #333; }
-        .btn-submit { padding: 0.5rem 1.25rem; background: #009aff; color: #fff; text-decoration: none; border-radius: 0.25rem; font-size: 0.95rem; cursor: pointer; }
-        .btn-submit:hover { background: #0080e0; }
-
-        /* Form Container */
-        .form-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 2rem; max-width: 1200px; margin: 0 auto; }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.95rem; color: #555; }
-        .form-group input[type="text"],
-        .form-group textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 0.5rem; font-size: 1rem; }
-        .form-group textarea { height: 200px; resize: vertical; }
-
-        /* Upload Card */
-        .upload-card { border: 2px dashed #ccc; border-radius: 0.5rem; background: #fafafa; padding: 2rem; text-align: center; }
-        .upload-card:hover { border-color: #999; }
-        .upload-card-icon { font-size: 3rem; color: #888; margin-bottom: 1rem; }
-        .upload-card p { margin-bottom: 1rem; color: #666; }
-        .upload-btn { display: inline-block; padding: 0.5rem 1rem; background: #009aff; color: #fff; text-decoration: none; border-radius: 0.25rem; font-size: 0.95rem; cursor: pointer; }
-        .upload-btn:hover { background: #0080e0; }
-        .upload-input { display: none; }
-
-        /* Image Preview */
-        .image-preview {
-            max-width: 100%;
-            max-height: 200px;
-            margin: 1rem auto;
-            display: none;
+        /* Form layout */
+        .form-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .create-header .btn-primary { border: none; }
+        /* Upload card */
+        .upload-card {
+            position: relative;
+            border: 2px dashed #e5e7eb;
+            border-radius: 0.375rem;
+            background: #fafafa;
+            padding: 1.5rem;
+            text-align: center;
         }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
+        .upload-card-icon { font-size: 2.5rem; color: #9ca3af; margin-bottom: 0.5rem; }
+        .upload-btn {
+            display: inline-flex;
             align-items: center;
-            z-index: 1000;
-            color: white;
-            font-size: 1.5rem;
+            gap: 0.4rem;
+            background: #4F46E5;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-
-        .hidden {
+        .upload-btn:hover { background: #2563eb; }
+        .upload-input { display: none; }
+        .upload-loading {
             display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
         }
-
-        /* Footer */
-        .footer { background-color: #222; color: #bbb; padding: 3rem 2rem; margin-top: 2rem; }
-        .footer-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; max-width: 1200px; margin: 0 auto; }
-        .footer h3 { color: #fff; margin-bottom: 1rem; font-size: 1.1rem; }
-        .footer a { display: block; color: #bbb; text-decoration: none; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .footer a:hover { text-decoration: underline; }
-        .footer p { font-size: 0.9rem; line-height: 1.6; }
+        .upload-loading span { font-size: 0.9rem; color: #374151; }
+        .upload-preview {
+            margin-top: 1rem;
+            display: none;
+            max-width: 240px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .upload-preview img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16/9;
+        }
+        .status-message {
+            display: none;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .status-success { color: #16a34a; }
+        .status-error   { color: #dc2626; }
     </style>
 </head>
 <body>
-<!-- Loading Overlay -->
-<div id="loading-overlay" class="loading-overlay">
-    <div>Loading ad data...</div>
-</div>
+<!-- navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<!-- Top Navbar -->
-<header class="navbar">
-    <div class="logo">EventSphere</div>
-    <div class="user-info">0 currency&nbsp;&nbsp;|&nbsp;&nbsp;Username</div>
-</header>
+<main class="main-content with-navbar container">
+    <form id="ad-form">
+        <div class="create-header">
+            <h2>Edit Ads</h2>
+            <button type="submit" id="update-btn" class="btn btn-primary" disabled>Update</button>
+        </div>
 
-<!-- Secondary Header: Edit Ads -->
-<div class="create-header">
-    <h2>Edit Ads</h2>
-    <a href="#" class="btn-submit" id="update-btn">Update</a>
-</div>
+        <div class="form-container">
+            <!-- Left: Title & Image -->
+            <div>
+                <div class="form-group">
+                    <label for="ads-title">Ads Title</label>
+                    <input type="text"
+                           id="ads-title"
+                           name="title"
+                           class="form-control"
+                           th:value="${ad.title}"
+                           required/>
+                </div>
+                <div class="upload-card">
+                    <div class="upload-loading" id="upload-loading"><span>Uploading…</span></div>
+                    <div class="upload-card-icon">⬆️</div>
+                    <p>Upload Image</p>
+                    <label class="upload-btn" for="file-input">Choose File</label>
+                    <input type="file"
+                           id="file-input"
+                           accept="image/png, image/jpeg"
+                           class="upload-input"/>
+                    <div class="upload-preview" id="image-preview" th:if="${ad.imageUrl}">
+                        <img id="preview-image"
+                             th:src="@{${ad.imageUrl}}"
+                             alt="Preview"/>
+                    </div>
+                    <div id="upload-status" class="status-message"></div>
+                    <input type="hidden" id="image-url" name="imageUrl" th:value="${ad.imageUrl}"/>
+                </div>
+            </div>
 
-<!-- Form -->
-<div class="form-container">
-    <!-- Left Column: Title & Upload -->
-    <div>
-        <div class="form-group">
-            <label for="ads-title">Ads Title:</label>
-            <input type="text" id="ads-title" name="adsTitle" placeholder="Enter ad title" />
+            <!-- Right: Description -->
+            <div>
+                <div class="form-group">
+                    <label for="ads-desc">Ads Description</label>
+                    <textarea id="ads-desc"
+                              name="description"
+                              class="form-control"
+                              rows="6"
+                              required
+                              th:text="${ad.description}"></textarea>
+                </div>
+            </div>
         </div>
-        <div class="upload-card">
-            <div class="upload-card-icon">⬆️</div>
-            <p>Upload Image</p>
-            <img id="image-preview" class="image-preview" src="" alt="Ad Image Preview">
-            <label class="upload-btn" for="file-input">Select a file</label>
-            <input type="file" id="file-input" class="upload-input" accept="image/png, image/jpeg" />
-        </div>
-    </div>
 
-    <!-- Right Column: Description -->
-    <div>
-        <div class="form-group">
-            <label for="ads-desc">Ads Description:</label>
-            <textarea id="ads-desc" name="adsDescription" placeholder="Enter ad description..."></textarea>
-        </div>
-        <!-- Hidden input to store the ID from the model -->
-        <input type="hidden" id="ad-id" th:value="${id}" />
-    </div>
-</div>
-
-<!-- Footer -->
-<footer class="footer">
-    <div class="footer-container">
-        <div>
-            <h3>About EventSphere</h3>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed metus nec massa pharetra ultricies at blandit erat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque nec magna sed eros bibendum ultricies vitae id dui. Pellentesque semper nibh ut rutrum lacinia. Nunc dui nulla, lacinia vel varius eget, dictum vel enim. In non dictum felis. Curabitur interdum, libero id cursus fringilla, odio massa imperdiet nulla, in elementum nibh quam ac ligula. </p>
-        </div>
-        <div>
-            <h3>Partnerships</h3>
-            <a href="#">Merchant Sign Up</a>
-            <a href="#">Merchant Log In</a>
-            <a href="#">Affiliate Partnership</a>
-            <a href="#">Influencer Program</a>
-        </div>
-        <div>
-            <h3>Contact Us</h3>
-            <a href="#">Contact</a>
-            <a href="#">Support</a>
-            <a href="#">Contact Sales</a>
-            <a href="#">Facebook</a>
-            <a href="#">Linkedin</a>
-            <a href="#">Instagram</a>
-            <a href="#">TikTok</a>
-        </div>
-        <div>
-            <h3>Terms of Use</h3>
-            <a href="#">General Terms of Use</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Cookie Policy</a>
-        </div>
-    </div>
-</footer>
+        <input type="hidden" id="ad-id" th:value="${ad.id}"/>
+    </form>
+</main>
 
 <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        // Cloudinary config
-        const CLOUDINARY_UPLOAD_PRESET = "adpro-ads";
-        const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5";
-        const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput   = document.getElementById('file-input');
+        const urlInput    = document.getElementById('image-url');
+        const updateBtn   = document.getElementById('update-btn');
+        const loadingEl   = document.getElementById('upload-loading');
+        const previewWrap = document.getElementById('image-preview');
+        const previewImg  = document.getElementById('preview-image');
+        const statusMsg   = document.getElementById('upload-status');
+        const titleInput  = document.getElementById('ads-title');
+        const descInput   = document.getElementById('ads-desc');
+        const form        = document.getElementById('ad-form');
+        const adId        = document.getElementById('ad-id').value;
 
-        // get DOM element
-        const adId = document.getElementById('ad-id').value;
-        const titleInput = document.getElementById('ads-title');
-        const descInput  = document.getElementById('ads-desc');
-        const fileInput  = document.getElementById('file-input');
-        const previewImg = document.getElementById('image-preview');
-        const loadingOv  = document.getElementById('loading-overlay');
-        const updateBtn  = document.getElementById('update-btn');
+        const CLOUD_URL = `https://api.cloudinary.com/v1_1/dgtd4i3r5/image/upload`;
+        const PRESET    = 'adpro-ads';
 
-        if (!adId) {
-            alert('No ad ID provided. Redirecting to ads list.');
-            loadingOv.classList.add('hidden');
-            return;
+        function toggleUpdate() {
+            updateBtn.disabled =
+                !(titleInput.value.trim() &&
+                    descInput.value.trim() &&
+                    urlInput.value);
         }
 
-        // Fetch data ad existing
-        fetch(`/api/ads/${adId}`)
-            .then(res => res.ok ? res.json() : Promise.reject())
-            .then(ad => {
-                titleInput.value = ad.title;
-                descInput.value  = ad.description;
-                if (ad.imageUrl) {
-                    previewImg.src = ad.imageUrl;
-                    previewImg.style.display = 'block';
-                }
-            })
-            .catch(() => alert('Failed to load ad data.'))
-            .finally(() => loadingOv.classList.add('hidden'));
+        function showStatus(text, isError = false) {
+            statusMsg.textContent = text;
+            statusMsg.className = isError
+                ? 'status-message status-error'
+                : 'status-message status-success';
+            statusMsg.style.display = 'block';
+            setTimeout(() => statusMsg.style.display = 'none', 4000);
+        }
 
-        // when user chose file: upload to Cloudinary
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
+        [titleInput, descInput].forEach(el => el.addEventListener('input', toggleUpdate));
+
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
             if (!file) return;
-
-            // shows overlay loading
-            loadingOv.querySelector('div').innerText = 'Uploading image...';
-            loadingOv.classList.remove('hidden');
-
+            loadingEl.style.display = 'flex';
+            previewWrap && (previewWrap.style.display = 'none');
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-                const resp = await fetch(CLOUDINARY_UPLOAD_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (!resp.ok) throw new Error();
-
-                const data = await resp.json();
-                // set preview and save URL
-                previewImg.src = data.secure_url;
-                previewImg.style.display = 'block';
-            } catch (err) {
-                console.error(err);
-                alert('Failed to upload image. Please try again.');
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('upload_preset', PRESET);
+                const res = await fetch(CLOUD_URL, { method: 'POST', body: fd });
+                if (!res.ok) throw new Error();
+                const json = await res.json();
+                urlInput.value = json.secure_url;
+                previewImg.src = json.secure_url;
+                previewWrap.style.display = 'block';
+                showStatus('Upload successful');
+                toggleUpdate();
+            } catch {
+                showStatus('Upload failed', true);
             } finally {
-                loadingOv.classList.add('hidden');
-                loadingOv.querySelector('div').innerText = 'Loading ad data...';
+                loadingEl.style.display = 'none';
             }
         });
 
-        // Handle update click
-        updateBtn.addEventListener('click', function(e) {
+        form.addEventListener('submit', async e => {
             e.preventDefault();
-            const title = titleInput.value.trim();
-            const desc  = descInput.value.trim();
-            const imageUrl = previewImg.src;
-
-            if (!title || !desc) {
-                alert('Please fill in all required fields.');
-                return;
+            updateBtn.disabled = true;
+            try {
+                const payload = {
+                    title:       titleInput.value.trim(),
+                    description: descInput.value.trim(),
+                    imageUrl:    urlInput.value
+                };
+                const res = await fetch(`/api/ads/${adId}`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error();
+                window.location.href = '/ads/list';
+            } catch {
+                alert('Update failed');
+            } finally {
+                updateBtn.disabled = false;
             }
-
-            // show loading
-            loadingOv.classList.remove('hidden');
-
-            fetch(`/api/ads/${adId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description: desc, imageUrl })
-            })
-                .then(res => {
-                    if (!res.ok) throw new Error();
-                    return res.json();
-                })
-                .then(() => {
-                    alert('Ad updated successfully!');
-                    window.location.href = '/ads/list';
-                })
-                .catch(() => {
-                    alert('Failed to update ad. Please try again.');
-                })
-                .finally(() => loadingOv.classList.add('hidden'));
         });
+
+        toggleUpdate();
     });
 </script>
 </body>
