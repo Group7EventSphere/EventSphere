@@ -26,6 +26,8 @@ import java.util.logging.Logger;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -322,8 +324,8 @@ class EventControllerTest {
                 anyString(),
                 anyString(),
                 anyString(),
-                any(Integer.class),
-                any(Boolean.class)
+                anyInt(),
+                anyBoolean()
         );
 
         mockMvc.perform(post("/events/1/edit")
@@ -404,7 +406,7 @@ class EventControllerTest {
 
         // Mock the event management service to throw an exception
         when(eventManagementService.createEvent(
-                anyString(), anyString(), anyString(), anyString(), any(Integer.class), any(Integer.class), any(Boolean.class)
+                anyString(), anyString(), anyString(), anyString(), anyInt(), anyInt(), anyBoolean()
         )).thenThrow(new RuntimeException("Creation failed"));
 
         // Test with a valid principal
@@ -634,7 +636,9 @@ class EventControllerTest {
                 eq("Test Description"),
                 eq("2024-12-31"),
                 eq("Jakarta"),
-                eq(mockOrganizer.getId())
+                eq(mockOrganizer.getId()),
+                anyInt(),
+                anyBoolean()
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")
