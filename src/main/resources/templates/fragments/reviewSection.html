@@ -1,18 +1,17 @@
-<!-- templates/fragments/reviewSection.html -->
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<div th:fragment="reviewSection(event)">
+<div th:fragment="reviewSection(event)"
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <section id="review-section"
              style="background:#f1f1f1; padding:2em; border-radius:8px; margin:2em 0;"
              th:attr="data-event-id=${event.id}">
-        <h2>Reviews</h2>
+        <h2>Review</h2>
 
-        <!-- CREATE FORM (only logged-in users) -->
-        <sec:authorize access="isAuthenticated()">
-            <div style="margin-bottom:1em;">
-                <label for="rating">Rate your experience:</label>
-                <select id="rating" name="rating" style="width:100%; padding:.5em; margin-top:.3em;">
+        <sec:authorize access="hasRole('ATTENDEE')">
+            <div id="create-section"
+                 style="margin:2em 0; padding:1em; background:#fff; border-radius:4px;">
+                <label><strong>Rate your experience:</strong></label>
+                <select id="rating"
+                        style="width:100%; padding:.5em; margin:.5em 0;">
                     <option value="" disabled selected>Select rating…</option>
                     <option value="1">1 star</option>
                     <option value="2">2 stars</option>
@@ -20,77 +19,158 @@
                     <option value="4">4 stars</option>
                     <option value="5">5 stars</option>
                 </select>
-            </div>
-            <div style="margin-bottom:1em;">
-                <label for="reviewText">Write your review</label>
+
+                <label><strong>Write your review</strong></label>
                 <textarea id="reviewText"
-                          name="reviewText"
                           rows="3"
-                          style="width:100%; padding:.5em;"
+                          style="width:100%; padding:.5em; margin:.5em 0;"
                           placeholder="Your thoughts…"></textarea>
+
+                <button id="btnSubmit"
+                        style="display:block; margin:auto; padding:.5em 1em;
+                       background:#337ab7; color:white; border:none; border-radius:4px;">
+                    Submit
+                </button>
             </div>
-            <button id="btnSubmit" style="padding:.5em 1em; background:#337ab7; color:white; border:none; border-radius:4px;">
-                Submit
-            </button>
         </sec:authorize>
 
-        <!-- LIST OF EXISTING REVIEWS -->
-        <div id="reviews-container" style="margin-top:2em;"></div>
+        <div id="reviews-container"></div>
     </section>
 
-    <!-- inline JavaScript to handle CRUD -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        const eventId = [[${event.id}]];
-        const container = document.getElementById('reviews-container');
+        const eventId       = /*[[${event.id}]]*/ 0;
+        const currentUserId = /*[[${#authentication.principal.id}]]*/ 0;
+        const container     = document.getElementById('reviews-container');
+        const createSection = document.getElementById('create-section');
+        let reviewsCache    = [];
 
         async function loadReviews() {
             container.innerHTML = '<p>Loading reviews…</p>';
-            const res = await fetch(`/reviews/event/${eventId}`);
+            const res     = await fetch(`/reviews/event/${eventId}`);
             const reviews = await res.json();
+            reviewsCache  = reviews;
+
+            if (createSection) {
+                const hasMine = reviews.some(r => r.attendeeId === currentUserId);
+                createSection.style.display = hasMine ? 'none' : 'block';
+            }
+
             container.innerHTML = '';
-            if (reviews.length === 0) {
+            if (!reviews.length) {
                 container.innerHTML = '<p>No reviews yet.</p>';
                 return;
             }
+
             reviews.forEach(r => {
+                const fullStars = '⭐'.repeat(r.rating);
+                const emptyStars = '☆'.repeat(5 - r.rating);
+                const starDisplay = fullStars + emptyStars;
+
                 const card = document.createElement('div');
-                card.style = 'border:1px solid #ccc; padding:1em; margin-bottom:1em;';
+                card.style = `
+                    position: relative;
+                    background: #fff;
+                    border: 1px solid #ccc;
+                    padding: 1em;
+                    margin-bottom: 1em;
+                    border-radius: 4px;
+                  `;
                 card.innerHTML = `
-          <p><strong>Rating:</strong> ${r.rating} ⭐</p>
-          <p>${r.reviewText}</p>
-          <button data-id="${r.id}" class="btn-update">Update</button>
-          <button data-id="${r.id}" class="btn-delete">Delete</button>
-        `;
+                    <p><strong>${r.attendee.email}</strong></p>
+                    <p><strong>Rating:</strong> ${starDisplay}</p>
+                    <p>${r.reviewText}</p>
+                  `;
+
+                if (r.attendeeId === currentUserId) {
+                    const btnEdit = document.createElement('button');
+                    btnEdit.textContent       = 'Edit';
+                    btnEdit.className         = 'btn-edit';
+                    btnEdit.dataset.id        = r.id;
+                    btnEdit.style = `
+            position: absolute;
+            bottom: 1em;
+            right: 5.5em;
+            background: transparent;
+            border: none;
+            color: #337ab7;
+            cursor: pointer;
+          `;
+
+                    const btnDelete = document.createElement('button');
+                    btnDelete.textContent     = 'Delete';
+                    btnDelete.className       = 'btn-delete';
+                    btnDelete.dataset.id      = r.id;
+                    btnDelete.style = `
+            position: absolute;
+            bottom: 1em;
+            right: 1.5em;
+            background: transparent;
+            border: none;
+            color: #d9534f;
+            cursor: pointer;
+          `;
+
+                    card.appendChild(btnEdit);
+                    card.appendChild(btnDelete);
+                }
+
                 container.appendChild(card);
             });
 
-            // attach handlers
-            document.querySelectorAll('.btn-update').forEach(btn =>
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const newText = prompt('New review text:');
-                    const newRating = prompt('New rating (1–5):');
-                    if (newText!=null && newRating!=null) {
-                        await fetch(`/reviews/${id}`, {
-                            method: 'PUT',
-                            headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({ reviewText: newText, rating: +newRating })
-                        });
-                        loadReviews();
-                    }
-                }
-            );
-            document.querySelectorAll('.btn-delete').forEach(btn =>
-                btn.onclick = async () => {
-                    if (!confirm('Delete this review?')) return;
-                    await fetch(`/reviews/${btn.dataset.id}`, { method: 'DELETE' });
-                    loadReviews();
-                }
-            );
+            document.querySelectorAll('.btn-edit').forEach(b => b.onclick   = onEdit);
+            document.querySelectorAll('.btn-delete').forEach(b => b.onclick = onDelete);
         }
 
-        // Create
+        function onEdit() {
+            const id     = this.dataset.id;
+            const review = reviewsCache.find(r => `${r.id}` === id);
+            const card   = this.parentElement;
+
+            card.innerHTML = `
+        <div style="margin-bottom:1em;">
+          <label><strong>Rating:</strong></label>
+          <select id="editRating-${id}"
+                  style="width:100%; padding:.5em; margin:.5em 0;">
+            <option value="1"${review.rating===1?' selected':''}>1 star</option>
+            <option value="2"${review.rating===2?' selected':''}>2 stars</option>
+            <option value="3"${review.rating===3?' selected':''}>3 stars</option>
+            <option value="4"${review.rating===4?' selected':''}>4 stars</option>
+            <option value="5"${review.rating===5?' selected':''}>5 stars</option>
+          </select>
+        </div>
+        <div style="margin-bottom:1em;">
+          <label><strong>Review:</strong></label>
+          <textarea id="editText-${id}"
+                    rows="3"
+                    style="width:100%; padding:.5em;">${review.reviewText}</textarea>
+        </div>
+        <button id="btnUpdate-${id}"
+                style="display:block; margin:auto; padding:.5em 1em;
+                       background:#337ab7; color:white; border:none; border-radius:4px;">
+          Update
+        </button>
+      `;
+            document.getElementById(`btnUpdate-${id}`).onclick = async () => {
+                const newText   = document.getElementById(`editText-${id}`).value;
+                const newRating = +document.getElementById(`editRating-${id}`).value;
+                const res = await fetch(`/reviews/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ reviewText: newText, rating: newRating })
+                });
+                if (res.ok) loadReviews();
+                else        alert('Failed to update: ' + await res.text());
+            };
+        }
+
+        function onDelete() {
+            const id = this.dataset.id;
+            if (!confirm('Delete this review?')) return;
+            fetch(`/reviews/${id}`, { method: 'DELETE' })
+                .then(r => r.ok ? loadReviews() : alert('Failed to delete'));
+        }
+
         document.getElementById('btnSubmit')?.addEventListener('click', async () => {
             const body = {
                 reviewText: document.getElementById('reviewText').value,
@@ -102,7 +182,6 @@
                 body: JSON.stringify(body)
             });
             if (res.ok) {
-                // clear form
                 document.getElementById('reviewText').value = '';
                 document.getElementById('rating').value     = '';
                 loadReviews();
@@ -111,7 +190,6 @@
             }
         });
 
-        // initial load
         loadReviews();
         /*]]>*/
     </script>
