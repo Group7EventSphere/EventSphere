@@ -14,7 +14,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/reviews")
+// now answers both /reviews/** and /api/reviews/**
+@RequestMapping({ "/reviews", "/api/reviews" })
 public class ReviewController {
 
     private final ReviewService service;

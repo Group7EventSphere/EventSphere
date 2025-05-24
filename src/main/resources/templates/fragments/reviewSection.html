@@ -6,110 +6,111 @@
              th:attr="data-event-id=${event.id}">
         <h2>Review</h2>
 
-        <sec:authorize access="hasRole('ATTENDEE')">
-            <div id="create-section"
-                 style="margin:2em 0; padding:1em; background:#fff; border-radius:4px;">
-                <label><strong>Rate your experience:</strong></label>
-                <select id="rating"
-                        style="width:100%; padding:.5em; margin:.5em 0;">
-                    <option value="" disabled selected>Select rating…</option>
-                    <option value="1">1 star</option>
-                    <option value="2">2 stars</option>
-                    <option value="3">3 stars</option>
-                    <option value="4">4 stars</option>
-                    <option value="5">5 stars</option>
-                </select>
+        <div id="create-section"
+             style="margin:2em 0; padding:1em; background:#fff; border-radius:4px;">
+            <label><strong>Rate your experience:</strong></label>
+            <select id="rating"
+                    style="width:100%; padding:.5em; margin:.5em 0;">
+                <option value="" disabled selected>Select rating…</option>
+                <option value="1">1 star</option>
+                <option value="2">2 stars</option>
+                <option value="3">3 stars</option>
+                <option value="4">4 stars</option>
+                <option value="5">5 stars</option>
+            </select>
 
-                <label><strong>Write your review</strong></label>
-                <textarea id="reviewText"
-                          rows="3"
-                          style="width:100%; padding:.5em; margin:.5em 0;"
-                          placeholder="Your thoughts…"></textarea>
+            <label><strong>Your review:</strong></label>
+            <textarea id="reviewText"
+                      rows="3"
+                      style="width:100%; padding:.5em; margin:.5em 0;"
+                      placeholder="Your thoughts…"></textarea>
 
-                <button id="btnSubmit"
-                        style="display:block; margin:auto; padding:.5em 1em;
-                       background:#337ab7; color:white; border:none; border-radius:4px;">
-                    Submit
-                </button>
-            </div>
-        </sec:authorize>
+            <button id="btnSubmit"
+                    style="display:block; margin:auto; padding:.5em 1em;
+                     background:#337ab7; color:white; border:none; border-radius:4px;">
+                Submit
+            </button>
+        </div>
 
         <div id="reviews-container"></div>
     </section>
 
     <script th:inline="javascript">
-        /*<![CDATA[*/
-        const eventId       = /*[[${event.id}]]*/ 0;
-        const currentUserId = /*[[${#authentication.principal.id}]]*/ 0;
+        const eventId          = /*[[${event.id}]]*/ 0;
+        const currentUserEmail = /*[[${#authentication.name}]]*/ '';
+        const currentRole      = /*[[${#authentication.principal.role.name()}]]*/ 'GUEST';
+
         const container     = document.getElementById('reviews-container');
         const createSection = document.getElementById('create-section');
         let reviewsCache    = [];
 
         async function loadReviews() {
             container.innerHTML = '<p>Loading reviews…</p>';
-            const res     = await fetch(`/reviews/event/${eventId}`);
+            const res     = await fetch(`/api/reviews/event/${eventId}`);
             const reviews = await res.json();
             reviewsCache  = reviews;
 
-            if (createSection) {
-                const hasMine = reviews.some(r => r.attendeeId === currentUserId);
-                createSection.style.display = hasMine ? 'none' : 'block';
-            }
+            const isAttendee = currentRole === 'ATTENDEE';
+            const already    = reviews.some(r => r.attendee?.email === currentUserEmail);
+            createSection.style.display = (isAttendee && !already) ? 'block' : 'none';
 
             container.innerHTML = '';
-            if (!reviews.length) {
+            if (reviews.length === 0) {
                 container.innerHTML = '<p>No reviews yet.</p>';
                 return;
             }
 
             reviews.forEach(r => {
-                const fullStars = '⭐'.repeat(r.rating);
-                const emptyStars = '☆'.repeat(5 - r.rating);
+                const fullStars   = '⭐'.repeat(r.rating);
+                const emptyStars  = '☆'.repeat(5 - r.rating);
                 const starDisplay = fullStars + emptyStars;
+                const userEmail   = r.attendee?.email || `User #${r.attendeeId}`;
 
                 const card = document.createElement('div');
                 card.style = `
-                    position: relative;
-                    background: #fff;
-                    border: 1px solid #ccc;
-                    padding: 1em;
-                    margin-bottom: 1em;
-                    border-radius: 4px;
-                  `;
+                  position: relative;
+                  background: #fff;
+                  border: 1px solid #ccc;
+                  padding: 1em;
+                  margin-bottom: 1em;
+                  border-radius: 4px;
+                `;
                 card.innerHTML = `
-                    <p><strong>${r.attendee.email}</strong></p>
-                    <p><strong>Rating:</strong> ${starDisplay}</p>
-                    <p>${r.reviewText}</p>
-                  `;
+                  <p><strong>${userEmail}</strong></p>
+                  <p><strong>Rating:</strong> ${starDisplay}</p>
+                  <p>${r.reviewText}</p>
+                `;
 
-                if (r.attendeeId === currentUserId) {
+                if (isAttendee && r.attendee?.email === currentUserEmail) {
                     const btnEdit = document.createElement('button');
-                    btnEdit.textContent       = 'Edit';
-                    btnEdit.className         = 'btn-edit';
-                    btnEdit.dataset.id        = r.id;
+                    btnEdit.textContent    = 'Edit';
+                    btnEdit.dataset.id     = r.id;
                     btnEdit.style = `
-            position: absolute;
-            bottom: 1em;
-            right: 5.5em;
-            background: transparent;
-            border: none;
-            color: #337ab7;
-            cursor: pointer;
-          `;
+                        position: absolute;
+                        bottom: 1em;
+                        right: 5.5em;
+                        background: transparent;
+                        border: none;
+                        color: #337ab7;
+                        cursor: pointer;
+                        padding: .2em .5em;
+                      `;
+                    btnEdit.onclick = () => onEdit(r.id);
 
                     const btnDelete = document.createElement('button');
-                    btnDelete.textContent     = 'Delete';
-                    btnDelete.className       = 'btn-delete';
-                    btnDelete.dataset.id      = r.id;
+                    btnDelete.textContent = 'Delete';
+                    btnDelete.dataset.id  = r.id;
                     btnDelete.style = `
-            position: absolute;
-            bottom: 1em;
-            right: 1.5em;
-            background: transparent;
-            border: none;
-            color: #d9534f;
-            cursor: pointer;
-          `;
+                        position: absolute;
+                        bottom: 1em;
+                        right: 1.5em;
+                        background: transparent;
+                        border: none;
+                        color: #d9534f;
+                        cursor: pointer;
+                        padding: .2em .5em;
+                      `;
+                    btnDelete.onclick = () => onDelete(r.id);
 
                     card.appendChild(btnEdit);
                     card.appendChild(btnDelete);
@@ -117,80 +118,80 @@
 
                 container.appendChild(card);
             });
-
-            document.querySelectorAll('.btn-edit').forEach(b => b.onclick   = onEdit);
-            document.querySelectorAll('.btn-delete').forEach(b => b.onclick = onDelete);
         }
 
-        function onEdit() {
-            const id     = this.dataset.id;
-            const review = reviewsCache.find(r => `${r.id}` === id);
-            const card   = this.parentElement;
+        function onEdit(id) {
+            const review = reviewsCache.find(r => r.id === id);
+            const card   = [...container.children].find(c =>
+                c.querySelector(`button[data-id="${id}"]`)
+            );
+            if (!review || !card) return;
 
             card.innerHTML = `
-        <div style="margin-bottom:1em;">
-          <label><strong>Rating:</strong></label>
-          <select id="editRating-${id}"
-                  style="width:100%; padding:.5em; margin:.5em 0;">
-            <option value="1"${review.rating===1?' selected':''}>1 star</option>
-            <option value="2"${review.rating===2?' selected':''}>2 stars</option>
-            <option value="3"${review.rating===3?' selected':''}>3 stars</option>
-            <option value="4"${review.rating===4?' selected':''}>4 stars</option>
-            <option value="5"${review.rating===5?' selected':''}>5 stars</option>
-          </select>
-        </div>
-        <div style="margin-bottom:1em;">
-          <label><strong>Review:</strong></label>
-          <textarea id="editText-${id}"
-                    rows="3"
-                    style="width:100%; padding:.5em;">${review.reviewText}</textarea>
-        </div>
-        <button id="btnUpdate-${id}"
-                style="display:block; margin:auto; padding:.5em 1em;
-                       background:#337ab7; color:white; border:none; border-radius:4px;">
-          Update
-        </button>
-      `;
-            document.getElementById(`btnUpdate-${id}`).onclick = async () => {
-                const newText   = document.getElementById(`editText-${id}`).value;
-                const newRating = +document.getElementById(`editRating-${id}`).value;
-                const res = await fetch(`/reviews/${id}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ reviewText: newText, rating: newRating })
+                <div style="margin-bottom:1em;">
+                  <label><strong>Rating:</strong></label>
+                  <select id="editRating-${id}"
+                          style="width:100%; padding:.5em; margin:.5em 0;">
+                    <option value="1"${review.rating===1?' selected':''}>1 star</option>
+                    <option value="2"${review.rating===2?' selected':''}>2 stars</option>
+                    <option value="3"${review.rating===3?' selected':''}>3 stars</option>
+                    <option value="4"${review.rating===4?' selected':''}>4 stars</option>
+                    <option value="5"${review.rating===5?' selected':''}>5 stars</option>
+                  </select>
+                </div>
+                <div style="margin-bottom:1em;">
+                  <label><strong>Your review:</strong></label>
+                  <textarea id="editText-${id}"
+                            rows="3"
+                            style="width:100%; padding:.5em;">${review.reviewText}</textarea>
+                </div>
+                <button id="btnUpdate-${id}"
+                        style="display:block; margin:auto; padding:.5em 1em;
+                               background:#337ab7; color:white; border:none; border-radius:4px;">
+                  Update
+                </button>
+              `;
+
+            document.getElementById(`btnUpdate-${id}`)
+                .addEventListener('click', async () => {
+                    const newText   = document.getElementById(`editText-${id}`).value;
+                    const newRating = +document.getElementById(`editRating-${id}`).value;
+                    const res = await fetch(`/api/reviews/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ reviewText: newText, rating: newRating })
+                    });
+                    if (res.ok) loadReviews();
+                    else        alert('Failed to update: ' + await res.text());
                 });
-                if (res.ok) loadReviews();
-                else        alert('Failed to update: ' + await res.text());
-            };
         }
 
-        function onDelete() {
-            const id = this.dataset.id;
+        function onDelete(id) {
             if (!confirm('Delete this review?')) return;
-            fetch(`/reviews/${id}`, { method: 'DELETE' })
+            fetch(`/api/reviews/${id}`, { method:'DELETE' })
                 .then(r => r.ok ? loadReviews() : alert('Failed to delete'));
         }
 
-        document.getElementById('btnSubmit')?.addEventListener('click', async () => {
-            const body = {
-                reviewText: document.getElementById('reviewText').value,
-                rating:     +document.getElementById('rating').value
-            };
-            const res = await fetch(`/reviews/create/${eventId}`, {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify(body)
+        document.getElementById('btnSubmit')
+            .addEventListener('click', async () => {
+                const body = {
+                    reviewText: document.getElementById('reviewText').value,
+                    rating:     +document.getElementById('rating').value
+                };
+                const res = await fetch(`/api/reviews/create/${eventId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    document.getElementById('reviewText').value = '';
+                    document.getElementById('rating').value     = '';
+                    loadReviews();
+                } else {
+                    alert('Error: ' + await res.text());
+                }
             });
-            if (res.ok) {
-                document.getElementById('reviewText').value = '';
-                document.getElementById('rating').value     = '';
-                loadReviews();
-            } else {
-                alert('Error: ' + await res.text());
-            }
-        });
 
         loadReviews();
-        /*]]>*/
     </script>
 </div>
