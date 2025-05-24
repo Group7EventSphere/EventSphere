@@ -11,4 +11,5 @@ public interface TransactionAuditService {
     void flagFailed(UUID id);
     void softDelete(UUID id);
     void hardDelete  (UUID id);
+    void markSuccess(UUID id);
 }
