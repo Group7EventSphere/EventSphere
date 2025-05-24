@@ -46,9 +46,18 @@ public class EventTest {
             if (eventToStoreAndReturn.getDetails() == null) {
                 eventToStoreAndReturn.setDetails(new HashMap<>());
             }
+
+            // Copy capacity from source event if present in the details
+            if (eventArg.getDetails() != null && eventArg.getDetails().containsKey("capacity")) {
+                eventToStoreAndReturn.getDetails().put("capacity", eventArg.getDetails().get("capacity"));
+            }
+
             // Persist the isPublic status from eventArg into eventToStoreAndReturn's details map
-            // eventArg.isPublic() will get the value from eventArg's details map.
-            eventToStoreAndReturn.getDetails().put("isPublic", eventArg.isPublic());
+            if (eventArg.getDetails() != null && eventArg.getDetails().containsKey("isPublic")) {
+                eventToStoreAndReturn.getDetails().put("isPublic", eventArg.getDetails().get("isPublic"));
+            } else {
+                eventToStoreAndReturn.getDetails().put("isPublic", eventArg.isPublic());
+            }
 
             eventDatabase.put(currentId, eventToStoreAndReturn);
             return eventToStoreAndReturn;
@@ -73,7 +82,7 @@ public class EventTest {
     @Test
     void testCreateEvent() {
         Event event = eventManager.createEvent(
-                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1, 100, true);
         assertNotNull(event);
         assertNotNull(event.getId());
         assertEquals("Test Event", event.getTitle());
@@ -81,42 +90,44 @@ public class EventTest {
         assertEquals("2024-12-31", event.getEventDate());
         assertEquals("Jakarta", event.getLocation());
         assertEquals(1, event.getOrganizerId());
+        assertEquals(100, event.getCapacity());
+        assertEquals(true, event.isPublic());
     }
 
     @Test
     void testUpdateEvent() {
         Event event = eventManager.createEvent(
-                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1, 100, true);
         assertNotNull(event);
         assertNotNull(event.getId());
         int eventId = event.getId();
         boolean originalIsPublic = event.isPublic(); // Store original isPublic status
 
         Event updated = eventManager.updateEvent(
-                eventId, "Updated Event", "Updated Description", "2025-01-01", "Bandung", 2, originalIsPublic); // Use stored originalIsPublic
+                eventId, "Updated Event", "Updated Description", "2025-01-01", "Bandung", 200, originalIsPublic); // Updated to use capacity instead of organizerId
         assertNotNull(updated);
         assertEquals(eventId, updated.getId());
         assertEquals("Updated Event", updated.getTitle());
         assertEquals("Updated Description", updated.getDescription());
         assertEquals("2025-01-01", updated.getEventDate());
         assertEquals("Bandung", updated.getLocation());
-        assertEquals(2, updated.getOrganizerId());
-        assertEquals(originalIsPublic, updated.isPublic()); // Assert isPublic on the 'updated' object
+        assertEquals(200, updated.getCapacity());  // Updated assertion to check capacity
+        assertEquals(originalIsPublic, updated.isPublic());
 
         Event retrievedEvent = eventManager.getEvent(eventId);
         assertNotNull(retrievedEvent);
         assertEquals("Updated Event", retrievedEvent.getTitle());
-        assertEquals("Updated Description", retrievedEvent.getDescription()); // Added assertion
-        assertEquals("2025-01-01", retrievedEvent.getEventDate()); // Added assertion
-        assertEquals("Bandung", retrievedEvent.getLocation()); // Added assertion
-        assertEquals(2, retrievedEvent.getOrganizerId()); // Added assertion
-        assertEquals(originalIsPublic, retrievedEvent.isPublic()); // Added assertion for isPublic
+        assertEquals("Updated Description", retrievedEvent.getDescription());
+        assertEquals("2025-01-01", retrievedEvent.getEventDate());
+        assertEquals("Bandung", retrievedEvent.getLocation());
+        assertEquals(200, retrievedEvent.getCapacity());  // Updated assertion to check capacity
+        assertEquals(originalIsPublic, retrievedEvent.isPublic());
     }
 
     @Test
     void testGetEvent() {
         Event event = eventManager.createEvent(
-                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1, 100, true);
         assertNotNull(event);
         assertNotNull(event.getId());
         int eventId = event.getId();
@@ -130,7 +141,7 @@ public class EventTest {
     @Test
     void testDeleteEvent() {
         Event event = eventManager.createEvent(
-                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1);
+                "Test Event", "Test Description", "2024-12-31", "Jakarta", 1, 100, true);
         assertNotNull(event);
         assertNotNull(event.getId());
         int eventId = event.getId();
