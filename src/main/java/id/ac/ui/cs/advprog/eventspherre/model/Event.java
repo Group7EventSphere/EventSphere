@@ -6,6 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter @Setter
@@ -30,7 +31,11 @@ public class Event {
     private String location;
 
     @Column(name = "organizer_id")
-    private Integer organizerId;
+    private Integer organizerId;    @Column(name = "is_public")
+    private Boolean isPublic = null;
+
+    @Column(name = "capacity")
+    private Integer capacity;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -40,7 +45,7 @@ public class Event {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column
-    private Map<String, Object> details;
+    private Map<String, Object> details = null;
 
     public Event(Integer id, Map<String, Object> details) {
         this.id = id;
@@ -69,11 +74,55 @@ public class Event {
     }
 
     public Integer getCapacity() {
-        return (Integer) details.getOrDefault("capacity", 0);
+        // If capacity field is set directly, return it
+        if (capacity != null) {
+            return capacity;
+        }
+
+        // For backward compatibility, try to get from details map
+        if (details != null && details.containsKey("capacity")) {
+            Object capacityObj = details.get("capacity");
+            if (capacityObj instanceof Integer) {
+                this.capacity = (Integer) capacityObj; // Cache it in the field
+                return this.capacity;
+            }        }
+        return null;
     }
 
     public boolean isPublic() {
-        return (Boolean) details.getOrDefault("isPublic", false);
+        if (isPublic != null) {
+            return isPublic;
+        }
+
+        // For backward compatibility, try to get from details map
+        if (details != null && details.containsKey("isPublic")) {
+            Object isPublicObj = details.get("isPublic");
+            if (isPublicObj instanceof Boolean) {
+                this.isPublic = (Boolean) isPublicObj; // Cache it in the field
+                return this.isPublic;
+            } else if (isPublicObj == null) {
+                // This should throw NPE for consistency with the test expectation
+                throw new NullPointerException("isPublic value in details map is null");
+            }
+        }
+        return false; // Default value when not set
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+        // Also update the details map for backward compatibility
+        if (details == null) {
+            details = new HashMap<>();
+        }
+        details.put("capacity", capacity);
+    }
+
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+        // Also update the details map for backward compatibility
+        if (details == null) {
+            details = new HashMap<>();
+        }
+        details.put("isPublic", isPublic);
     }
 }
-

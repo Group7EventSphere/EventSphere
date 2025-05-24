@@ -21,6 +21,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -92,6 +95,35 @@ class TicketControllerTest {
                    .param("quota", "3"))
                .andExpect(status().is3xxRedirection())
                .andExpect(redirectedUrlPattern("/tickets/create?ticketTypeId=*"));
+
+  
+    @DisplayName("GET /tickets returns list view with user’s tickets and events")
+    void listUserTickets_shouldReturnTicketListView() throws Exception {
+        User user = mockUser();
+
+        TicketType ticketType = new TicketType();
+        ticketType.setName("VIP");
+        ticketType.setPrice(BigDecimal.valueOf(50000));
+        ticketType.setEventId(1);
+
+        Ticket ticket = new Ticket();
+        ticket.setId(UUID.randomUUID());
+        ticket.setTicketType(ticketType);
+        ticket.setDate(LocalDate.now());
+        ticket.setAttendee(user);
+
+        Event event = new Event();
+        event.setId(1);
+        event.setTitle("Test Event");
+
+        when(userService.getUserByEmail("test@example.com")).thenReturn(user);
+        when(ticketService.getTicketsByAttendeeId(user.getId())).thenReturn(List.of(ticket));
+        when(eventManagementService.getEvent(1)).thenReturn(event);
+
+        mockMvc.perform(get("/tickets").with(user("test@example.com")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/list"))
+                .andExpect(model().attributeExists("ticketWithEventList"));
     }
 
     @Test

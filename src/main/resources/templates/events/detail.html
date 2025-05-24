@@ -21,7 +21,7 @@
         </div>
 
         <div class="event-meta">
-            <p class="event-date"><strong>Date:</strong> <span th:text="${#temporals.format(event.eventDate, 'dd MMMM yyyy')}">Event Date</span></p>
+            <p class="event-date"><strong>Date:</strong> <span th:text="${event.eventDate}">Event Date</span></p>
             <p class="event-location"><strong>Location:</strong> <span th:text="${event.location}">Location</span></p>
         </div>
 
@@ -38,11 +38,12 @@
                     <h3 class="ticket-type-name" th:text="${ticketType.name}">Ticket Name</h3>
                     <p class="ticket-type-price" th:text="${'Rp' + #numbers.formatDecimal(ticketType.price, 0, 'COMMA', 0, 'POINT')}">Rp100,000</p>
                     <p class="ticket-type-quota" th:text="${'Available: ' + ticketType.quota}">Available: 100</p>
-                    <form th:if="${ticketType.quota > 0}" th:action="@{/tickets/purchase}" method="post" class="ticket-purchase-form">
+                    <form th:action="@{/tickets/select}" method="post">
                         <input type="hidden" name="ticketTypeId" th:value="${ticketType.id}" />
+                        <input type="hidden" name="eventId" th:value="${event.id}" />
                         <div class="form-group">
-                            <label for="quantity">Quantity:</label>
-                            <input type="number" id="quantity" name="quantity" min="1" th:max="${ticketType.quota}" value="1" class="form-control" />
+                            <label>Quantity:</label>
+                            <input type="number" name="quota" min="1" th:max="${ticketType.quota}" value="1" class="form-control" />
                         </div>
                         <button type="submit" class="btn btn-primary">Purchase</button>
                     </form>
@@ -59,7 +60,7 @@
 
         <div class="event-actions">
             <!-- Edit event link, visible only to authorized users -->
-            <a th:href="@{/events/edit/{id}(id=${event.id})}" class="btn btn-primary" sec:authorize="hasRole('ROLE_ADMIN')">Edit Event</a>
+            <a th:href="@{/events/{eventId}/edit(eventId=${event.id})}" class="btn btn-primary" sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_ORGANIZER')">Edit Event</a>
             <a th:href="@{/events}" class="btn btn-secondary">Back to Events</a>
         </div>
     </div>
