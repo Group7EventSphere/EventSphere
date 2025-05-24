@@ -1,12 +1,20 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TicketTypeTest {
+    private TicketType ticketType;
+
+    @BeforeEach
+    void setUp() {
+        ticketType = new TicketType("VIP", new BigDecimal("120.00"), 5);
+    }
+
     @Test
     void testGetName() {
         TicketType ticketType = new TicketType("VIP", new BigDecimal("75.00"), 20);
@@ -76,6 +84,20 @@ class TicketTypeTest {
 
         TicketType ticketType = TicketType.create("VIP", new BigDecimal("100.00"), 10, organizer);
         assertEquals("VIP", ticketType.getName());
+    }
+
+    @Test
+    @DisplayName("reduceQuota - should throw when quantity is zero or negative")
+    void reduceQuota_shouldThrow_whenQuantityIsZeroOrNegative() {
+        IllegalArgumentException zeroException = assertThrows(IllegalArgumentException.class, () ->
+                ticketType.reduceQuota(0)
+        );
+        assertEquals("Quantity must be positive", zeroException.getMessage());
+
+        IllegalArgumentException negativeException = assertThrows(IllegalArgumentException.class, () ->
+                ticketType.reduceQuota(-3)
+        );
+        assertEquals("Quantity must be positive", negativeException.getMessage());
     }
 
     @Test

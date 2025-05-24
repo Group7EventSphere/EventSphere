@@ -2,9 +2,9 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,19 +34,7 @@ class TicketTest {
 
     @Test
     void testTicketCreation() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
-
-        User attendee = new User();
-        attendee.setId(1);
-        attendee.setName("John Doe");
-        attendee.setEmail("john@example.com");
-        attendee.setRole(User.Role.ATTENDEE);
-
-        String confirmationCode = "TKT-ABC123";
-
-        Ticket ticket = new Ticket(ticketType, attendee, confirmationCode);
-
-        assertNull(ticket.getId()); // not saved to DB, so id is still null
+        assertNull(ticket.getId());
         assertEquals(ticketType, ticket.getTicketType());
         assertEquals(attendee, ticket.getAttendee());
         assertEquals(confirmationCode, ticket.getConfirmationCode());
@@ -62,6 +50,23 @@ class TicketTest {
         ticket.updateTicketType(newType, organizer);
 
         assertEquals(newType, ticket.getTicketType());
+    }
+
+    @Test
+    @DisplayName("Ticket constructor - should set userId = 0 when attendee is null")
+    void constructor_shouldSetUserIdZero_whenAttendeeIsNull() {
+        Ticket result = new Ticket(ticketType, null, confirmationCode);
+
+        assertEquals(0, result.getUserId());
+    }
+
+    @Test
+    @DisplayName("Ticket constructor - should set userId = 0 when attendee ID is null")
+    void constructor_shouldSetUserIdZero_whenAttendeeIdIsNull() {
+        User noIdUser = new User();  // no setId()
+        Ticket result = new Ticket(ticketType, noIdUser, confirmationCode);
+
+        assertEquals(0, result.getUserId());
     }
 
     @Test
