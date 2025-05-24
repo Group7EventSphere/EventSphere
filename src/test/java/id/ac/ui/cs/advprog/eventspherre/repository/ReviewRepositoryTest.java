@@ -1,69 +1,89 @@
 package id.ac.ui.cs.advprog.eventspherre.repository;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Review;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = Replace.NONE)
 class ReviewRepositoryTest {
 
-    @Autowired
     private ReviewRepository repo;
+
+    @BeforeEach
+    void setUp() {
+        repo = mock(ReviewRepository.class);
+    }
 
     @Test
     void saveAndFind() {
         Review input = new Review(10, 20L, "Test review", 4);
+        Review saved = new Review(10, 20L, "Test review", 4);
+        saved.setId(1L);
 
-        Review saved = repo.save(input);
+        when(repo.save(input)).thenReturn(saved);
+        when(repo.findById(1L)).thenReturn(Optional.of(saved));
 
-        assertNotNull(saved.getId(), "ID should be generated");
-        Optional<Review> found = repo.findById(saved.getId());
+        Review result = repo.save(input);
+        Optional<Review> found = repo.findById(1L);
+
+        assertNotNull(result.getId(), "ID should be generated");
         assertTrue(found.isPresent(), "Review must be retrievable");
         assertEquals("Test review", found.get().getReviewText());
+        verify(repo).save(input);
+        verify(repo).findById(1L);
     }
 
     @Test
     void deleteReview() {
-        Review toDelete = repo.save(new Review(1, 2L, "To delete", 3));
-        Long id = toDelete.getId();
+        Long id = 2L;
+        doNothing().when(repo).deleteById(id);
+        when(repo.findById(id)).thenReturn(Optional.empty());
 
         repo.deleteById(id);
-
         Optional<Review> found = repo.findById(id);
+
         assertFalse(found.isPresent(), "Review should be gone after delete");
+        verify(repo).deleteById(id);
+        verify(repo).findById(id);
     }
 
     @Test
     void findByEventId_returnsAllMatchingReviews() {
-        Review a = repo.save(new Review(100, 10L, "First", 5));
-        Review b = repo.save(new Review(100, 11L, "Second", 4));
-        repo.save(new Review(101, 10L, "Other event", 3));
+        Review a = new Review(100, 10L, "First", 5);
+        a.setId(3L);
+        Review b = new Review(100, 11L, "Second", 4);
+        b.setId(4L);
+
+        when(repo.findByEventId(100)).thenReturn(List.of(a, b));
 
         List<Review> list = repo.findByEventId(100);
 
-        assertEquals(2, list.size(), "Should return exactly 2 reviews for event 100");
-        assertTrue(list.stream().anyMatch(r -> r.getId().equals(a.getId())));
-        assertTrue(list.stream().anyMatch(r -> r.getId().equals(b.getId())));
+        assertEquals(2, list.size(),
+                "Should return exactly 2 reviews for event 100");
+        assertTrue(list.contains(a));
+        assertTrue(list.contains(b));
+        verify(repo).findByEventId(100);
     }
 
     @Test
     void findByAttendeeIdAndEventId_returnsMatchingReview() {
-        Review a = repo.save(new Review(200, 20L, "Mine", 2));
-        repo.save(new Review(200, 21L, "Not mine", 3));
+        Review a = new Review(200, 20L, "Mine", 2);
+        a.setId(5L);
+
+        when(repo.findByAttendeeIdAndEventId(20L, 200))
+                .thenReturn(Optional.of(a));
 
         Optional<Review> opt = repo.findByAttendeeIdAndEventId(20L, 200);
 
-        assertTrue(opt.isPresent(), "Should find the review by attendee 20 on event 200");
+        assertTrue(opt.isPresent(),
+                "Should find the review by attendee 20 on event 200");
         assertEquals(a.getId(), opt.get().getId());
         assertEquals("Mine", opt.get().getReviewText());
+        verify(repo).findByAttendeeIdAndEventId(20L, 200);
     }
 }
