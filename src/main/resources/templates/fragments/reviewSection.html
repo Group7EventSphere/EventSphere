@@ -1,0 +1,118 @@
+<!-- templates/fragments/reviewSection.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<div th:fragment="reviewSection(event)">
+    <section id="review-section"
+             style="background:#f1f1f1; padding:2em; border-radius:8px; margin:2em 0;"
+             th:attr="data-event-id=${event.id}">
+        <h2>Reviews</h2>
+
+        <!-- CREATE FORM (only logged-in users) -->
+        <sec:authorize access="isAuthenticated()">
+            <div style="margin-bottom:1em;">
+                <label for="rating">Rate your experience:</label>
+                <select id="rating" name="rating" style="width:100%; padding:.5em; margin-top:.3em;">
+                    <option value="" disabled selected>Select rating…</option>
+                    <option value="1">1 star</option>
+                    <option value="2">2 stars</option>
+                    <option value="3">3 stars</option>
+                    <option value="4">4 stars</option>
+                    <option value="5">5 stars</option>
+                </select>
+            </div>
+            <div style="margin-bottom:1em;">
+                <label for="reviewText">Write your review</label>
+                <textarea id="reviewText"
+                          name="reviewText"
+                          rows="3"
+                          style="width:100%; padding:.5em;"
+                          placeholder="Your thoughts…"></textarea>
+            </div>
+            <button id="btnSubmit" style="padding:.5em 1em; background:#337ab7; color:white; border:none; border-radius:4px;">
+                Submit
+            </button>
+        </sec:authorize>
+
+        <!-- LIST OF EXISTING REVIEWS -->
+        <div id="reviews-container" style="margin-top:2em;"></div>
+    </section>
+
+    <!-- inline JavaScript to handle CRUD -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const eventId = [[${event.id}]];
+        const container = document.getElementById('reviews-container');
+
+        async function loadReviews() {
+            container.innerHTML = '<p>Loading reviews…</p>';
+            const res = await fetch(`/reviews/event/${eventId}`);
+            const reviews = await res.json();
+            container.innerHTML = '';
+            if (reviews.length === 0) {
+                container.innerHTML = '<p>No reviews yet.</p>';
+                return;
+            }
+            reviews.forEach(r => {
+                const card = document.createElement('div');
+                card.style = 'border:1px solid #ccc; padding:1em; margin-bottom:1em;';
+                card.innerHTML = `
+          <p><strong>Rating:</strong> ${r.rating} ⭐</p>
+          <p>${r.reviewText}</p>
+          <button data-id="${r.id}" class="btn-update">Update</button>
+          <button data-id="${r.id}" class="btn-delete">Delete</button>
+        `;
+                container.appendChild(card);
+            });
+
+            // attach handlers
+            document.querySelectorAll('.btn-update').forEach(btn =>
+                btn.onclick = async () => {
+                    const id = btn.dataset.id;
+                    const newText = prompt('New review text:');
+                    const newRating = prompt('New rating (1–5):');
+                    if (newText!=null && newRating!=null) {
+                        await fetch(`/reviews/${id}`, {
+                            method: 'PUT',
+                            headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({ reviewText: newText, rating: +newRating })
+                        });
+                        loadReviews();
+                    }
+                }
+            );
+            document.querySelectorAll('.btn-delete').forEach(btn =>
+                btn.onclick = async () => {
+                    if (!confirm('Delete this review?')) return;
+                    await fetch(`/reviews/${btn.dataset.id}`, { method: 'DELETE' });
+                    loadReviews();
+                }
+            );
+        }
+
+        // Create
+        document.getElementById('btnSubmit')?.addEventListener('click', async () => {
+            const body = {
+                reviewText: document.getElementById('reviewText').value,
+                rating:     +document.getElementById('rating').value
+            };
+            const res = await fetch(`/reviews/create/${eventId}`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                // clear form
+                document.getElementById('reviewText').value = '';
+                document.getElementById('rating').value     = '';
+                loadReviews();
+            } else {
+                alert('Error: ' + await res.text());
+            }
+        });
+
+        // initial load
+        loadReviews();
+        /*]]>*/
+    </script>
+</div>
