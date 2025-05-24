@@ -18,6 +18,7 @@ public class TicketTypeServiceImpl implements TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
     private final TicketRepository ticketRepository;
+    private final TicketService ticketService;
 
     @Override
     public TicketType create(String name, BigDecimal price, int quota, User user, int eventId) {
@@ -48,7 +49,9 @@ public class TicketTypeServiceImpl implements TicketTypeService {
             throw new IllegalArgumentException("Only admins can delete ticket types");
         }
 
-        // Check if any tickets reference this ticket type
+        // Step 1: Delete associated tickets
+        ticketService.deleteTicketsByTicketTypeId(id);
+
         if (ticketRepository.existsByTicketTypeId(id)) {
             throw new IllegalStateException("Cannot delete ticket type with existing tickets.");
         }

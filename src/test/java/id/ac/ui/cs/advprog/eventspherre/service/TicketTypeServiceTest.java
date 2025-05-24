@@ -31,6 +31,9 @@ public class TicketTypeServiceTest {
     @Mock
     private TicketRepository ticketRepository;
 
+    @Mock
+    private TicketService ticketService;
+
     @InjectMocks
     private TicketTypeServiceImpl ticketTypeService;
 
@@ -95,6 +98,7 @@ public class TicketTypeServiceTest {
 
         ticketTypeService.deleteTicketType(ticketTypeId, admin);
 
+        verify(ticketService, times(1)).deleteTicketsByTicketTypeId(ticketTypeId);
         verify(ticketTypeRepository, times(1)).deleteById(ticketTypeId);
     }
 
