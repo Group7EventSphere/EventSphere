@@ -148,8 +148,23 @@ public final class AppConstants {
     
     // JWT Constants
     public static final long JWT_EXPIRATION_TIME = 3600L; // 1 hour
-    
-    // User Constants
+      // User Constants
     public static final double DEFAULT_BALANCE = 0.0;
     public static final int MIN_PASSWORD_LENGTH = 6;
+    
+    // Test Constants
+    public static final String TEST_VIP_TICKET_TYPE = "VIP";
+    public static final String TEST_REGULAR_TICKET_TYPE = "Regular";
+    public static final String TEST_PRICE_120 = "120.00";
+    public static final String TEST_PRICE_100 = "100.00";
+    public static final String TEST_PRICE_150 = "150.00";
+    public static final int TEST_QUOTA_5 = 5;
+    public static final int TEST_QUOTA_10 = 10;
+    public static final int TEST_QUOTA_25 = 25;
+    public static final int TEST_QUOTA_50 = 50;
+    public static final int TEST_REDUCE_QUANTITY_1 = 1;
+    public static final int TEST_REDUCE_QUANTITY_2 = 2;
+    public static final int TEST_REDUCE_QUANTITY_4 = 4;
+    public static final int TEST_USER_ID_1 = 1;
+    public static final String TEST_ERROR_CANNOT_DELETE = "Cannot delete ticket type";
 }
