@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Entity
 @Table(name="reviews")
 @Getter
@@ -40,4 +38,3 @@ public class Review {
         this.rating = rating;
     }
 }
-
