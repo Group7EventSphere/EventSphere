@@ -21,7 +21,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewValidator validator;
 
     public ReviewServiceImpl(ReviewRepository repo, ReviewValidator validator) {
-        this.repo = repo;
+        this.repo      = repo;
         this.validator = validator;
     }
 
@@ -69,18 +69,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-
-    public List<Review> getReviewsByEventId(UUID eventId) {
-        return List.of();
+    public List<Review> findByEventId(int eventId) {
+        return repo.findByEventId(eventId);
     }
 
     @Override
-    public List<Review> findByEventId(int eventId) {
-        return List.of();
-    }
-
-    public List<Review> getReviewsByEventId(int eventId) {
-        // Convert UUID to String to match with our eventUuid field in the database
-        return repo.findByEventId(eventId);
+    public List<Review> getReviewsByEventId(UUID eventUuid) {
+        int id = eventUuid.hashCode();
+        return repo.findByEventId(id);
     }
 }
