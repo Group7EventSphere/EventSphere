@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Ticket Type</title>
+    <link rel="stylesheet" th:href="@{/css/ticketType-form.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="ticketType-container">
+    <div class="ticketType-backContainer">
+        <a href="javascript:history.back()" class="ticketType-backButton">← Back</a>
+    </div>
+
+    <h2 class="ticketType-title">Create New Ticket Type</h2>
+    <hr class="ticketType-divider"/>
+
+    <form th:action="${isGeneralForm} ? @{/ticket-types/create} : @{/events/{eventId}/ticket-types/create(eventId=${event.id})}"
+          th:object="${ticketType}" method="post" class="ticketType-form">
+
+        <!-- General form: dropdown with Select2 -->
+        <div class="ticketType-group" th:if="${isGeneralForm}">
+            <label for="eventId">Event:</label>
+            <select id="eventId" name="eventId" class="select-event" required>
+                <option value="" disabled selected>Select an event</option>
+                <option th:each="event : ${events}"
+                        th:value="${event.id}"
+                        th:text="${event.title}">Event A</option>
+            </select>
+        </div>
+
+        <!-- Per-event form: show event name with hidden input -->
+        <div class="ticketType-group" th:unless="${isGeneralForm}">
+            <label for="eventId">Event:</label>
+            <select id="eventId" name="eventId" class="select-event" disabled>
+                <option th:value="${event.id}" th:text="${event.title}" selected>Selected Event</option>
+            </select>
+            <input type="hidden" name="eventId" th:value="${event.id}"/>
+        </div>
+
+        <div class="ticketType-group">
+            <label for="name">Name of Type:</label>
+            <input type="text" th:field="*{name}" required>
+        </div>
+
+        <div class="ticketType-group">
+            <label for="price">Price (IDR):</label>
+            <input type="number" th:field="*{price}" step="1" required>
+        </div>
+
+        <div class="ticketType-group">
+            <label for="quota">Quota:</label>
+            <input type="number" th:field="*{quota}" required>
+        </div>
+
+        <div class="ticketType-buttonContainer">
+            <button type="submit" class="ticketType-button">Create</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.select-event').select2({
+            placeholder: "Select an event",
+            allowClear: true
+        });
+    });
+</script>
+</body>
+</html>

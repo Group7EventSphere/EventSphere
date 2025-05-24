@@ -1,17 +1,22 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
-
 
 class TicketTest {
     private Ticket ticket;
     private TicketType ticketType;
     private User attendee;
     private String confirmationCode;
+
+    @Autowired
+    private TicketRepository ticketRepository;
 
     @BeforeEach
     void setUp() {
@@ -29,10 +34,23 @@ class TicketTest {
 
     @Test
     void testTicketCreation() {
-        assertNotNull(ticket.getId());
+        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
+
+        User attendee = new User();
+        attendee.setId(1);
+        attendee.setName("John Doe");
+        attendee.setEmail("john@example.com");
+        attendee.setRole(User.Role.ATTENDEE);
+
+        String confirmationCode = "TKT-ABC123";
+
+        Ticket ticket = new Ticket(ticketType, attendee, confirmationCode);
+
+        assertNull(ticket.getId()); // not saved to DB, so id is still null
         assertEquals(ticketType, ticket.getTicketType());
         assertEquals(attendee, ticket.getAttendee());
         assertEquals(confirmationCode, ticket.getConfirmationCode());
+        assertEquals(attendee.getId(), ticket.getUserId());
     }
 
     @Test

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Types</title>
+    <link rel="stylesheet" th:href="@{/css/ticketType-list.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="ticketType-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="ticketType-container">
+    <aside class="ticketType-sidebar">
+        <a th:href="@{/ticket-types}" class="ticketType-nav-item">See All Tickets</a>
+        <a th:href="@{/ticket-types/create}" class="ticketType-nav-item">Create Ticket</a>
+    </aside>
+
+    <main class="ticketType-main">
+        <h2 class="ticketType-title">Available Tickets</h2>
+
+        <div class="ticketType-pagination-wrapper">
+            <div class="ticketType-card-container">
+                <div class="ticketType-card"
+                     th:each="entry, stat : ${eventTicketList}"
+                     th:attr="data-page=${stat.index / 6}">
+                    <h3 class="ticketType-event-name">
+                        <a th:href="@{/events/{eventId}/ticket-types(eventId=${entry.event.id})}"
+                           th:text="${entry.event.title}">Event A</a>
+                    </h3>
+                    <ul class="ticketType-list">
+
+                        <!-- less than 3 tickets -->
+                        <li th:each="type, iterStat : ${entry.ticketTypes}"
+                            th:if="${iterStat.index} < 3"
+                            class="ticketType-item">
+                                <span>
+                                    <span th:text="${type.name}">VIP</span>
+                                    <span class="ticketType-quota" th:text="'(' + ${type.quota} + ' left)'">(50 left)</span>
+                                </span>
+                            <span class="ticketType-price" th:text="'IDR ' + ${#numbers.formatInteger(type.price, 0, 'COMMA')}">IDR 500,000</span>
+                        </li>
+
+                        <!-- more than 3 -->
+                        <li class="ticketType-item"
+                            th:if="${#lists.size(entry.ticketTypes) > 3}">
+                            <span>...</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ticketType-pagination">
+                <button class="page-btn" onclick="changePage(-1)">‹</button>
+                <span id="pagination-indicator">Page 1</span>
+                <button class="page-btn" onclick="changePage(1)">›</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- MODAL -->
+<div class="ticketType-modal-overlay" id="messageModal"
+     th:if="${errorMessage != null} or ${successMessage != null}">
+    <div class="ticketType-modal-content">
+        <p th:if="${successMessage}" th:text="${successMessage}" class="ticketType-success-text"></p>
+        <p th:if="${errorMessage}" th:text="${errorMessage}" class="ticketType-error-text"></p>
+        <button onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('messageModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+        updatePagination();
+    });
+
+    function closeModal() {
+        const modal = document.getElementById('messageModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    let currentPage = 0;
+    const cardsPerPage = 6;
+
+    function updatePagination() {
+        const cards = document.querySelectorAll('.ticketType-card');
+        const totalPages = Math.ceil(cards.length / cardsPerPage);
+
+        cards.forEach(card => {
+            const page = parseInt(card.getAttribute('data-page'));
+            card.style.display = (page === currentPage) ? 'flex' : 'none';
+        });
+
+        document.getElementById('pagination-indicator').innerText = `Page ${currentPage + 1}`;
+    }
+
+    function changePage(direction) {
+        const cards = document.querySelectorAll('.ticketType-card');
+        const totalPages = Math.ceil(cards.length / cardsPerPage);
+        currentPage += direction;
+
+        if (currentPage < 0) currentPage = 0;
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+
+        updatePagination();
+    }
+</script>
+
+</body>
+</html>

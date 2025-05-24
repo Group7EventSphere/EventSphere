@@ -1,23 +1,56 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.UUID;
 
+@Entity
+@Table(name = "tickets")
 @Getter
 @Setter
 public class Ticket {
-    private UUID id = UUID.randomUUID();
+    // private Event event;
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "ticket_type_id")
     private TicketType ticketType;
+
+    @Column(name = "user_id", nullable = false)
+    private int userId;
+
+    @Transient
     private User attendee;
+
+    @Column(nullable = false, unique = true)
     private String confirmationCode;
+
+    @Column(nullable = false)
+    private String status = "pending";
+
+    @Column(nullable = false)
+    @DateTimeFormat(pattern = "dd MMM yyyy")
+    private LocalDate date;
 
     public Ticket() {}
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
         this.ticketType = ticketType;
         this.attendee = attendee;
+
+        // Defensive check to prevent NPE
+        if (attendee == null || attendee.getId() == null) {
+            this.userId = 0;
+        } else {
+            this.userId = attendee.getId();
+        }
+
         this.confirmationCode = confirmationCode;
     }
 

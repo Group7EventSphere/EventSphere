@@ -1,0 +1,60 @@
+/* Profile Page Styles */
+.profile-container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.profile-info {
+    margin-bottom: 2rem;
+}
+
+.profile-info h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.form-divider {
+    margin: 1.5rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Role badge styles */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: lowercase;
+    margin-top: 0.5rem;
+}
+
+.role-admin {
+    background-color: #fca5a5;
+    color: #991b1b;
+}
+
+.role-organizer {
+    background-color: #a5b4fc;
+    color: #3730a3;
+}
+
+.role-attendee {
+    background-color: #a7f3d0;
+    color: #064e3b;
+}

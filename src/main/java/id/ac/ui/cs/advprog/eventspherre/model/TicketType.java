@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,15 +10,28 @@ import java.util.UUID;
 
 @Setter
 @Getter
+@Entity
+@Table(name = "ticket_types")
 public class TicketType {
-    // Getters & Setters
-    private UUID id = UUID.randomUUID();
+    @Id
+    @JsonProperty("id")
+    @GeneratedValue
+    private UUID id;
 
+    @JsonProperty("name")
+    @Column(nullable = false, unique = true)
     private String name;
 
+    @JsonProperty("price")
+    @Column(nullable = false)
     private BigDecimal price;
 
+    @JsonProperty("quota")
+    @Column(nullable = false)
     private int quota;
+
+    @Column(name = "event_id") // Renamed from event_uuid to event_id
+    private Integer eventId; // Changed from String to int
 
     // Constructor
     public TicketType() {}
@@ -25,6 +40,7 @@ public class TicketType {
         this.name = name;
         this.price = price;
         this.quota = quota;
+        this.eventId = eventId;
     }
 
     public void reduceQuota(int quantity) {
@@ -42,5 +58,11 @@ public class TicketType {
             throw new IllegalArgumentException("Only organizers can create ticket types");
         }
         return new TicketType(name, price, quota);
+    }
+
+    public static TicketType create(String name, BigDecimal price, int quota, User user, int eventId) { // Changed eventId from UUID to int
+        TicketType ticketType = create(name, price, quota, user);
+        ticketType.setEventId(eventId); // Changed from setEventUuid to setEventId
+        return ticketType;
     }
 }
