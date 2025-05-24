@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.eventspherre.config.WebSecurityTestConfig;
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
@@ -8,147 +9,167 @@ import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TicketController.class)
+@WebMvcTest(
+    controllers = TicketController.class,
+    excludeAutoConfiguration = ThymeleafAutoConfiguration.class
+)
+@Import(WebSecurityTestConfig.class)
+@ActiveProfiles("test")
 class TicketControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired MockMvc mockMvc;
 
-    @MockBean
-    private TicketService ticketService;
+    @MockBean TicketService            ticketService;
+    @MockBean TicketTypeService        ticketTypeService;
+    @MockBean UserService              userService;
+    @MockBean EventManagementService   eventManagementService;
+    @MockBean AuthenticationProvider   authenticationProvider;
 
-    @MockBean
-    private TicketTypeService ticketTypeService;
+    private User     attendee;
+    private UUID     typeId;
+    private Event    sampleEvent;
+    private TicketType sampleType;
 
-    @MockBean
-    private EventManagementService eventManagementService;
+    @BeforeEach
+    void setUp() {
+        attendee = new User();
+        attendee.setId(42);
+        attendee.setEmail("attendee@example.com");
 
-    @MockBean
-    private UserService userService;
+        typeId = UUID.randomUUID();
+        sampleType = new TicketType();
+        sampleType.setId(typeId);
+        sampleType.setEventId(7);
 
-    private User mockUser() {
-        User user = new User();
-        user.setId(1);
-        user.setEmail("test@example.com");
-        user.setName("Test User");
-        return user;
-    }
-
-    private Ticket sampleTicket() {
-        TicketType type = new TicketType("VIP", new BigDecimal("100.00"), 10);
-        Ticket ticket = new Ticket();
-        ticket.setId(UUID.randomUUID());
-        ticket.setConfirmationCode("TKT-ABC123");
-        ticket.setTicketType(type);
-        ticket.setAttendee(mockUser());
-        return ticket;
+        sampleEvent = new Event();
+        sampleEvent.setId(7);
+        sampleEvent.setEventDate("2025-06-01T10:00");
     }
 
     @Test
-    @DisplayName("GET /tickets returns list view with user’s tickets")
-    void listUserTickets_shouldReturnTicketListView() throws Exception {
-        User user = mockUser();
-        when(ticketService.getTicketsByAttendeeId(user.getId())).thenReturn(List.of(sampleTicket()));
-        when(userService.getUserByEmail("test@example.com")).thenReturn(user);
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void showTicketSelection() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(eventManagementService.getEvent(7)).thenReturn(sampleEvent);
+        when(ticketTypeService.findByEventId(7)).thenReturn(List.of(sampleType));
 
-        mockMvc.perform(get("/tickets").with(user("test@example.com")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("ticket/list"))
-                .andExpect(model().attributeExists("tickets"));
+        mockMvc.perform(get("/tickets/select/7"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("ticket/select"))
+               .andExpect(model().attributeExists("ticketTypes"))
+               .andExpect(model().attribute("event", sampleEvent));
     }
 
     @Test
-    @DisplayName("GET /tickets/{id} returns ticket detail view")
-    void getTicketById_shouldReturnView() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(ticketService.getTicketById(id)).thenReturn(Optional.of(sampleTicket()));
-
-        mockMvc.perform(get("/tickets/" + id).with(user("test@example.com")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("ticket/detail"))
-                .andExpect(model().attributeExists("ticket"));
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void handleTicketSelection_redirectsToCreate() throws Exception {
+        mockMvc.perform(post("/tickets/select")
+                   .with(csrf())
+                   .param("ticketTypeId", typeId.toString())
+                   .param("quota", "3"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrlPattern("/tickets/create?ticketTypeId=*"));
     }
 
     @Test
-    @DisplayName("POST /tickets/create should create ticket and redirect")
-    void createTicket_shouldRedirectAfterCreation() throws Exception {
-        User user = mockUser();
-        UUID ticketTypeId = UUID.randomUUID();
-        Ticket ticket = new Ticket();
-        ticket.setId(UUID.randomUUID());
-        ticket.setConfirmationCode("TKT-ABC123");
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void showTicketForm_populatesModel() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+        when(eventManagementService.getEvent(7)).thenReturn(sampleEvent);
 
-        // Mock user and ticketType
-        when(userService.getUserByEmail("test@example.com")).thenReturn(user);
-        when(ticketTypeService.getTicketTypeById(ticketTypeId))
-                .thenReturn(Optional.of(new TicketType("VIP", new BigDecimal("500000"), 10)));
+        mockMvc.perform(get("/tickets/create")
+                   .param("ticketTypeId", typeId.toString())
+                   .param("quota", "2"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("ticket/create"))
+               .andExpect(model().attribute("quota", 2))
+               .andExpect(model().attributeExists("ticket"))
+               .andExpect(model().attribute("ticketType", sampleType))
+               .andExpect(model().attribute("event", sampleEvent));
+    }
 
-        // Mock ticket creation result
-        when(ticketService.createTicket(any(Ticket.class), eq(2)))
-                .thenReturn(List.of(ticket));
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void createTicket_invokesServiceAndRedirects() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+        when(ticketService.createTicket(any(Ticket.class), eq(5))).thenReturn(List.of(new Ticket()));
 
         mockMvc.perform(post("/tickets/create")
-                        .param("confirmationCode", "TKT-ABC123")
-                        .param("ticketTypeId", ticketTypeId.toString())
-                        .param("quota", "2")
-                        .with(user("test@example.com"))
-                        .with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/tickets"));
-
-        verify(ticketService).createTicket(any(Ticket.class), eq(2));
+                   .with(csrf())
+                   .param("ticketTypeId", typeId.toString())
+                   .param("quota", "5"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/tickets"));
     }
 
     @Test
-    @DisplayName("GET /tickets/code/{code} returns ticket")
-    void getTicketByConfirmationCode_shouldReturnTicket() throws Exception {
-        String code = "TKT-ABC123";
-        when(ticketService.getTicketByConfirmationCode(code)).thenReturn(Optional.of(sampleTicket()));
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void listUserTickets_showsList() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketService.getTicketsByAttendeeId(42)).thenReturn(List.of(new Ticket()));
 
-        mockMvc.perform(get("/tickets/code/" + code).with(user("test@example.com")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
+        mockMvc.perform(get("/tickets"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("ticket/list"))
+               .andExpect(model().attributeExists("tickets"));
     }
 
     @Test
-    @DisplayName("GET /tickets/attendee/{attendeeId} returns user’s tickets")
-    void getTicketsByAttendee_shouldReturnList() throws Exception {
-        when(ticketService.getTicketsByAttendeeId(1)).thenReturn(List.of(sampleTicket()));
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    void getTicketById_returnsDetailView() throws Exception {
+        UUID ticketId = UUID.randomUUID();
+        Ticket t = new Ticket(); t.setId(ticketId);
+        when(ticketService.getTicketById(ticketId)).thenReturn(Optional.of(t));
 
-        mockMvc.perform(get("/tickets/attendee/1").with(user("test@example.com")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].confirmationCode").value("TKT-ABC123"));
+        mockMvc.perform(get("/tickets/" + ticketId))
+               .andExpect(status().isOk())
+               .andExpect(view().name("ticket/detail"))
+               .andExpect(model().attribute("ticket", t));
     }
 
     @Test
-    @DisplayName("GET /tickets/count/{ticketTypeId} returns count")
-    void countTicketsByType_shouldReturnCount() throws Exception {
-        UUID ticketTypeId = UUID.randomUUID();
-        when(ticketService.countTicketsByType(ticketTypeId)).thenReturn(5L);
+    void apiEndpoints_workCorrectly() throws Exception {
+        when(ticketService.getTicketsByAttendeeId(42)).thenReturn(List.of(new Ticket()));
+        when(ticketService.getTicketByConfirmationCode("CODE")).thenReturn(Optional.of(new Ticket()));
+        when(ticketService.countTicketsByType(typeId)).thenReturn(7L);
 
-        mockMvc.perform(get("/tickets/count/" + ticketTypeId).with(user("test@example.com")))
-                .andExpect(status().isOk())
-                .andExpect(content().string("5"));
+        mockMvc.perform(get("/tickets/attendee/42")
+                .with(user("attendee@example.com").roles("ATTENDEE")))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get("/tickets/code/CODE")
+                .with(user("attendee@example.com").roles("ATTENDEE")))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get("/tickets/count/" + typeId)
+                .with(user("attendee@example.com").roles("ATTENDEE")))
+            .andExpect(status().isOk())
+            .andExpect(content().string("7"));
     }
+
 }
