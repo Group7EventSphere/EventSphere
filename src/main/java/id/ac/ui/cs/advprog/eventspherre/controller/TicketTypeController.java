@@ -66,11 +66,13 @@ public class TicketTypeController {
     public String showCreateForm(Model model, Principal principal) {
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
+        boolean isOrganizer = user != null && user.getRole() == User.Role.ORGANIZER;
 
         List<Event> events = eventManagementService.getAllEvents();
         model.addAttribute("events", events);
         model.addAttribute("ticketType", new TicketType());
         model.addAttribute("isGeneralForm", Boolean.TRUE);
+        model.addAttribute("isOrganizer", isOrganizer);
         return "ticket-type/type_form";
     }
 
@@ -113,6 +115,9 @@ public class TicketTypeController {
         // Fetch and bind the ticket type
         TicketType ticketType = ticketTypeService.getTicketTypeById(id)
                 .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+
+        boolean isOrganizer = currentUser != null && currentUser.getRole() == User.Role.ORGANIZER;
+        model.addAttribute("isOrganizer", isOrganizer);
 
         model.addAttribute("ticketType", ticketType);
         model.addAttribute("currentUser", currentUser); // optional

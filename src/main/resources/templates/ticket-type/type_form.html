@@ -61,6 +61,13 @@
         </div>
     </form>
 </div>
+<div class="ticketType-modal-overlay" id="notOrganizerModal"
+     th:if="${isOrganizer != null and !isOrganizer}">
+    <div class="ticketType-modal-content">
+        <p class="ticketType-error-text" th:text="${isEdit} ? ' Only organizers can edit ticket types.' : 'Only organizers can create ticket types.'">Permission denied.</p>
+        <a href="/ticket-types" class="ticketType-button">Back to Manage Tickets</a>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -69,6 +76,25 @@
         $('.select-event').select2({
             placeholder: "Select an event",
             allowClear: true
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById("notOrganizerModal");
+        if (modal) {
+            // Disable form interaction when modal is shown
+            const form = document.querySelector("form.ticketType-form");
+            if (form) {
+                form.style.pointerEvents = "none";
+                form.style.opacity = "0.3";
+            }
+        }
+
+        // Optional: prevent keyboard submission
+        document.addEventListener("keydown", function (e) {
+            if (modal && e.key === "Enter") {
+                e.preventDefault();
+            }
         });
     });
 </script>

@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.common.ModelAttributes;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
@@ -37,7 +38,8 @@ public class TicketController {
 
     @GetMapping("/select/{eventId}")
     public String showTicketSelection(@PathVariable("eventId") int eventId, Model model, Principal principal) {
-        User user = userService.getUserByEmail(principal.getName());
+        userService.getUserByEmail(principal.getName());
+
         Event event = eventManagementService.getEvent(eventId);
         if (event == null) {
             return "redirect:/events"; // or show error page
@@ -45,7 +47,7 @@ public class TicketController {
 
         List<TicketType> ticketTypes = ticketTypeService.findByEventId(eventId);
 
-        model.addAttribute("event", event);
+        model.addAttribute(ModelAttributes.EVENT, event);
         model.addAttribute("ticketTypes", ticketTypes);
         return "ticket/select"; // same select.html
     }
@@ -78,12 +80,12 @@ public class TicketController {
         ticket.setTicketType(ticketType);
         ticket.setAttendee(user);
 
-        model.addAttribute("ticket", ticket);
+        model.addAttribute(ModelAttributes.TICKET, ticket);
         model.addAttribute("quota", quota);
         model.addAttribute("ticketType", ticketType);
 
         // Handling events
-        model.addAttribute("event", event);
+        model.addAttribute(ModelAttributes.EVENT, event);
         model.addAttribute("eventDateFormatted", parsedDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy HH:mm")));
 
         return "ticket/create";
@@ -107,7 +109,8 @@ public class TicketController {
         ticket.setTicketType(ticketType);
 
         // Create multiple tickets
-        List<Ticket> tickets = ticketService.createTicket(ticket, quota);
+        ticketService.createTicket(ticket, quota);
+
         redirectAttributes.addFlashAttribute("message", "Successfully purchased " + quota + " ticket(s).");
 
         return "redirect:/tickets";
@@ -117,7 +120,7 @@ public class TicketController {
     @GetMapping("/{id}")
     public String getTicketById(@PathVariable UUID id, Model model, Principal principal) {
         Optional<Ticket> ticket = ticketService.getTicketById(id);
-        ticket.ifPresent(value -> model.addAttribute("ticket", value));
+        ticket.ifPresent(value -> model.addAttribute(ModelAttributes.TICKET, value));
         return ticket.map(t -> "ticket/detail").orElse("redirect:/tickets");
     }
 
@@ -137,8 +140,8 @@ public class TicketController {
                     if (event == null) return null;
 
                     Map<String, Object> entry = new HashMap<>();
-                    entry.put("ticket", ticket);
-                    entry.put("event", event);
+                    entry.put(ModelAttributes.TICKET, ticket);
+                    entry.put(ModelAttributes.EVENT, event);
                     return entry;
                 })
                 .filter(Objects::nonNull)
@@ -185,7 +188,7 @@ public class TicketController {
     @PutMapping("/{id}")
     @ResponseBody
     public ResponseEntity<Ticket> updateTicket(@PathVariable UUID id, @RequestBody Ticket updatedTicket, Principal principal) {
-        User user = userService.getUserByEmail(principal.getName());
+        userService.getUserByEmail(principal.getName());
         Ticket updated = ticketService.updateTicket(id, updatedTicket);
         return ResponseEntity.ok(updated);
     }
