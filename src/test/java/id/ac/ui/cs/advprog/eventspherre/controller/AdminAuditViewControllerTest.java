@@ -29,15 +29,6 @@ class AdminAuditViewControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    @DisplayName("GET /admin/audit_admin → view 'admin_audit'")
-    void auditPage() throws Exception {
-        mvc.perform(get("/admin/audit_admin"))
-           .andExpect(status().isOk())
-           .andExpect(view().name("admin_audit"));
-    }
-
-    @Test
-    @WithMockUser(roles = "ADMIN")
     @DisplayName("GET /admin/audit → view 'admin/audit'")
     void auditAdminPage() throws Exception {
         mvc.perform(get("/admin/audit"))
