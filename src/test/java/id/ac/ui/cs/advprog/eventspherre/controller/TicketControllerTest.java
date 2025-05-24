@@ -10,22 +10,26 @@ import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -161,4 +165,176 @@ class TicketControllerTest {
                 .andExpect(content().string("7"));
     }
 
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should redirect to /events if event not found")
+    void showTicketSelection_shouldRedirectWhenEventNull() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(eventManagementService.getEvent(sampleType.getEventId())).thenReturn(null);
+
+        mockMvc.perform(get("/tickets/select/{eventId}", sampleType.getEventId()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events"));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should return ticket/select view with model attributes")
+    void showTicketSelection_shouldReturnViewAndModel() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(eventManagementService.getEvent(sampleType.getEventId())).thenReturn(sampleEvent);
+        when(ticketTypeService.findByEventId(sampleType.getEventId())).thenReturn(List.of(sampleType));
+
+        mockMvc.perform(get("/tickets/select/{eventId}", sampleType.getEventId()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/select"))
+                .andExpect(model().attribute("event", sampleEvent))
+                .andExpect(model().attribute("ticketTypes", List.of(sampleType)));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should throw IllegalArgumentException when ticket type is not found")
+    void showTicketForm_shouldThrowWhenTicketTypeNotFound() throws Exception {
+        UUID ticketTypeId = UUID.randomUUID();
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(ticketTypeId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/tickets/create")
+                        .param("ticketTypeId", ticketTypeId.toString())
+                        .param("quota", "2"))
+                .andExpect(status().isInternalServerError()) // or use is4xxClientError if you're handling it
+                .andExpect(result -> assertTrue(
+                        result.getResolvedException() instanceof IllegalArgumentException))
+                .andExpect(result -> assertEquals(
+                        "Invalid ticket type ID", result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should throw exception if ticket type ID is invalid in POST /create")
+    void createTicket_shouldThrowWhenTicketTypeMissing() throws Exception {
+        UUID invalidTicketTypeId = UUID.randomUUID();
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(invalidTicketTypeId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/tickets/create")
+                        .with(csrf())
+                        .param("ticketTypeId", invalidTicketTypeId.toString())
+                        .param("quota", "2"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof IllegalArgumentException))
+                .andExpect(result -> assertEquals("Invalid ticket type ID", result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should return ticket list view with ticket and event data")
+    void listUserTickets_shouldReturnViewWithTicketAndEventList() throws Exception {
+        Ticket ticket = new Ticket();
+        ticket.setAttendee(attendee);
+        ticket.setTicketType(sampleType);
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketService.getTicketsByAttendeeId(attendee.getId())).thenReturn(List.of(ticket));
+        when(eventManagementService.getEvent(sampleType.getEventId())).thenReturn(sampleEvent);
+
+        mockMvc.perform(get("/tickets"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/list"))
+                .andExpect(model().attributeExists("ticketWithEventList"));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should delete ticket and return no content")
+    void deleteTicket_shouldReturnNoContent() throws Exception {
+        UUID ticketId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/tickets/" + ticketId).with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(ticketService).deleteTicket(ticketId);
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should update ticket and return updated ticket")
+    void updateTicket_shouldReturnUpdatedTicket() throws Exception {
+        UUID ticketId = UUID.randomUUID();
+
+        Ticket updated = new Ticket();
+        updated.setId(ticketId);
+        updated.setAttendee(attendee);
+        updated.setConfirmationCode("TKT-NEW");
+        updated.setTicketType(sampleType);
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketService.updateTicket(eq(ticketId), any(Ticket.class))).thenReturn(updated);
+
+        mockMvc.perform(put("/tickets/" + ticketId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                      "id": "%s",
+                      "confirmationCode": "TKT-NEW"
+                    }
+                    """.formatted(ticketId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(ticketId.toString()))
+                .andExpect(jsonPath("$.confirmationCode").value("TKT-NEW"));
+
+        verify(ticketService).updateTicket(eq(ticketId), any(Ticket.class));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @DisplayName("Should filter out ticket when TicketType is null")
+    void listUserTickets_shouldSkipTicketIfTypeIsNull() throws Exception {
+        Ticket ticketWithoutType = new Ticket();
+        ticketWithoutType.setAttendee(attendee);
+        ticketWithoutType.setTicketType(null);
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketService.getTicketsByAttendeeId(attendee.getId())).thenReturn(List.of(ticketWithoutType));
+
+        mockMvc.perform(get("/tickets"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/list"))
+                .andExpect(model().attribute("ticketWithEventList", List.of())); // list empty
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @DisplayName("Should filter out ticket when event is null")
+    void listUserTickets_shouldSkipTicketIfEventIsNull() throws Exception {
+        Ticket ticket = new Ticket();
+        ticket.setAttendee(attendee);
+        ticket.setTicketType(sampleType);
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketService.getTicketsByAttendeeId(attendee.getId())).thenReturn(List.of(ticket));
+        when(eventManagementService.getEvent(sampleType.getEventId())).thenReturn(null); // event empty
+
+        mockMvc.perform(get("/tickets"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/list"))
+                .andExpect(model().attribute("ticketWithEventList", List.of()));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "USER")
+    @DisplayName("Should return 404 Not Found when ticket with confirmation code does not exist")
+    void getByConfirmationCode_shouldReturnNotFoundIfTicketMissing() throws Exception {
+        String missingCode = "TKT-MISSING";
+
+        when(ticketService.getTicketByConfirmationCode(missingCode))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/tickets/code/" + missingCode))
+                .andExpect(status().isNotFound());
+    }
 }
