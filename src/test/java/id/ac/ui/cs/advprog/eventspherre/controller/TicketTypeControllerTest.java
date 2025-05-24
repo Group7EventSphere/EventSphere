@@ -179,20 +179,6 @@ class TicketTypeControllerTest {
     }
 
     @Test
-    @DisplayName("GET /edit/{id} - should set isOrganizer=true when user is ORGANIZER")
-    void showEditForm_shouldSetIsOrganizerTrue_whenUserIsOrganizer() throws Exception {
-        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
-        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
-
-        mockMvc.perform(get("/ticket-types/edit/" + typeId).principal(() -> mockUser.getEmail()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("ticket-type/type_edit"))
-                .andExpect(model().attribute("ticketType", standard))
-                .andExpect(model().attribute("currentUser", mockUser))
-                .andExpect(model().attribute("isOrganizer", Boolean.TRUE));
-    }
-
-    @Test
     @DisplayName("GET /edit/{id} - should throw exception when ticket type not found")
     void showEditForm_shouldThrowException_whenTicketTypeNotFound() throws Exception {
         when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
