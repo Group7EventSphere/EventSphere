@@ -109,7 +109,9 @@ public class EventControllerTest {
                 eq("Test Description"), 
                 eq("2024-12-31"), 
                 eq("Jakarta"), 
-                eq(mockOrganizer.getId())
+                eq(mockOrganizer.getId()),
+                eq(100),     // Adding capacity parameter
+                eq(true)     // Adding isPublic parameter
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")
@@ -140,3 +142,4 @@ public class EventControllerTest {
                         containsString("Cannot invoke \"id.ac.ui.cs.advprog.eventspherre.model.User.getId()\" because \"currentUser\" is null")));
         }
 }
+
