@@ -37,6 +37,7 @@
             <span class="order-date"
                   th:text="${#temporals.format(entry.ticket.date, 'dd MMM yyyy')}">17 May 2025</span>
                 </div>
+                <div class="order-cc" th:text="${entry.ticket.confirmationCode}">TKT-1923810</div>
 
                 <div class="order-details">
                     <a th:href="@{/events/{id}(id=${entry.event.id})}">Details</a>
