@@ -28,12 +28,22 @@
                            th:text="${entry.event.title}">Event A</a>
                     </h3>
                     <ul class="ticketType-list">
-                        <li th:each="type : ${entry.ticketTypes}" class="ticketType-item">
-                            <span>
-                                <span th:text="${type.name}">VIP</span>
-                                <span class="ticketType-quota" th:text="'(' + ${type.quota} + ' left)'">(50 left)</span>
-                            </span>
+
+                        <!-- less than 3 tickets -->
+                        <li th:each="type, iterStat : ${entry.ticketTypes}"
+                            th:if="${iterStat.index} < 3"
+                            class="ticketType-item">
+                                <span>
+                                    <span th:text="${type.name}">VIP</span>
+                                    <span class="ticketType-quota" th:text="'(' + ${type.quota} + ' left)'">(50 left)</span>
+                                </span>
                             <span class="ticketType-price" th:text="'IDR ' + ${#numbers.formatInteger(type.price, 0, 'COMMA')}">IDR 500,000</span>
+                        </li>
+
+                        <!-- more than 3 -->
+                        <li class="ticketType-item"
+                            th:if="${#lists.size(entry.ticketTypes) > 3}">
+                            <span>...</span>
                         </li>
                     </ul>
                 </div>

@@ -70,55 +70,53 @@
 </head>
 <body>
 
-<h2>Buy a Ticket</h2>
+<h2 th:text="'Buy a Ticket for ' + ${event.title}">Buy a Ticket</h2>
 
 <form th:action="@{/tickets/select}" method="post">
     <label for="ticketType">Ticket Type:</label>
-    <select name="ticketTypeId" required>
+    <select id="ticketTypeSelect" name="ticketTypeId" required>
         <option th:each="type : ${ticketTypes}"
                 th:value="${type.id}"
-                th:text="${type.name + ' - IDR ' + type.price}">
+                th:attr="data-price=${type.price}"
+                th:text="${type.name + ' - IDR ' + #numbers.formatInteger(type.price, 0, 'COMMA')}">
         </option>
     </select>
 
     <label for="quota">Quantity:</label>
-    <input type="number" name="quota" min="1" value="1" required />
+    <input type="number" name="quota" id="quotaInput" min="1" value="1" required />
 
     <button type="submit">Purchase</button>
 
     <p><strong>Selected Ticket Price:</strong> <span id="ticketPriceDisplay">-</span></p>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const select = document.getElementById("ticketTypeSelect");
-            const priceDisplay = document.getElementById("ticketPriceDisplay");
-
-            async function fetchTicketDetails(ticketTypeId) {
-                try {
-                    const response = await fetch(`/tickets/${ticketTypeId}`);
-                    if (!response.ok) throw new Error("Ticket type not found");
-                    const data = await response.json();
-                    priceDisplay.textContent = data.price.toLocaleString("en-US", { style: "currency", currency: "IDR" });
-                } catch (err) {
-                    priceDisplay.textContent = "Error fetching price";
-                    console.error(err);
-                }
-            }
-
-            if (select) {
-                select.addEventListener("change", (e) => {
-                    const ticketTypeId = e.target.value;
-                    if (ticketTypeId) {
-                        fetchTicketDetails(ticketTypeId);
-                    }
-                });
-            }
-        });
-    </script>
 </form>
 
-
 <a th:href="@{/tickets}" class="back-link">← Back to My Tickets</a>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const select = document.getElementById("ticketTypeSelect");
+        const quotaInput = document.getElementById("quotaInput");
+        const priceDisplay = document.getElementById("ticketPriceDisplay");
+
+        function updatePrice() {
+            const selectedOption = select.options[select.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const quantity = parseInt(quotaInput.value) || 0;
+            const total = price * quantity;
+
+            priceDisplay.textContent = "IDR " + total.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        }
+
+        select.addEventListener("change", updatePrice);
+        quotaInput.addEventListener("input", updatePrice);
+
+        updatePrice(); // trigger once on load
+    });
+</script>
 
 </body>
 </html>
