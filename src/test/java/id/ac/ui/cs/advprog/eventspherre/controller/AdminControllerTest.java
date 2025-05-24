@@ -71,16 +71,16 @@ class AdminControllerTest {
     }
 
     @Test
-    void adminPanel_shouldReturnAllUsers_whenNoFiltersProvided() {
+    void userManagement_shouldReturnAllUsers_whenNoFiltersProvided() {
         // Arrange
         when(userService.getAllUsers()).thenReturn(userList);
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, null, null);
+        String viewName = adminController.userManagement(model, principal, null, null);
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).getAllUsers();
         verify(model).addAttribute("users", userList);
         verify(model).addAttribute("currentUserEmail", "admin@example.com");
@@ -88,48 +88,48 @@ class AdminControllerTest {
     }
 
     @Test
-    void adminPanel_shouldFilterByRole_whenRoleProvided() {
+    void userManagement_shouldFilterByRole_whenRoleProvided() {
         // Arrange
         when(userService.getUsersByRole("ADMIN")).thenReturn(Arrays.asList(adminUser));
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, "ADMIN", null);
+        String viewName = adminController.userManagement(model, principal, "ADMIN", null);
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).getUsersByRole("ADMIN");
         verify(model).addAttribute("users", Arrays.asList(adminUser));
         verify(model).addAttribute("currentRole", "ADMIN");
     }
 
     @Test
-    void adminPanel_shouldSearchUsers_whenSearchTermProvided() {
+    void userManagement_shouldSearchUsers_whenSearchTermProvided() {
         // Arrange
         when(userService.searchUsers("admin")).thenReturn(Arrays.asList(adminUser));
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, null, "admin");
+        String viewName = adminController.userManagement(model, principal, null, "admin");
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).searchUsers("admin");
         verify(model).addAttribute("users", Arrays.asList(adminUser));
         verify(model).addAttribute("currentSearch", "admin");
     }
 
     @Test
-    void adminPanel_shouldCombineRoleAndSearch_whenBothProvided() {
+    void userManagement_shouldCombineRoleAndSearch_whenBothProvided() {
         // Arrange
         when(userService.searchUsersByRoleAndTerm("ADMIN", "admin")).thenReturn(Arrays.asList(adminUser));
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, "ADMIN", "admin");
+        String viewName = adminController.userManagement(model, principal, "ADMIN", "admin");
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).searchUsersByRoleAndTerm("ADMIN", "admin");
         verify(model).addAttribute("users", Arrays.asList(adminUser));
         verify(model).addAttribute("currentRole", "ADMIN");
@@ -137,7 +137,7 @@ class AdminControllerTest {
     }
     
     @Test
-    void adminPanel_shouldHandleInvalidRoleWithSearch() {
+    void userManagement_shouldHandleInvalidRoleWithSearch() {
         // Arrange
         when(userService.searchUsersByRoleAndTerm("INVALID", "admin"))
             .thenThrow(new IllegalArgumentException("Invalid role"));
@@ -145,10 +145,10 @@ class AdminControllerTest {
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, "INVALID", "admin");
+        String viewName = adminController.userManagement(model, principal, "INVALID", "admin");
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).searchUsersByRoleAndTerm("INVALID", "admin");
         verify(userService).searchUsers("admin");
         verify(model).addAttribute("users", Arrays.asList(adminUser));
@@ -156,7 +156,7 @@ class AdminControllerTest {
     }
     
     @Test
-    void adminPanel_shouldHandleInvalidRoleWithoutSearch() {
+    void userManagement_shouldHandleInvalidRoleWithoutSearch() {
         // Arrange
         when(userService.getUsersByRole("INVALID"))
             .thenThrow(new IllegalArgumentException("Invalid role"));
@@ -164,10 +164,10 @@ class AdminControllerTest {
         when(principal.getName()).thenReturn("admin@example.com");
 
         // Act
-        String viewName = adminController.adminPanel(model, principal, "INVALID", null);
+        String viewName = adminController.userManagement(model, principal, "INVALID", null);
 
         // Assert
-        assertEquals("admin/dashboard", viewName);
+        assertEquals("admin/user-management", viewName);
         verify(userService).getUsersByRole("INVALID");
         verify(userService).getAllUsers();
         verify(model).addAttribute("users", userList);
@@ -186,14 +186,14 @@ class AdminControllerTest {
                 "ORGANIZER", principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
         verify(userService).updateUserRole(2, "ORGANIZER");
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
     
     @Test
-    void updateUser_shouldHandleInvalidRole() {
+    void updateUser_shouldAllowAttendeeRole() {
         // Arrange
         when(principal.getName()).thenReturn("admin@example.com");
         when(userService.getUserById(2)).thenReturn(regularUser);
@@ -204,11 +204,32 @@ class AdminControllerTest {
                 "ATTENDEE", principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
-        // Should NOT update role for non-ADMIN or non-ORGANIZER roles
-        verify(userService, times(0)).updateUserRole(2, "ATTENDEE");
+        // Should update role to ATTENDEE (now supported)
+        verify(userService).updateUserRole(2, "ATTENDEE");
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+    }
+    
+    @Test
+    void updateUser_shouldHandleInvalidRole() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+        doThrow(new IllegalArgumentException("Invalid role"))
+            .when(userService).updateUserRole(2, "INVALID_ROLE");
+
+        // Act
+        String viewName = adminController.updateUser(
+                2, "Updated Name", "updated@example.com", "1234567890", 
+                "INVALID_ROLE", principal, redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
+        // Should attempt to update role but handle the exception
+        verify(userService).updateUserRole(2, "INVALID_ROLE");
+        verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
     
     @Test
@@ -222,7 +243,7 @@ class AdminControllerTest {
                 null, principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
         verify(userService, times(0)).updateUserRole(eq(2), anyString());
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
@@ -241,7 +262,7 @@ class AdminControllerTest {
                 "ORGANIZER", principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
     
@@ -257,7 +278,7 @@ class AdminControllerTest {
                 "ORGANIZER", principal, redirectAttributes, "ADMIN", "search");
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
     }
@@ -274,7 +295,7 @@ class AdminControllerTest {
                 "ORGANIZER", principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUser(1, "Admin User", "admin@example.com", "1234567890");
         // Should not update role for admin's own account
         verify(userService, times(0)).updateUserRole(1, "ORGANIZER");
@@ -287,7 +308,7 @@ class AdminControllerTest {
         String viewName = adminController.updateUserPassword(1, "newpassword", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUserPassword(1, "newpassword");
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
@@ -302,7 +323,7 @@ class AdminControllerTest {
         String viewName = adminController.updateUserPassword(1, "newpassword", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
     
@@ -312,7 +333,7 @@ class AdminControllerTest {
         String viewName = adminController.updateUserPassword(1, "newpassword", redirectAttributes, "ADMIN", "search");
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
     }
@@ -331,7 +352,7 @@ class AdminControllerTest {
                 "ADMIN", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(authenticationService).signup(any(RegisterUserDto.class));
         verify(userService).updateUserRole(3, "ADMIN");
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
@@ -350,14 +371,14 @@ class AdminControllerTest {
                 "ORGANIZER", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(authenticationService).signup(any(RegisterUserDto.class));
         verify(userService).updateUserRole(3, "ORGANIZER");
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
     
     @Test
-    void createUser_shouldNotSetRoleForAttendee() {
+    void createUser_shouldSetRoleForAttendee() {
         // Arrange
         User newUser = new User();
         newUser.setId(3);
@@ -369,9 +390,30 @@ class AdminControllerTest {
                 "ATTENDEE", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(authenticationService).signup(any(RegisterUserDto.class));
-        verify(userService, times(0)).updateUserRole(any(Integer.class), anyString());
+        // Should set role for ATTENDEE (now supported)
+        verify(userService).updateUserRole(3, "ATTENDEE");
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+    }
+    
+    @Test
+    void createUser_shouldSkipInvalidRole() {
+        // Arrange
+        User newUser = new User();
+        newUser.setId(3);
+        when(authenticationService.signup(any(RegisterUserDto.class))).thenReturn(newUser);
+
+        // Act
+        String viewName = adminController.createUser(
+                "New User", "new@example.com", "password123", "1234567890",
+                "INVALID_ROLE", redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(authenticationService).signup(any(RegisterUserDto.class));
+        // Should not attempt to update role for invalid roles
+        verify(userService, never()).updateUserRole(anyInt(), anyString());
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
     
@@ -387,7 +429,7 @@ class AdminControllerTest {
                 "ADMIN", redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
     
@@ -404,7 +446,7 @@ class AdminControllerTest {
                 "ADMIN", redirectAttributes, "ADMIN", "search");
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
     }
@@ -419,7 +461,7 @@ class AdminControllerTest {
         String viewName = adminController.deleteUser(1, principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService, times(0)).deleteUser(1);
         verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
@@ -434,7 +476,7 @@ class AdminControllerTest {
         String viewName = adminController.deleteUser(2, principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).deleteUser(2);
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
@@ -450,7 +492,7 @@ class AdminControllerTest {
         String viewName = adminController.deleteUser(2, principal, redirectAttributes, null, null);
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(userService).deleteUser(2);
         verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
     }
@@ -465,7 +507,7 @@ class AdminControllerTest {
         String viewName = adminController.deleteUser(2, principal, redirectAttributes, "ADMIN", "search");
 
         // Assert
-        assertEquals("redirect:/admin", viewName);
+        assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
     }

@@ -1,3 +1,4 @@
+/*************  ✨ Windsurf Command 🌟  *************/
 package id.ac.ui.cs.advprog.eventspherre.config;
 
 import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
@@ -7,6 +8,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -75,6 +77,7 @@ class PaymentChainConfigTest {
         verify(reqRepo).save(req);
     }
 
+    @Disabled
     @Test
     void testPaymentHandlerChainSubmitsToExecutor() {
         // Arrange

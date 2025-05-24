@@ -65,6 +65,15 @@
                         <input type="text" id="phoneNumber" name="phoneNumber" th:value="${user.phoneNumber}" class="form-control" />
                     </div>
                     
+                    <div class="form-group">
+                        <label for="role">User Role</label>
+                        <select id="role" name="role" class="form-control">
+                            <option value="ADMIN" th:selected="${user.role.name() == 'ADMIN'}">Admin</option>
+                            <option value="ORGANIZER" th:selected="${user.role.name() == 'ORGANIZER'}">Organizer</option>
+                            <option value="ATTENDEE" th:selected="${user.role.name() == 'ATTENDEE'}">Attendee</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-actions">
                         <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">Save Changes</button>

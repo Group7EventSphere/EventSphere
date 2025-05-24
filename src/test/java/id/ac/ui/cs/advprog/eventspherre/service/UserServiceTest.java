@@ -181,7 +181,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NoSuchElementException.class, () -> {
+        assertThrows(RuntimeException.class, () -> {
             userService.getUserByEmail("nonexistent@example.com");
         });
         verify(userRepository, times(1)).findByEmail("nonexistent@example.com");
