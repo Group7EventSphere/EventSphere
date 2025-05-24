@@ -126,9 +126,9 @@ public class EventControllerTest {
                 .andExpect(redirectedUrl("/events/manage"));
     }
     
-        @Test
-        @WithMockUser(username = "attendee@example.com", roles = {"ATTENDEE"})
-        void createEvent_shouldDenyAccessForNonOrganizers() throws Exception {
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = {"ATTENDEE"})
+    void createEvent_shouldDenyAccessForNonOrganizers() throws Exception {
         // Mock the userService to return null for attendee user
         when(userService.getUserByEmail("attendee@example.com")).thenReturn(null);
         
@@ -140,6 +140,90 @@ public class EventControllerTest {
                 .andExpect(flash().attributeExists("errorMessage"))
                 .andExpect(flash().attribute("errorMessage", 
                         containsString("Cannot invoke \"id.ac.ui.cs.advprog.eventspherre.model.User.getId()\" because \"currentUser\" is null")));
-        }
-}
+    }
 
+    @Test
+    @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
+    void deleteEvent_shouldRedirectAfterDeletion() throws Exception {
+        Event mockEvent = new Event();
+        mockEvent.setId(1);
+        mockEvent.setTitle("Test Event");
+        mockEvent.setOrganizerId(1); // Same as mockOrganizer.getId()
+
+        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
+
+        mockMvc.perform(post("/events/1/delete")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/manage"))
+                .andExpect(flash().attributeExists("successMessage"))
+                .andExpect(flash().attribute("successMessage", "Event deleted successfully!"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void deleteEvent_adminCanDeleteAnyEvent() throws Exception {
+        // Setup admin user
+        User mockAdmin = new User();
+        mockAdmin.setId(2);
+        mockAdmin.setEmail("admin@example.com");
+        mockAdmin.setName("Test Admin");
+        mockAdmin.setRole(User.Role.ADMIN);
+
+        Event mockEvent = new Event();
+        mockEvent.setId(1);
+        mockEvent.setTitle("Test Event");
+        mockEvent.setOrganizerId(1); // Different from admin's ID
+
+        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);
+
+        mockMvc.perform(post("/events/1/delete")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/manage"))
+                .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    @WithMockUser(username = "other-organizer@example.com", roles = {"ORGANIZER"})
+    void deleteEvent_shouldDenyDeletionForNonOwner() throws Exception {
+        // Setup another organizer user who is not the event owner
+        User otherOrganizer = new User();
+        otherOrganizer.setId(3);
+        otherOrganizer.setEmail("other-organizer@example.com");
+        otherOrganizer.setName("Other Organizer");
+        otherOrganizer.setRole(User.Role.ORGANIZER);
+
+        Event mockEvent = new Event();
+        mockEvent.setId(1);
+        mockEvent.setTitle("Test Event");
+        mockEvent.setOrganizerId(1); // mockOrganizer's ID, not otherOrganizer's
+
+        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(userService.getUserByEmail("other-organizer@example.com")).thenReturn(otherOrganizer);
+
+        mockMvc.perform(post("/events/1/delete")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/manage"))
+                .andExpect(flash().attributeExists("errorMessage"))
+                .andExpect(flash().attribute("errorMessage", "You are not authorized to delete this event."));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = {"ATTENDEE"})
+    void deleteEvent_shouldDenyAccessForAttendees() throws Exception {
+        // Mock the userService to return null for attendee user like in other tests
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(null);
+
+        // Since we're expecting a redirect with an error message instead of a 403
+        mockMvc.perform(post("/events/1/delete")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/manage"))
+                .andExpect(flash().attributeExists("errorMessage"))
+                .andExpect(flash().attribute("errorMessage", "User not found."));
+    }
+}
