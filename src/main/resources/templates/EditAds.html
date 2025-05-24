@@ -155,11 +155,11 @@
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function() {
         // Cloudinary config
-        const CLOUDINARY_UPLOAD_PRESET = "adpro-ads";  // ganti sesuai preset Anda
-        const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5";    // ganti sesuai cloud name Anda
+        const CLOUDINARY_UPLOAD_PRESET = "adpro-ads";
+        const CLOUDINARY_CLOUD_NAME = "dgtd4i3r5";
         const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-        // Ambil elemen DOM
+        // get DOM element
         const adId = document.getElementById('ad-id').value;
         const titleInput = document.getElementById('ads-title');
         const descInput  = document.getElementById('ads-desc');
@@ -188,12 +188,12 @@
             .catch(() => alert('Failed to load ad data.'))
             .finally(() => loadingOv.classList.add('hidden'));
 
-        // Saat user pilih file: upload ke Cloudinary
+        // when user chose file: upload to Cloudinary
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // tampilkan overlay loading
+            // shows overlay loading
             loadingOv.querySelector('div').innerText = 'Uploading image...';
             loadingOv.classList.remove('hidden');
 
@@ -209,15 +209,14 @@
                 if (!resp.ok) throw new Error();
 
                 const data = await resp.json();
-                // set preview dan simpan URL
+                // set preview and save URL
                 previewImg.src = data.secure_url;
                 previewImg.style.display = 'block';
             } catch (err) {
                 console.error(err);
-                alert('Gagal upload gambar, silakan coba lagi.');
+                alert('Failed to upload image. Please try again.');
             } finally {
                 loadingOv.classList.add('hidden');
-                // kembalikan teks overlay
                 loadingOv.querySelector('div').innerText = 'Loading ad data...';
             }
         });
