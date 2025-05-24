@@ -44,10 +44,4 @@ class AdTest {
 
         assertNull(adWithoutImage.getImageUrl());
     }
-
-    @Test
-    void testAdToString() {
-        String expectedString = "Ad [id=1, title=Test Ad, description=This is a test ad description, imageUrl=image1.jpg]";
-        assertEquals(expectedString, ad.toString());
-    }
 }

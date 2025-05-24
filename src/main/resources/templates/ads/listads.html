@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Ads — EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Container */
+        .ad-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        /* Top action buttons */
+        .ad-actions-top {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        /* Main ad */
+        .main-ad {
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .main-ad img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .main-ad h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        .main-ad p {
+            color: #555;
+            line-height: 1.4;
+        }
+        /* Grid of other ads */
+        .other-ads {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .ad-card {
+            position: relative;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .ad-card img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+        .ad-card-content {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .ad-card-content h4 {
+            margin: 0.5rem 0 0.25rem;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        .ad-card-content p {
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 1.3;
+            flex: 1;
+        }
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            color: #fff;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .btn-edit { background: #4F46E5; }
+        .btn-delete { background: #ef4444; }
+        .btn-add {
+            background: #4F46E5;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .btn:hover { opacity: 0.9; }
+        /* Positioning action buttons */
+        .actions {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<!-- shared navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="ad-container" th:with="ads=${ads}">
+    <!-- top-level actions -->
+    <div class="ad-actions-top" th:if="${!#lists.isEmpty(ads)}">
+        <a th:href="@{/ads/edit/{id}(id=${ads[0].id})}" class="btn btn-edit">Edit</a>
+        <a href="#"
+           th:attr="data-id=${ads[0].id}"
+           class="btn btn-delete">Delete</a>
+        <a th:href="@{/ads/create}" class="btn btn-add">＋</a>
+    </div>
+
+    <!-- no ads -->
+    <div th:if="${#lists.isEmpty(ads)}" style="text-align:center; margin:2rem 0;">
+        <p>No ads found.</p>
+        <a th:href="@{/ads/create}" class="btn btn-add">＋ Create your first Ad</a>
+    </div>
+
+    <!-- main ad -->
+    <div class="main-ad" th:if="${!#lists.isEmpty(ads)}" th:with="ad=${ads[0]}">
+        <img th:if="${ad.imageUrl}" th:src="@{${ad.imageUrl}}" alt="Ad image"/>
+        <h3 th:text="${ad.title}">Ad Title</h3>
+        <p th:text="${ad.description}">Ad description…</p>
+    </div>
+
+    <!-- other ads -->
+    <div class="other-ads" th:if="${ads.size() > 1}">
+        <div class="ad-card" th:each="ad,iterStat : ${ads}" th:if="${!iterStat.first}">
+            <div class="actions">
+                <a th:href="@{/ads/edit/{id}(id=${ad.id})}" class="btn btn-edit">Edit</a>
+                <a href="#"
+                   th:attr="data-id=${ad.id}"
+                   class="btn btn-delete">Delete</a>
+            </div>
+            <img th:if="${ad.imageUrl}" th:src="@{${ad.imageUrl}}" alt="Ad image"/>
+            <div class="ad-card-content">
+                <h4 th:text="${ad.title}">Ad Title</h4>
+                <p th:text="${ad.description}">Short description…</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async e => {
+                e.preventDefault();
+                if (!confirm('Are you sure you want to delete this ad?')) return;
+                const id = btn.getAttribute('data-id');
+                try {
+                    const res = await fetch(`/api/ads/${id}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error();
+                    const card = btn.closest('.ad-card');
+                    if (card) {
+                        card.remove();
+                    } else {
+                        window.location.href = '/ads/list';
+                    }
+                } catch {
+                    alert('Failed to delete. Please try again.');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
