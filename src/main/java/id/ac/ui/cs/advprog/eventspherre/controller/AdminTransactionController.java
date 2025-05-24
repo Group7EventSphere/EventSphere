@@ -46,4 +46,10 @@ public class AdminTransactionController {
         auditService.hardDelete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/success")
+    public ResponseEntity<Void> markSuccess(@PathVariable UUID id) {
+    auditService.markSuccess(id);
+    return ResponseEntity.noContent().build();
+}
 }

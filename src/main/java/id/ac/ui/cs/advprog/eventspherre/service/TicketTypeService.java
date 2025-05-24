@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TicketTypeService {
-    TicketType create(String name, BigDecimal price, int quota, User creator);
+    TicketType create(String name, BigDecimal price, int quota, User creator, int eventId);
     Optional<TicketType> getTicketTypeById(UUID id);
     TicketType updateTicketType(UUID id, TicketType updated, User editor);
     void deleteTicketType(UUID id, User requester);

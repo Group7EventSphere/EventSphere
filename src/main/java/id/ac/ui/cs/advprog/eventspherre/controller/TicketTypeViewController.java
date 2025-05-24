@@ -40,7 +40,7 @@ public class TicketTypeViewController {
         List<TicketType> ticketTypes = ticketTypeService.findByEventId(eventId);
         model.addAttribute("event", event);
         model.addAttribute("ticketTypes", ticketTypes);
-        return "ticket-types/list";
+        return "ticket-type/manage";
     }
 
     @GetMapping("/create")
@@ -55,7 +55,8 @@ public class TicketTypeViewController {
 
         model.addAttribute("event", event);
         model.addAttribute("ticketType", new TicketType());
-        return "ticket-types/create";
+        model.addAttribute("isGeneralForm", false);
+        return "ticket-type/type_form";
     }
 
     @PostMapping("/create")
@@ -72,7 +73,7 @@ public class TicketTypeViewController {
         }
 
         User user = userService.getUserByEmail(principal.getName());
-        TicketType ticketType = ticketTypeService.create(name, price, quota, user);
+        TicketType ticketType = ticketTypeService.create(name, price, quota, user, eventId);
 
         // Associate ticket type with event
         ticketTypeService.associateWithEvent(ticketType.getId(), eventId);
@@ -98,7 +99,7 @@ public class TicketTypeViewController {
 
         model.addAttribute("event", event);
         model.addAttribute("ticketType", ticketType);
-        return "ticket-types/edit";
+        return "ticket-type/type_form";
     }
 
     @PostMapping("/edit/{id}")
@@ -121,7 +122,7 @@ public class TicketTypeViewController {
 
     @PostMapping("/delete/{id}")
     public String deleteTicketType(
-            @PathVariable("eventId") UUID eventId,
+            @PathVariable("eventId") int eventId,
             @PathVariable("id") UUID id,
             Principal principal,
             RedirectAttributes redirectAttributes) {
