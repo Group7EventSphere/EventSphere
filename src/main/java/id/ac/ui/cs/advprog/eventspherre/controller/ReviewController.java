@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.Review;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.ReviewService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class ReviewController {
     }
 
     @PostMapping("/create/{eventId}")
+    @PreAuthorize("hasAnyRole('ATTENDEE')")
     public ResponseEntity<Review> create(
             @PathVariable int eventId,
             @RequestBody Review review,
@@ -50,6 +52,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ATTENDEE')")
     public ResponseEntity<Review> update(
             @PathVariable Long id,
             @RequestBody Review review,
@@ -65,6 +68,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ATTENDEE')")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             @AuthenticationPrincipal User user
