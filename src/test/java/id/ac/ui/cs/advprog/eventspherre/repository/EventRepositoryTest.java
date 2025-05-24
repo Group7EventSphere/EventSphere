@@ -141,5 +141,48 @@ public class EventRepositoryTest {
 
         assertThat(eventRepository.existsById(saved.getId())).isTrue();
     }
-}
 
+    @Test
+    @DisplayName("Handle empty repository operations")
+    void testEmptyRepositoryOperations() {
+        // Test find all on empty repository
+        List<Event> allEvents = eventRepository.findAll();
+        assertThat(allEvents).isEmpty();
+
+        // Test count on empty repository
+        assertThat(eventRepository.count()).isZero();
+
+        // Test finding by non-existent ID
+        Optional<Event> nonExistentEvent = eventRepository.findById(999);
+        assertThat(nonExistentEvent).isEmpty();
+
+        // Test exists by ID on non-existent ID
+        assertThat(eventRepository.existsById(999)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Test transaction handling with rollback")
+    void testTransactionWithRollback() {
+        // Create initial state
+        Event event = createTestEvent("Initial Event", "Description", "2024-12-01", "Jakarta", 1);
+        Event saved = eventRepository.save(event);
+        Integer eventId = saved.getId();
+
+        // Verify initial state
+        assertThat(eventRepository.findById(eventId)).isPresent();
+
+        // Simulate transaction rollback by not committing changes
+        // (Spring automatically rolls back transactions in test methods)
+        Event eventToUpdate = eventRepository.findById(eventId).get();
+        eventToUpdate.setTitle("Updated Title");
+
+        // Since we're using @DataJpaTest which marks test transactions as rollback,
+        // this update will be saved but rolled back at the end of the test
+        eventRepository.save(eventToUpdate);
+
+        // Verify the update is visible within the transaction
+        Optional<Event> updated = eventRepository.findById(eventId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getTitle()).isEqualTo("Updated Title");
+    }
+}

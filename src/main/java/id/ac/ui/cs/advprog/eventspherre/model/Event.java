@@ -41,7 +41,7 @@ public class Event {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column
-    private Map<String, Object> details;
+    private Map<String, Object> details = null;
 
     public Event(Integer id, Map<String, Object> details) {
         this.id = id;
@@ -70,10 +70,16 @@ public class Event {
     }
 
     public Integer getCapacity() {
-        return (Integer) details.getOrDefault("capacity", 0);
+        if (details == null) {
+            return null;
+        }
+        return (Integer) details.getOrDefault("capacity", null);
     }
 
     public boolean isPublic() {
+        if (details == null) {
+            return false;
+        }
         return (Boolean) details.getOrDefault("isPublic", false);
     }
 

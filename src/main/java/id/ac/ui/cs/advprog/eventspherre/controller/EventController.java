@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,9 +130,16 @@ public class EventController {
     }
 
     @PostMapping("/create")
-    public String createEvent(@ModelAttribute("eventForm") EventForm eventForm,
+    public String createEvent(@Valid @ModelAttribute("eventForm") EventForm eventForm,
+                              org.springframework.validation.BindingResult bindingResult,
                               Principal principal,
+                              Model model,
                               RedirectAttributes ra) {
+        // Check for validation errors first
+        if (bindingResult.hasErrors()) {
+            return "events/create"; // Return to form with validation errors
+        }
+
         User currentUser = null;
         try {
             currentUser = userService.getUserByEmail(principal.getName());
@@ -234,10 +242,43 @@ public class EventController {
         return "redirect:/events/manage";
     }
 
+    @PostMapping("/{eventId}/toggle-visibility")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String toggleEventVisibility(@PathVariable Integer eventId,
+                                        RedirectAttributes ra) {
+        try {
+            Event event = eventManagementService.getEventById(eventId);
+            if (event == null) {
+                ra.addFlashAttribute("errorMessage", "Event not found.");
+                return "redirect:/events/manage";
+            }
+
+            // Toggle the visibility
+            boolean newVisibility = !event.isPublic();
+            eventManagementService.updateEvent(
+                    eventId,
+                    event.getTitle(),
+                    event.getDescription(),
+                    event.getEventDate(),
+                    event.getLocation(),
+                    event.getCapacity(),
+                    newVisibility
+            );
+
+            String visibilityStatus = newVisibility ? "public" : "private";
+            ra.addFlashAttribute("successMessage", "Event visibility changed to " + visibilityStatus + ".");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error toggling visibility for event " + eventId, e);
+            ra.addFlashAttribute("errorMessage", "Failed to toggle event visibility: " + e.getMessage());
+        }
+        return "redirect:/events/manage";
+    }
+
     // --- Form backing objects ---
 
     @Getter @Setter
     public static class EventForm {
+        @jakarta.validation.constraints.NotBlank(message = "Title is required")
         private String title;
         private String description;
         private String location;
