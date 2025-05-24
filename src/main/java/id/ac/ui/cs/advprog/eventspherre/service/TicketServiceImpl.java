@@ -50,6 +50,7 @@ public class TicketServiceImpl implements TicketService {
             t.setUserId(attendee.getId());
             t.setDate(LocalDate.now());
             t.setConfirmationCode("TKT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            t.setTransactionId(ticket.getTransactionId()); // Copy transaction ID from passed ticket
             tickets.add(ticketRepository.save(t));
         }
 
