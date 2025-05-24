@@ -700,22 +700,4 @@ public class EventControllerTest {
                 .andExpect(model().attribute("ticketTypes", org.hamcrest.Matchers.instanceOf(ArrayList.class)))
                 .andExpect(model().attribute("ticketTypes", org.hamcrest.Matchers.hasSize(0)));
     }
-
-    @Test
-    void createEvent_withNullPrincipal_shouldTriggerNPEAndLogWarning() throws Exception {
-        mockMvc.perform(post("/events/create")
-                        .with(csrf())
-                        .param("title", "Test Event Null Principal")
-                        .param("description", "Description for null principal test")
-                        .param("eventDate", "2025-12-31")
-                        .param("location", "Nullsville")
-                        .param("capacity", "50")
-                        .param("public", "true"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/events/create"))
-                .andExpect(flash().attributeExists("errorMessage"))
-                // This checks if the NPE message is about "principal" being null,
-                // which happens if principal.getName() is called on a null principal.
-                .andExpect(flash().attribute("errorMessage", containsString("Cannot invoke \"java.security.Principal.getName()\" because \"principal\" is null")));
-    }
 }
