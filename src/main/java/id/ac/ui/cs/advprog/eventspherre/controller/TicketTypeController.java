@@ -6,13 +6,13 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import static id.ac.ui.cs.advprog.eventspherre.common.ViewRoutes.*;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -22,24 +22,23 @@ import java.util.*;
 @RequestMapping("/ticket-types")
 public class TicketTypeController {
 
-    @Autowired
     private final TicketTypeService ticketTypeService;
+    private final UserService userService;
+    private final EventManagementService eventManagementService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private EventManagementService eventManagementService;
-
-    public TicketTypeController(TicketTypeService ticketTypeService) {
+    public TicketTypeController(TicketTypeService ticketTypeService,
+                                UserService userService,
+                                EventManagementService eventManagementService) {
         this.ticketTypeService = ticketTypeService;
+        this.userService = userService;
+        this.eventManagementService = eventManagementService;
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
     public String showTicketOverview(Model model, Principal principal) {
         String userEmail = principal.getName();
-        User user = userService.getUserByEmail(userEmail);
+        userService.getUserByEmail(userEmail);
 
         List<Event> allEvents = eventManagementService.getAllEvents();
         List<TicketType> allTicketTypes = ticketTypeService.findAll();
@@ -87,12 +86,11 @@ public class TicketTypeController {
 
         ticketTypeService.create(name, price, quota, user, eventId);
 
-        return "redirect:/ticket-types";
+        return REDIRECT_TICKET_TYPES;
     }
 
     @PostMapping("/delete/{id}")
     public String deleteTicketType(@PathVariable UUID id, Principal principal, RedirectAttributes redirectAttributes) {
-        String userEmail = principal.getName();
         User requester = userService.getUserByEmail(principal.getName());
 
         try {
@@ -102,7 +100,7 @@ public class TicketTypeController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
-        return "redirect:/ticket-types";
+        return REDIRECT_TICKET_TYPES;
     }
 
     @GetMapping("/edit/{id}")
@@ -135,7 +133,7 @@ public class TicketTypeController {
         // Update the ticket type
         ticketTypeService.updateTicketType(id, updatedTicketType, currentUser);
 
-        return "redirect:/ticket-types";
+        return REDIRECT_TICKET_TYPES;
     }
 
     @GetMapping("/{id}")

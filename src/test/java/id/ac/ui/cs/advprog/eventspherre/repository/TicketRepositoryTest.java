@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest(properties = "spring.sql.init.mode=never")
-public class TicketRepositoryTest {
+class TicketRepositoryTest {
 
     @Autowired
     private TicketRepository ticketRepository;
