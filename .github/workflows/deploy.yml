@@ -3,7 +3,7 @@ name: Build & Deploy to EC2
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build:
@@ -54,7 +54,7 @@ jobs:
           docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/eventsphere:latest
           docker stop eventsphere || true
           docker rm   eventsphere || true
-          # Expose container port 8080 on host port 80
+          # Expose container port 8080 on host port 80 for graders
           docker run -d \
             --name eventsphere \
             -p 80:8080 \
