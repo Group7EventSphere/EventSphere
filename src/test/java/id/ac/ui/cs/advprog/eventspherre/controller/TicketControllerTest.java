@@ -13,9 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +60,7 @@ class TicketControllerTest {
 
     private Ticket sampleTicket() {
         TicketType type = new TicketType("VIP", new BigDecimal("100.00"), 10);
+
         Ticket ticket = new Ticket();
         ticket.setId(UUID.randomUUID());
         ticket.setConfirmationCode("TKT-ABC123");
@@ -168,5 +172,137 @@ class TicketControllerTest {
         mockMvc.perform(get("/tickets/count/" + ticketTypeId).with(user("test@example.com")))
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
+    }
+
+    @Test
+    @DisplayName("Should show ticket selection page with event and ticket types")
+    void showTicketSelection_shouldReturnSelectPage() throws Exception {
+        int eventId = 1;
+
+        User user = new User();
+        user.setEmail("user@example.com");
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setTitle("Sample Event");
+
+        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 50);
+        List<TicketType> ticketTypes = List.of(ticketType);
+
+        when(userService.getUserByEmail("user@example.com")).thenReturn(user);
+        when(eventManagementService.getEvent(eventId)).thenReturn(event);
+        when(ticketTypeService.findByEventId(eventId)).thenReturn(ticketTypes);
+
+        mockMvc.perform(get("/tickets/select/{eventId}", eventId)
+                        .with(user("user@example.com").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/select"))
+                .andExpect(model().attribute("event", event))
+                .andExpect(model().attribute("ticketTypes", ticketTypes));
+    }
+
+    @Test
+    @DisplayName("Should redirect to /events when event is not found")
+    void showTicketSelection_shouldRedirectWhenEventNotFound() throws Exception {
+        int eventId = 99;
+
+        Principal principal = () -> "ghost@example.com";
+        when(userService.getUserByEmail("ghost@example.com")).thenReturn(new User());
+        when(eventManagementService.getEvent(eventId)).thenReturn(null);
+
+        mockMvc.perform(get("/tickets/select/{eventId}", eventId)
+                        .with(user("user@example.com").roles("USER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events"));
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    @DisplayName("Should redirect to ticket creation with parameters")
+    void handleTicketSelection_shouldRedirectWithParams() throws Exception {
+        UUID ticketTypeId = UUID.randomUUID();
+
+        mockMvc.perform(post("/tickets/select")
+                        .with(csrf())
+                        .param("ticketTypeId", ticketTypeId.toString())
+                        .param("quota", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tickets/create?ticketTypeId=" + ticketTypeId + "&quota=2"));
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    @DisplayName("Should show ticket creation form with all model attributes")
+    void showTicketForm_shouldLoadFormWithData() throws Exception {
+        UUID ticketTypeId = UUID.randomUUID();
+
+        // User
+        User user = new User();
+        user.setEmail("user@example.com");
+        when(userService.getUserByEmail("user@example.com")).thenReturn(user);
+
+        // Ticket Type
+        TicketType ticketType = new TicketType("VIP", new BigDecimal("150.00"), 10);
+        ticketType.setId(ticketTypeId);
+        ticketType.setEventId(123);
+        when(ticketTypeService.getTicketTypeById(ticketTypeId)).thenReturn(Optional.of(ticketType));
+
+        // Event
+        Event event = new Event();
+        event.setId(123);
+        event.setTitle("Spring Boot Workshop");
+        event.setEventDate("2025-12-01T18:30"); // valid ISO_LOCAL_DATE_TIME format
+        when(eventManagementService.getEvent(123)).thenReturn(event);
+
+        mockMvc.perform(get("/tickets/create")
+                        .param("ticketTypeId", ticketTypeId.toString())
+                        .param("quota", "3"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket/create"))
+                .andExpect(model().attributeExists("ticket"))
+                .andExpect(model().attribute("quota", 3))
+                .andExpect(model().attribute("ticketType", ticketType))
+                .andExpect(model().attribute("event", event))
+                .andExpect(model().attributeExists("eventDateFormatted"));
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    @DisplayName("Should delete ticket successfully")
+    void deleteTicket_shouldReturnNoContent() throws Exception {
+        Ticket ticket = sampleTicket();
+        UUID ticketId = ticket.getId();
+
+        mockMvc.perform(delete("/tickets/" + ticketId)
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(ticketService, times(1)).deleteTicket(ticketId);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = "USER")
+    @DisplayName("Should update ticket and return updated object")
+    void updateTicket_shouldReturnUpdatedTicket() throws Exception {
+        Ticket updatedTicket = sampleTicket();
+        UUID ticketId = updatedTicket.getId();
+
+        when(userService.getUserByEmail("test@example.com")).thenReturn(mockUser());
+        when(ticketService.updateTicket(eq(ticketId), any(Ticket.class))).thenReturn(updatedTicket);
+
+        mockMvc.perform(put("/tickets/" + ticketId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "id": "%s",
+                  "confirmationCode": "TKT-ABC123"
+                }
+                """.formatted(ticketId.toString())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(ticketId.toString()))
+                .andExpect(jsonPath("$.confirmationCode").value("TKT-ABC123"));
+
+        verify(ticketService).updateTicket(eq(ticketId), any(Ticket.class));
     }
 }
