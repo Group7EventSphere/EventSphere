@@ -197,6 +197,43 @@ public class EventController {
         }
     }
 
+    @PostMapping("/{eventId}/delete")
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    public String deleteEvent(@PathVariable Integer eventId,
+                              Principal principal,
+                              RedirectAttributes ra) {
+        try {
+            // Get the event first to check if it exists
+            Event event = eventManagementService.getEventById(eventId);
+
+            // Check if the current user is either an admin or the organizer of this event
+            User user = userService.getUserByEmail(principal.getName());
+
+            // Add null check for user
+            if (user == null) {
+                ra.addFlashAttribute("errorMessage", "User not found.");
+                return "redirect:/events/manage";
+            }
+
+            boolean isAdmin = user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isOrganizer = event.getOrganizerId().equals(user.getId());
+
+            if (!isAdmin && !isOrganizer) {
+                ra.addFlashAttribute("errorMessage", "You are not authorized to delete this event.");
+                return "redirect:/events/manage";
+            }
+
+            // Delete the event
+            eventManagementService.deleteEvent(eventId);
+            ra.addFlashAttribute("successMessage", "Event deleted successfully!");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting event " + eventId, e);
+            ra.addFlashAttribute("errorMessage", "Failed to delete event: " + e.getMessage());
+        }
+        return "redirect:/events/manage";
+    }
+
     // --- Form backing objects ---
 
     @Getter @Setter
@@ -210,4 +247,3 @@ public class EventController {
         private List<?> ticketTypes; // Added ticketTypes field to fix the error
     }
 }
-
