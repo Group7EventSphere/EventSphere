@@ -38,8 +38,8 @@ jobs:
       - name: Push to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/eventsphere:latest
 
-
   deploy:
+    name: Deploy on EC2 (self-hosted runner)
     runs-on:
       - self-hosted
       - Linux
@@ -55,10 +55,14 @@ jobs:
       - name: Pull & run latest container
         run: |
           docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/eventsphere:latest
-          docker stop eventsphere || true
-          docker rm   eventsphere || true
-          # Expose container port 8080 on host port 80 for graders
+          docker stop eventsphere    || true
+          docker rm   eventsphere    || true
           docker run -d \
             --name eventsphere \
             -p 80:8080 \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASS=${{ secrets.DB_PASS }} \
             ${{ secrets.DOCKER_HUB_USERNAME }}/eventsphere:latest

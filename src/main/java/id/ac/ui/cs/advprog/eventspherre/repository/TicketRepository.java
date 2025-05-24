@@ -15,4 +15,6 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     long countByTicketTypeId(UUID ticketTypeId);
     boolean existsByTicketTypeId(UUID ticketTypeId);
     void deleteByTicketTypeId(UUID ticketTypeId);
+    List<Ticket> findByTransactionId(UUID transactionId);
+    void deleteByTransactionId(UUID transactionId);
 }
