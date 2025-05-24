@@ -11,7 +11,24 @@ public class UserObserver implements EventObserver {
     }
 
     @Override
-    public void update(Event event) {
-        System.out.println(username + " received an update for event " + event.getId() + ": " + event.getDetails());
+    public void onEventCreated(Event event) {
+        System.out.println(username + " received notification: Event created - " + event.getTitle() + " (ID: " + event.getId() + ")");
+    }
+
+    @Override
+    public void onEventUpdated(Event event) {
+        System.out.println(username + " received notification: Event updated - " + event.getTitle() + " (ID: " + event.getId() + ")");
+    }
+
+    @Override
+    public void onEventVisibilityChanged(Event event, boolean isPublic) {
+        String visibility = isPublic ? "public" : "private";
+        System.out.println(username + " received notification: Event visibility changed to " + visibility + " - " + event.getTitle() + " (ID: " + event.getId() + ")");
+    }
+
+    @Override
+    public void onEventDeleted(Event event) {
+        System.out.println(username + " received notification: Event deleted - " + event.getTitle() + " (ID: " + event.getId() + ")");
     }
 }
+
