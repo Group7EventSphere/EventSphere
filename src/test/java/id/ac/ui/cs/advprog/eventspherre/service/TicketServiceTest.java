@@ -16,12 +16,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TicketServiceTest {
+class TicketServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
@@ -59,19 +58,11 @@ public class TicketServiceTest {
     @DisplayName("Should create ticket and decrement quota")
     void createTicket_shouldSaveTicketAndDecreaseQuota() {
         // Given
-        TicketType type = new TicketType("Standard", new BigDecimal("50.00"), 10);
         UUID typeId = UUID.randomUUID();
-        type.setId(typeId);
+        sampleTicket.getTicketType().setId(typeId);
+        sampleTicket.getTicketType().setQuota(10);
 
-        User user = new User();
-        user.setId(5);
-
-        Ticket ticket = new Ticket();
-        ticket.setTicketType(type);
-        ticket.setAttendee(user);
-
-        // Mocking
-        when(ticketTypeRepository.findById(typeId)).thenReturn(Optional.of(type));
+        when(ticketTypeRepository.findById(typeId)).thenReturn(Optional.of(sampleTicket.getTicketType()));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
             Ticket t = invocation.getArgument(0);
             t.setId(UUID.randomUUID());
@@ -79,41 +70,40 @@ public class TicketServiceTest {
         });
 
         // When
-        List<Ticket> savedTickets = ticketService.createTicket(ticket, 1);
+        List<Ticket> savedTickets = ticketService.createTicket(sampleTicket, 1);
 
         // Then
         assertEquals(1, savedTickets.size());
-        assertEquals(9, type.getQuota()); // 10 - 1
+        assertEquals(9, sampleTicket.getTicketType().getQuota()); // 10 - 1
         verify(ticketRepository, times(1)).save(any(Ticket.class));
     }
 
     @Test
     @DisplayName("Should fail when ticket quota is 0")
     void createTicket_quotaExceeded_throwsException() {
-        TicketType ticketType = new TicketType("Sold Out", new BigDecimal("999.99"), 0);
-        User user = new User();
-        user.setId(11);
-        user.setName("TooLate");
-        user.setEmail("late@example.com");
+        // Given
+        TicketType soldOutType = new TicketType("Sold Out", new BigDecimal("999.99"), 0);
+        soldOutType.setId(UUID.randomUUID());
+        Ticket soldOutTicket = new Ticket(soldOutType, user, "TKT-LATE");
 
-        Ticket ticket = new Ticket(ticketType, user, "TKT-LATE");
+        when(ticketTypeRepository.findById(soldOutType.getId())).thenReturn(Optional.of(soldOutType));
 
-        when(ticketTypeRepository.findById(ticketType.getId())).thenReturn(Optional.of(ticketType));
-
-        assertThrows(IllegalStateException.class, () -> ticketService.createTicket(ticket, 1));
+        // When & Then
+        assertThrows(IllegalStateException.class, () -> ticketService.createTicket(soldOutTicket, 1));
         verify(ticketRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Should throw when ticket type not found")
     void createTicket_missingTicketType_throwsException() {
-        TicketType ticketType = new TicketType("Ghost", new BigDecimal("0.01"), 1);
-        User user = new User();
-        user.setId(88);
+        // Create fake ticket type that isn't saved in repo
+        TicketType ghostType = new TicketType("Ghost", new BigDecimal("0.01"), 1);
+        UUID ghostId = UUID.randomUUID();
+        ghostType.setId(ghostId);
 
-        Ticket ticket = new Ticket(ticketType, user, "TKT-GHOST");
+        Ticket ticket = new Ticket(ghostType, user, "TKT-GHOST");
 
-        when(ticketTypeRepository.findById(ticketType.getId())).thenReturn(Optional.empty());
+        when(ticketTypeRepository.findById(ghostType.getId())).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> ticketService.createTicket(ticket, 1));
     }
