@@ -52,10 +52,12 @@ public class TicketTypeViewController {
 
         String userEmail = principal.getName();
         User user = userService.getUserByEmail(userEmail);
+        boolean isOrganizer = user != null && user.getRole() == User.Role.ORGANIZER;
 
         model.addAttribute("event", event);
         model.addAttribute("ticketType", new TicketType());
         model.addAttribute("isGeneralForm", false);
+        model.addAttribute("isOrganizer", isOrganizer);
         return "ticket-type/type_form";
     }
 
@@ -97,9 +99,12 @@ public class TicketTypeViewController {
         TicketType ticketType = ticketTypeService.getTicketTypeById(id)
                 .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
 
+        boolean isOrganizer = currentUser != null && currentUser.getRole() == User.Role.ORGANIZER;
+        model.addAttribute("isOrganizer", isOrganizer);
+
         model.addAttribute("event", event);
         model.addAttribute("ticketType", ticketType);
-        return "ticket-type/type_form";
+        return "ticket-type/type_edit";
     }
 
     @PostMapping("/edit/{id}")
