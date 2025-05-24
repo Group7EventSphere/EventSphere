@@ -21,6 +21,7 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final TicketTypeRepository ticketTypeRepository;
 
+
     @Override
     public List<Ticket> createTicket(Ticket ticket, int quota) {
         TicketType ticketType = ticket.getTicketType();
@@ -68,6 +69,11 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void deleteTicket(UUID id) {
         ticketRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteTicketsByTicketTypeId(UUID ticketTypeId) {
+        ticketRepository.deleteByTicketTypeId(ticketTypeId);
     }
 
     @Override
