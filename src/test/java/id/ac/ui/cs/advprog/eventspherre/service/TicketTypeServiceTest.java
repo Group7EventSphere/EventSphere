@@ -95,7 +95,11 @@ class TicketTypeServiceTest {
         User attendee = new User();
         attendee.setRole(User.Role.ATTENDEE);
 
-    assertThatThrownBy(() -> TicketType.create("VIP", new BigDecimal("100.00"), 10, attendee))
+        String name = "VIP";
+        BigDecimal price = new BigDecimal("100.00");
+        int quota = 10;
+
+        assertThatThrownBy(() -> TicketType.create(name, price, quota, attendee))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Only organizers can create ticket types");
     }
@@ -130,7 +134,6 @@ class TicketTypeServiceTest {
     @Test
     @DisplayName("Admin can delete a ticket type")
     void deleteTicketType_shouldSucceedForAdmin() {
-        User admin = new User();
         admin.setRole(User.Role.ADMIN);
 
         ticketTypeService.deleteTicketType(ticketTypeId, admin);

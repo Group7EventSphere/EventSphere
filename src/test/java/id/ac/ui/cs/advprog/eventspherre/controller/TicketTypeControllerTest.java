@@ -154,7 +154,7 @@ class TicketTypeControllerTest {
 
         when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
         doThrow(new IllegalStateException(errorMsg))
-                .when(ticketTypeService).deleteTicketType(eq(id), eq(mockUser));
+                .when(ticketTypeService).deleteTicketType(id, mockUser);
 
         mockMvc.perform(post("/ticket-types/delete/" + id)
                         .with(csrf())
@@ -167,20 +167,6 @@ class TicketTypeControllerTest {
     @Test
     @DisplayName("GET /edit/{id} - should return edit form with ticketType, currentUser, and isOrganizer")
     void showEditForm_shouldPopulateModelAndReturnEditView() throws Exception {
-        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
-        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
-
-        mockMvc.perform(get("/ticket-types/edit/" + typeId).principal(() -> mockUser.getEmail()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("ticket-type/type_edit"))
-                .andExpect(model().attribute("ticketType", standard))
-                .andExpect(model().attribute("currentUser", mockUser))
-                .andExpect(model().attribute("isOrganizer", Boolean.TRUE));
-    }
-
-    @Test
-    @DisplayName("GET /edit/{id} - should set isOrganizer=true when user is ORGANIZER")
-    void showEditForm_shouldSetIsOrganizerTrue_whenUserIsOrganizer() throws Exception {
         when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
         when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
 
