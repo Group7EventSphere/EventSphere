@@ -3,10 +3,12 @@ package id.ac.ui.cs.advprog.eventspherre.service;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EventManagementService {
@@ -41,6 +43,21 @@ public class EventManagementService {
         event.setPublic(isPublic);    // Explicitly set isPublic
 
         return eventRepository.save(event);
+    }
+
+    /**
+     * Asynchronous version of createEvent method
+     * This method runs in a separate thread and returns a CompletableFuture
+     */
+    @Async
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    public CompletableFuture<Event> createEventAsync(String title, String description, String eventDate,
+                             String location, Integer organizerId, Integer capacity, Boolean isPublic) {
+        // Perform the synchronous operation
+        Event createdEvent = createEvent(title, description, eventDate, location, organizerId, capacity, isPublic);
+
+        // Wrap the result in a CompletableFuture
+        return CompletableFuture.completedFuture(createdEvent);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER') or hasRole('ATTENDEE')")
@@ -78,6 +95,21 @@ public class EventManagementService {
             return eventRepository.save(event);
         }
         return null;
+    }
+
+    /**
+     * Asynchronous version of updateEvent method
+     * This method runs in a separate thread and returns a CompletableFuture
+     */
+    @Async
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    public CompletableFuture<Event> updateEventAsync(int id, String title, String description,
+                             String eventDate, String location, Integer capacity, boolean isPublic) {
+        // Perform the synchronous operation
+        Event updatedEvent = updateEvent(id, title, description, eventDate, location, capacity, isPublic);
+
+        // Wrap the result in a CompletableFuture
+        return CompletableFuture.completedFuture(updatedEvent);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")

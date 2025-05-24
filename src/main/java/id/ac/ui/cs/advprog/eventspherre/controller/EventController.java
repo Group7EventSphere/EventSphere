@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,9 +130,16 @@ public class EventController {
     }
 
     @PostMapping("/create")
-    public String createEvent(@ModelAttribute("eventForm") EventForm eventForm,
+    public String createEvent(@Valid @ModelAttribute("eventForm") EventForm eventForm,
+                              org.springframework.validation.BindingResult bindingResult,
                               Principal principal,
+                              Model model,
                               RedirectAttributes ra) {
+        // Check for validation errors first
+        if (bindingResult.hasErrors()) {
+            return "events/create"; // Return to form with validation errors
+        }
+
         User currentUser = null;
         try {
             currentUser = userService.getUserByEmail(principal.getName());
@@ -197,10 +205,80 @@ public class EventController {
         }
     }
 
+    @PostMapping("/{eventId}/delete")
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    public String deleteEvent(@PathVariable Integer eventId,
+                              Principal principal,
+                              RedirectAttributes ra) {
+        try {
+            // Get the event first to check if it exists
+            Event event = eventManagementService.getEventById(eventId);
+
+            // Check if the current user is either an admin or the organizer of this event
+            User user = userService.getUserByEmail(principal.getName());
+
+            // Add null check for user
+            if (user == null) {
+                ra.addFlashAttribute("errorMessage", "User not found.");
+                return "redirect:/events/manage";
+            }
+
+            boolean isAdmin = user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isOrganizer = event.getOrganizerId().equals(user.getId());
+
+            if (!isAdmin && !isOrganizer) {
+                ra.addFlashAttribute("errorMessage", "You are not authorized to delete this event.");
+                return "redirect:/events/manage";
+            }
+
+            // Delete the event
+            eventManagementService.deleteEvent(eventId);
+            ra.addFlashAttribute("successMessage", "Event deleted successfully!");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting event " + eventId, e);
+            ra.addFlashAttribute("errorMessage", "Failed to delete event: " + e.getMessage());
+        }
+        return "redirect:/events/manage";
+    }
+
+    @PostMapping("/{eventId}/toggle-visibility")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String toggleEventVisibility(@PathVariable Integer eventId,
+                                        RedirectAttributes ra) {
+        try {
+            Event event = eventManagementService.getEventById(eventId);
+            if (event == null) {
+                ra.addFlashAttribute("errorMessage", "Event not found.");
+                return "redirect:/events/manage";
+            }
+
+            // Toggle the visibility
+            boolean newVisibility = !event.isPublic();
+            eventManagementService.updateEvent(
+                    eventId,
+                    event.getTitle(),
+                    event.getDescription(),
+                    event.getEventDate(),
+                    event.getLocation(),
+                    event.getCapacity(),
+                    newVisibility
+            );
+
+            String visibilityStatus = newVisibility ? "public" : "private";
+            ra.addFlashAttribute("successMessage", "Event visibility changed to " + visibilityStatus + ".");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error toggling visibility for event " + eventId, e);
+            ra.addFlashAttribute("errorMessage", "Failed to toggle event visibility: " + e.getMessage());
+        }
+        return "redirect:/events/manage";
+    }
+
     // --- Form backing objects ---
 
     @Getter @Setter
     public static class EventForm {
+        @jakarta.validation.constraints.NotBlank(message = "Title is required")
         private String title;
         private String description;
         private String location;
@@ -210,4 +288,3 @@ public class EventController {
         private List<?> ticketTypes; // Added ticketTypes field to fix the error
     }
 }
-
