@@ -14,4 +14,9 @@ public class AdminAuditViewController {
     public String auditPage() {
         return "admin_audit";
     }
+
+    @GetMapping("/audit")
+    public String auditAdminPage() {
+        return "admin/audit";
+    }
 }

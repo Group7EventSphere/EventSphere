@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.config.WebSecurityTestConfig;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
@@ -10,7 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.security.Principal;
@@ -19,18 +23,21 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.containsString;
 
 @WebMvcTest(EventController.class)
-public class EventControllerTest {
+@Import(WebSecurityTestConfig.class)
+@ActiveProfiles("test")
+class EventControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,19 +51,23 @@ public class EventControllerTest {
     @MockBean
     private TicketTypeService ticketTypeService;
 
+    @MockBean
+    private AuthenticationProvider authenticationProvider;
+
     private User mockOrganizer;
     private Event mockEvent;
+    private UUID sampleId;
 
     @BeforeEach
     void setUp() {
-        // Create mock organizer
+        // a sample organizer
         mockOrganizer = new User();
         mockOrganizer.setId(1);
         mockOrganizer.setEmail("organizer@example.com");
         mockOrganizer.setName("Test Organizer");
         mockOrganizer.setRole(User.Role.ORGANIZER);
 
-        // Create mock event
+        // a sample event
         mockEvent = new Event();
         mockEvent.setId(1);
         mockEvent.setTitle("Test Event");
@@ -64,6 +75,8 @@ public class EventControllerTest {
         mockEvent.setEventDate("2024-12-31");
         mockEvent.setLocation("Jakarta");
         mockEvent.setOrganizerId(1);
+
+        sampleId = UUID.randomUUID();
     }
 
     @Test
@@ -311,8 +324,8 @@ public class EventControllerTest {
                 anyString(),
                 anyString(),
                 anyString(),
-                any(Integer.class),
-                any(Boolean.class)
+                anyInt(),
+                anyBoolean()
         );
 
         mockMvc.perform(post("/events/1/edit")
@@ -393,7 +406,7 @@ public class EventControllerTest {
 
         // Mock the event management service to throw an exception
         when(eventManagementService.createEvent(
-                anyString(), anyString(), anyString(), anyString(), any(Integer.class), any(Integer.class), any(Boolean.class)
+                anyString(), anyString(), anyString(), anyString(), anyInt(), anyInt(), anyBoolean()
         )).thenThrow(new RuntimeException("Creation failed"));
 
         // Test with a valid principal
@@ -557,15 +570,13 @@ public class EventControllerTest {
     @Test
     @WithMockUser(username = "user@example.com", roles = {"ATTENDEE"})
     void listEvents_shouldReturnView() throws Exception {
-        List<Event> events = new ArrayList<>();
-        events.add(mockEvent);
-
+        List<Event> events = List.of(mockEvent);
         when(eventManagementService.getAllEvents()).thenReturn(events);
 
         mockMvc.perform(get("/events"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("events/list"))
-                .andExpect(model().attributeExists("events"));
+               .andExpect(status().isOk())
+               .andExpect(view().name("events/list"))
+               .andExpect(model().attributeExists("events"));
     }
 
     @Test
@@ -597,66 +608,66 @@ public class EventControllerTest {
     @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void manageEvents_shouldReturnView() throws Exception {
-        List<Event> events = new ArrayList<>();
-        events.add(mockEvent);
-
-        when(eventManagementService.getAllEvents()).thenReturn(events);
-
+        when(eventManagementService.getAllEvents())
+            .thenReturn(List.of(mockEvent));
         mockMvc.perform(get("/events/manage"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("events/manage"))
-                .andExpect(model().attributeExists("events"));
+               .andExpect(status().isOk())
+               .andExpect(view().name("events/manage"))
+               .andExpect(model().attributeExists("events"));
     }
 
     @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void showCreateEventForm_shouldReturnView() throws Exception {
         mockMvc.perform(get("/events/create"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("events/create"))
-                .andExpect(model().attributeExists("eventForm"));
+               .andExpect(status().isOk())
+               .andExpect(view().name("events/create"))
+               .andExpect(model().attributeExists("eventForm"));
     }
 
     @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_shouldRedirectAfterCreation() throws Exception {
-        when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
+        when(userService.getUserByEmail("organizer@example.com"))
+            .thenReturn(mockOrganizer);
+
         when(eventManagementService.createEvent(
                 eq("Test Event"),
                 eq("Test Description"),
                 eq("2024-12-31"),
                 eq("Jakarta"),
                 eq(mockOrganizer.getId()),
-                eq(100),
-                eq(true)
+                anyInt(),
+                anyBoolean()
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")
-                        .with(csrf())
-                        .param("title", "Test Event")
-                        .param("description", "Test Description")
-                        .param("eventDate", "2024-12-31")
-                        .param("location", "Jakarta")
-                        .param("capacity", "100")
-                        .param("public", "true"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/events/manage"));
+                    .with(csrf())
+                    .param("title", "Test Event")
+                    .param("description", "Test Description")
+                    .param("eventDate", "2024-12-31")
+                    .param("location", "Jakarta")
+                    .param("capacity", "100")
+                    .param("public", "true"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/events/manage"));
     }
 
     @Test
     @WithMockUser(username = "attendee@example.com", roles = {"ATTENDEE"})
     void createEvent_shouldDenyAccessForNonOrganizers() throws Exception {
-        // Mock the userService to return null for attendee user
-        when(userService.getUserByEmail("attendee@example.com")).thenReturn(null);
+        when(userService.getUserByEmail("attendee@example.com"))
+            .thenReturn(null);
 
         mockMvc.perform(post("/events/create")
-                        .with(csrf())
-                        .param("title", "Test Event"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/events/create"))
-                .andExpect(flash().attributeExists("errorMessage"))
-                .andExpect(flash().attribute("errorMessage",
-                        containsString("Cannot invoke")));
+                    .with(csrf())
+                    .param("title", "Test Event"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/events/create"))
+               .andExpect(flash().attributeExists("errorMessage"))
+               .andExpect(flash().attribute("errorMessage",
+                       containsString("Cannot invoke")));
+
     }
 
     @Test

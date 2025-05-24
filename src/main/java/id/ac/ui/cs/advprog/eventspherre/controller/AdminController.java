@@ -24,6 +24,11 @@ import java.util.Arrays;
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
+    
+    @GetMapping
+    public String redirectToUserManagement() {
+        return "redirect:/admin/users";
+    }
 
     private final UserService userService;
     private final AuthenticationService authenticationService;
@@ -33,8 +38,8 @@ public class AdminController {
         this.authenticationService = authenticationService;
     }
 
-    @GetMapping
-    public String adminPanel(
+    @GetMapping("/users")
+    public String userManagement(
             Model model, 
             Principal principal,
             @RequestParam(required = false) String role,
@@ -86,7 +91,7 @@ public class AdminController {
         // Add available roles for the dropdown
         model.addAttribute("availableRoles", Arrays.asList(User.Role.values()));
         
-        return "admin/dashboard";
+        return "admin/user-management";
     }
     
     @PostMapping("/users/{id}/update")
@@ -117,15 +122,8 @@ public class AdminController {
                     // Skip role update for admin's own account
                     redirectAttributes.addFlashAttribute("successMessage", "User updated successfully. Note: You cannot change your own role as an admin.");
                 } else {
-                    // Validate allowed roles (only ADMIN or ORGANIZER)
-                    if (role.equals("ADMIN") || role.equals("ORGANIZER")) {
-                        userService.updateUserRole(id, role);
-                        redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
-                    } else {
-                        // If someone tries to set role to ATTENDEE
-                        redirectAttributes.addFlashAttribute("successMessage", 
-                            "User updated successfully. Note: Role can only be set to ADMIN or ORGANIZER.");
-                    }
+                    userService.updateUserRole(id, role);
+                    redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
                 }
             } else {
                 redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
@@ -142,7 +140,7 @@ public class AdminController {
             redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin";
+        return "redirect:/admin/users";
     }
     
     @PostMapping("/users/{id}/update-password")
@@ -167,7 +165,7 @@ public class AdminController {
             redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin";
+        return "redirect:/admin/users";
     }
     
     @PostMapping("/users/create")
@@ -191,8 +189,8 @@ public class AdminController {
             // Register the user
             User newUser = authenticationService.signup(registerUserDto);
             
-            // Set the user role if it's ADMIN or ORGANIZER
-            if (role.equals("ADMIN") || role.equals("ORGANIZER")) {
+            // Set the user role
+            if (role.equals("ADMIN") || role.equals("ORGANIZER") || role.equals("ATTENDEE")) {
                 userService.updateUserRole(newUser.getId(), role);
             }
             
@@ -209,7 +207,7 @@ public class AdminController {
             redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin";
+        return "redirect:/admin/users";
     }
     
     @PostMapping("/users/{id}/delete")
@@ -225,7 +223,7 @@ public class AdminController {
         // Prevent deletion of the current user
         if (principal != null && principal.getName().equals(user.getEmail())) {
             redirectAttributes.addFlashAttribute("errorMessage", "You cannot delete your own account");
-            return "redirect:/admin";
+            return "redirect:/admin/users";
         }
         
         try {
@@ -243,6 +241,6 @@ public class AdminController {
             redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin";
+        return "redirect:/admin/users";
     }
 }
