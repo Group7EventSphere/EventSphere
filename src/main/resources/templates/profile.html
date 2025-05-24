@@ -114,6 +114,9 @@
                 <h3>Account Balance</h3>
                 <p><strong>Current Balance:</strong> <span th:text="${'$' + user.balance}">$0.00</span></p>
                 <p class="form-note">For questions about your balance, please contact support.</p>
+                <div class="form-actions">
+                    <a th:href="@{/balance}" class="btn btn-primary">Top Up Balance</a>
+                </div>
             </div>
         </div>
     </div>
