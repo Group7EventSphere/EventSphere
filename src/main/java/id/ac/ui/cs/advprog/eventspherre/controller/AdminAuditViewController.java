@@ -10,11 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin")
 public class AdminAuditViewController {
 
-    @GetMapping("/audit_admin")
-    public String auditPage() {
-        return "admin_audit";
-    }
-
     @GetMapping("/audit")
     public String auditAdminPage() {
         return "admin/audit";
