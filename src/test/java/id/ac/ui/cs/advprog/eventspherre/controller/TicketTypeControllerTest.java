@@ -103,7 +103,7 @@ class TicketTypeControllerTest {
 
         verify(ticketTypeService).create(
                 eq("Premium"),
-                eq(new BigDecimal("200.00")),
+                argThat(bd -> bd.compareTo(BigDecimal.valueOf(200)) == 0),
                 eq(20),
                 eq(mockUser),
                 eq(1)
