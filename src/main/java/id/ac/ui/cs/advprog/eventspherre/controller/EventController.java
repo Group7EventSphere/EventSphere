@@ -14,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +84,6 @@ public class EventController {
             form.setEventDate(event.getEventDate());
             form.setCapacity(event.getCapacity());
             form.setPublic(event.isPublic());
-            // TODO: load existing ticket types if desired
 
             model.addAttribute("eventForm", form);
             model.addAttribute("eventId", eventId);
@@ -149,15 +147,15 @@ public class EventController {
                 return "redirect:/events/create";
             }
 
+            // Updated to pass all event form parameters including capacity and isPublic
             eventManagementService.createEvent(
                     eventForm.getTitle(),
                     eventForm.getDescription(),
                     eventForm.getEventDate(),
                     eventForm.getLocation(),
-                    organizerId
-                    // Note: capacity, isPublic, and ticketTypes from eventForm are not passed here
-                    // to align with the 5-argument mock in the createEvent_shouldRedirectAfterCreation test.
-                    // If these are needed, the service method and its mock should be updated.
+                    organizerId,
+                    eventForm.getCapacity(),
+                    eventForm.isPublic()
             );
             ra.addFlashAttribute("successMessage", "Event created successfully!");
             return "redirect:/events/manage";
@@ -174,23 +172,42 @@ public class EventController {
         }
     }
 
+    @GetMapping("/{eventId}")
+    @PreAuthorize("isAuthenticated()")
+    public String showEventDetails(@PathVariable Integer eventId, Model model, RedirectAttributes ra) {
+        try {
+            Event event = eventManagementService.getEventById(eventId);
+            if (event == null) {
+                ra.addFlashAttribute("errorMessage", "Event not found.");
+                return "redirect:/events";
+            }
+
+            // Get ticket types for this event
+            var ticketTypes = ticketTypeService.getTicketTypesByEventId(eventId);
+
+            model.addAttribute("event", event);
+            model.addAttribute("ticketTypes", ticketTypes != null ? ticketTypes : new ArrayList<>());
+
+            return "events/detail";
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error loading event details for event " + eventId, e);
+            ra.addFlashAttribute("errorMessage", "Could not load event details.");
+            return "redirect:/events";
+        }
+    }
+
     // --- Form backing objects ---
 
-    public static class EventForm {
-        @Getter @Setter private String title;
-        @Getter @Setter private String description;
-        @Getter @Setter private String location;
-        @Getter @Setter private String eventDate;
-        @Getter @Setter private Integer capacity;
-        @Getter @Setter private boolean isPublic;
-        @Getter @Setter private List<TicketTypeForm> ticketTypes = new ArrayList<>();
-    }
-
     @Getter @Setter
-    public static class TicketTypeForm {
-        private String name;
-        private BigDecimal price;
-        private Integer availableSeats;
+    public static class EventForm {
+        private String title;
         private String description;
+        private String location;
+        private String eventDate;
+        private Integer capacity;
+        private boolean isPublic;
+        private List<?> ticketTypes; // Added ticketTypes field to fix the error
     }
 }
+
