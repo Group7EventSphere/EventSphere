@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,16 +66,33 @@ class TicketControllerTest {
     }
 
     @Test
-    @DisplayName("GET /tickets returns list view with user’s tickets")
+    @DisplayName("GET /tickets returns list view with user’s tickets and events")
     void listUserTickets_shouldReturnTicketListView() throws Exception {
         User user = mockUser();
-        when(ticketService.getTicketsByAttendeeId(user.getId())).thenReturn(List.of(sampleTicket()));
+
+        TicketType ticketType = new TicketType();
+        ticketType.setName("VIP");
+        ticketType.setPrice(BigDecimal.valueOf(50000));
+        ticketType.setEventId(1);
+
+        Ticket ticket = new Ticket();
+        ticket.setId(UUID.randomUUID());
+        ticket.setTicketType(ticketType);
+        ticket.setDate(LocalDate.now());
+        ticket.setAttendee(user);
+
+        Event event = new Event();
+        event.setId(1);
+        event.setTitle("Test Event");
+
         when(userService.getUserByEmail("test@example.com")).thenReturn(user);
+        when(ticketService.getTicketsByAttendeeId(user.getId())).thenReturn(List.of(ticket));
+        when(eventManagementService.getEvent(1)).thenReturn(event);
 
         mockMvc.perform(get("/tickets").with(user("test@example.com")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ticket/list"))
-                .andExpect(model().attributeExists("tickets"));
+                .andExpect(model().attributeExists("ticketWithEventList"));
     }
 
     @Test

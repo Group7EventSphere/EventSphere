@@ -17,9 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping("/tickets")
@@ -128,7 +126,25 @@ public class TicketController {
     public String listUserTickets(Model model, Principal principal) {
         User user = userService.getUserByEmail(principal.getName());
         List<Ticket> tickets = ticketService.getTicketsByAttendeeId(user.getId());
-        model.addAttribute("tickets", tickets);
+
+        List<Map<String, Object>> ticketWithEventList = tickets.stream()
+                .map(ticket -> {
+                    TicketType type = ticket.getTicketType();
+                    if (type == null) return null;
+
+                    Integer eventId = type.getEventId();
+                    Event event = eventManagementService.getEvent(eventId);
+                    if (event == null) return null;
+
+                    Map<String, Object> entry = new HashMap<>();
+                    entry.put("ticket", ticket);
+                    entry.put("event", event);
+                    return entry;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        model.addAttribute("ticketWithEventList", ticketWithEventList);
         return "ticket/list";
     }
 
