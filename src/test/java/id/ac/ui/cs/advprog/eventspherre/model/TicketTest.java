@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -49,6 +50,23 @@ class TicketTest {
         ticket.updateTicketType(newType, organizer);
 
         assertEquals(newType, ticket.getTicketType());
+    }
+
+    @Test
+    @DisplayName("Ticket constructor - should set userId = 0 when attendee is null")
+    void constructor_shouldSetUserIdZero_whenAttendeeIsNull() {
+        Ticket result = new Ticket(ticketType, null, confirmationCode);
+
+        assertEquals(0, result.getUserId());
+    }
+
+    @Test
+    @DisplayName("Ticket constructor - should set userId = 0 when attendee ID is null")
+    void constructor_shouldSetUserIdZero_whenAttendeeIdIsNull() {
+        User noIdUser = new User();  // no setId()
+        Ticket result = new Ticket(ticketType, noIdUser, confirmationCode);
+
+        assertEquals(0, result.getUserId());
     }
 
     @Test
