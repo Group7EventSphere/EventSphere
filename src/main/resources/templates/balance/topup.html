@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, _, _)}">
+<head>
+  <title>Top‑Up Balance</title>
+</head>
+<body>
+  <main>
+    <div class="content-container">
+      <div class="page-title-container">
+        <h1>Top‑Up Balance</h1>
+        <p>Current Balance: <span th:text="${balance}">0</span></p>
+      </div>
+
+      <div class="action-buttons">
+        <a th:href="@{/profile}" class="btn-secondary">
+          <span>Back to Profile</span>
+        </a>
+      </div>
+
+      <div th:if="${flash}" class="alert-message">
+        <p th:text="${flash}"></p>
+      </div>
+
+      <div class="tab-menu">
+        <a th:href="@{/balance}" class="tab-item active">Top-up</a>
+        <a th:href="@{/balance/history}" class="tab-item">Transaction History</a>
+      </div>
+
+      <form method="post" th:action="@{/balance}" class="form">
+        <div class="form-group">
+          <label>Select Amount</label>
+          <div class="amount-options">
+            <button type="button" class="btn-amount preset-btn" data-value="100000">100,000</button>
+            <button type="button" class="btn-amount preset-btn" data-value="200000">200,000</button>
+            <button type="button" class="btn-amount preset-btn" data-value="500000">500,000</button>
+            <div class="other-amount">
+              <span>Other:</span>
+              <input type="number" min="1" name="amount" id="amountInput" placeholder="Amount" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Payment Method (E‑wallet)</label>
+          <div class="radio-options">
+            <div class="radio-option">
+              <input type="radio" name="method" value="GOPAY" id="gopay" checked>
+              <label for="gopay">Gopay</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="method" value="OVO" id="ovo">
+              <label for="ovo">Ovo</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="method" value="DANA" id="dana">
+              <label for="dana">Dana</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" type="submit">Proceed to Payment</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      Array.from(document.querySelectorAll('.preset-btn')).forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('amountInput').value = btn.dataset.value;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

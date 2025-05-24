@@ -58,3 +58,23 @@
     background-color: #a7f3d0;
     color: #064e3b;
 }
+
+/* Balance section styles */
+.balance-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.balance-container p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.balance-container .btn {
+    padding: 0.5rem 1.5rem;
+}

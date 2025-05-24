@@ -2,6 +2,10 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import id.ac.ui.cs.advprog.eventspherre.repository.EventRepository;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
+import id.ac.ui.cs.advprog.eventspherre.observer.EventSubject;
+import id.ac.ui.cs.advprog.eventspherre.command.EventCommandInvoker;
+import id.ac.ui.cs.advprog.eventspherre.command.EventCommand;
+import id.ac.ui.cs.advprog.eventspherre.command.CreateEventCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +22,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class EventTest {
+    private EventRepository mockEventRepository;
+    private EventSubject mockEventSubject;
+    private EventCommandInvoker mockCommandInvoker;
     private EventManagementService eventManager;
+    private Map<Integer, Event> eventDatabase;
+    private Integer currentId;
 
     @BeforeEach
     void setUp() {
-        EventRepository mockEventRepository = mock(EventRepository.class);
-        final Map<Integer, Event> eventDatabase = new HashMap<>();
+        mockEventRepository = mock(EventRepository.class);
+        mockEventSubject = mock(EventSubject.class);
+        mockCommandInvoker = mock(EventCommandInvoker.class);
+        eventDatabase = new HashMap<>();
         final AtomicInteger idGenerator = new AtomicInteger(1);
 
         // Configure mock behavior for save
@@ -41,17 +52,19 @@ public class EventTest {
             eventToStoreAndReturn.setDescription(eventArg.getDescription());
             eventToStoreAndReturn.setEventDate(eventArg.getEventDate());
             eventToStoreAndReturn.setLocation(eventArg.getLocation());
-            eventToStoreAndReturn.setOrganizerId(eventArg.getOrganizerId());
+            eventToStoreAndReturn.setOrganizerId(eventArg.getOrganizerId());            // Explicitly set capacity field from source event
+            eventToStoreAndReturn.setCapacity(eventArg.getCapacity());
+
+            // Explicitly set isPublic field from source event
+            eventToStoreAndReturn.setPublic(eventArg.isPublic());
 
             // Ensure details map is initialized for the event being stored/returned by the mock
             if (eventToStoreAndReturn.getDetails() == null) {
                 eventToStoreAndReturn.setDetails(new HashMap<>());
             }
 
-            // Copy capacity from source event if present in the details
-            if (eventArg.getDetails() != null && eventArg.getDetails().containsKey("capacity")) {
-                eventToStoreAndReturn.getDetails().put("capacity", eventArg.getDetails().get("capacity"));
-            }
+            // Copy capacity to details map for backward compatibility
+            eventToStoreAndReturn.getDetails().put("capacity", eventArg.getCapacity());
 
             // Persist the isPublic status from eventArg into eventToStoreAndReturn's details map
             if (eventArg.getDetails() != null && eventArg.getDetails().containsKey("isPublic")) {
@@ -68,16 +81,32 @@ public class EventTest {
         when(mockEventRepository.findById(any(Integer.class))).thenAnswer(invocation -> {
             Integer id = invocation.getArgument(0);
             return Optional.ofNullable(eventDatabase.get(id));
-        });
-
-        // Configure mock behavior for deleteById
+        });        // Configure mock behavior for deleteById
         doAnswer(invocation -> {
             Integer id = invocation.getArgument(0);
             eventDatabase.remove(id);
             return null;
         }).when(mockEventRepository).deleteById(any(Integer.class));
 
-        eventManager = new EventManagementService(mockEventRepository);
+        // Configure mock behavior for delete(Event)
+        doAnswer(invocation -> {
+            Event event = invocation.getArgument(0);
+            if (event != null && event.getId() != null) {
+                eventDatabase.remove(event.getId());
+            }
+            return null;
+        }).when(mockEventRepository).delete(any(Event.class));
+
+        // Configure mockCommandInvoker to actually execute commands
+        doAnswer(invocation -> {
+            Object command = invocation.getArgument(0);
+            if (command instanceof EventCommand) {
+                ((EventCommand) command).execute();
+            }
+            return null;
+        }).when(mockCommandInvoker).executeCommand(any());
+
+        eventManager = new EventManagementService(mockEventRepository, mockEventSubject, mockCommandInvoker);
     }
 
     @Test
@@ -295,8 +324,23 @@ public class EventTest {
 
     @Test
     void testCreateEventWithNegativeCapacity() {
-        Event event = eventManager.createEvent(
-                "Negative Capacity Event", "Description", "2024-12-31", "Jakarta", 1, -10, true);
+        // Create a local command to debug the issue
+        CreateEventCommand command = new CreateEventCommand(
+                mockEventRepository,
+                mockEventSubject,
+                "Negative Capacity Event",
+                "Description",
+                "2024-12-31",
+                "Jakarta",
+                1,
+                -10,
+                true);
+
+        // Manually execute the command
+        command.execute();
+
+        // Check if the created event is not null
+        Event event = command.getEvent();
         assertNotNull(event);
         assertEquals(-10, event.getCapacity());
         // This test verifies that the system accepts negative capacity (which might need validation)

@@ -75,3 +75,45 @@
 .ticketType-backButton:hover {
     text-decoration: underline;
 }
+
+.ticketType-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.ticketType-modal-content {
+    background-color: white;
+    padding: 2rem 3rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.ticketType-error-text {
+    font-size: 1.2rem;
+    color: #d9534f;
+    margin-bottom: 1.5rem;
+}
+
+.ticketType-modal-content .ticketType-button {
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 1rem;
+    display: inline-block;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.ticketType-modal-content .ticketType-button:hover {
+    background-color: #0056b3;
+}
