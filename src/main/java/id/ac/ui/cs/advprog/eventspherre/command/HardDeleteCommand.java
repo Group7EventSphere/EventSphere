@@ -22,18 +22,27 @@ public class HardDeleteCommand implements AuditCommand {
 
         txRepo.findById(txId).ifPresent(tx -> {
 
-            userRepo.findById(tx.getUserId()).ifPresent(u -> {
-                if (tx.getType() == PaymentRequest.PaymentType.TOPUP)
-                    u.deduct(tx.getAmount());
-                else
-                    u.topUp(tx.getAmount());
+            boolean alreadyFinal =
+                    "FAILED".equals(tx.getStatus()) || "SOFT_DELETED".equals(tx.getStatus());
+
+            reqRepo.findById(tx.getRequestId()).ifPresent(req -> {
+                req.setMessage("ADMIN-DELETE: HARD");
+                reqRepo.save(req);
             });
 
-            UUID reqId = tx.getRequestId();   // capture before deleting
+            if (!alreadyFinal) {
+                userRepo.findById(tx.getUserId()).ifPresent(u -> {
+                    if (tx.getType() == PaymentRequest.PaymentType.TOPUP)
+                        u.deduct(tx.getAmount());
+                    else
+                        u.topUp(tx.getAmount());
+                });
+            }
 
+            UUID reqId = tx.getRequestId();
             txRepo.delete(tx);
-
             reqRepo.findById(reqId).ifPresent(reqRepo::delete);
         });
     }
+
 }
