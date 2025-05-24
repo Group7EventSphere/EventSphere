@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.config.JwtConfig;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
@@ -82,15 +83,14 @@ public class JwtService {
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
-                    .getBody();
-        } catch (ExpiredJwtException e) {
-            log.error("JWT token expired: {}", e.getMessage());
+                    .getBody();        } catch (ExpiredJwtException e) {
+            log.error(AppConstants.LOG_JWT_TOKEN_EXPIRED, e.getMessage());
             throw e;
         } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token: {}", e.getMessage());
+            log.error(AppConstants.LOG_UNSUPPORTED_JWT_TOKEN, e.getMessage());
             throw e;
         } catch (MalformedJwtException e) {
-            log.error("Malformed JWT token: {}", e.getMessage());
+            log.error(AppConstants.LOG_MALFORMED_JWT_TOKEN, e.getMessage());
             throw e;
         } catch (SignatureException e) {
             log.error("Invalid JWT signature: {}", e.getMessage());

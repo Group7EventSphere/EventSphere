@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.dto.*;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.AuthenticationService;
 import id.ac.ui.cs.advprog.eventspherre.service.JwtService;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,14 +55,12 @@ public class AuthController {
             String refreshToken = jwtService.generateRefreshToken(userDetails);
 
             // Find the user entity
-            User user = userService.findByEmail(loginRequest.getEmail());
-
-            // Return response with tokens
+            User user = userService.findByEmail(loginRequest.getEmail());            // Return response with tokens
             return ResponseEntity.ok(JwtAuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .tokenType("Bearer")
-                    .expiresIn(3600L) // 1 hour
+                    .expiresIn(AppConstants.JWT_EXPIRATION_TIME) // 1 hour
                     .email(user.getEmail())
                     .name(user.getName())
                     .role(user.getRole().name())
@@ -106,14 +105,12 @@ public class AuthController {
             // Generate JWT tokens
             UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
             String accessToken = jwtService.generateToken(userDetails);
-            String refreshToken = jwtService.generateRefreshToken(userDetails);
-
-            // Return response with tokens
+            String refreshToken = jwtService.generateRefreshToken(userDetails);            // Return response with tokens
             return ResponseEntity.status(HttpStatus.CREATED).body(JwtAuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .tokenType("Bearer")
-                    .expiresIn(3600L) // 1 hour
+                    .expiresIn(AppConstants.JWT_EXPIRATION_TIME) // 1 hour
                     .email(user.getEmail())
                     .name(user.getName())
                     .role(user.getRole().name())
@@ -148,11 +145,10 @@ public class AuthController {
             User user = userService.findByEmail(email);
 
             // Return response with new access token
-            return ResponseEntity.ok(JwtAuthResponse.builder()
-                    .accessToken(accessToken)
+            return ResponseEntity.ok(JwtAuthResponse.builder()                    .accessToken(accessToken)
                     .refreshToken(refreshRequest.getRefreshToken()) // Return the same refresh token
                     .tokenType("Bearer")
-                    .expiresIn(3600L) // 1 hour
+                    .expiresIn(AppConstants.JWT_EXPIRATION_TIME) // 1 hour
                     .email(user.getEmail())
                     .name(user.getName())
                     .role(user.getRole().name())

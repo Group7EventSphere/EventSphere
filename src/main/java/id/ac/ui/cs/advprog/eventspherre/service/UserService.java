@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,13 +29,12 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
-    public List<User> getUsersByRole(String roleName) {
+      public List<User> getUsersByRole(String roleName) {
         try {
             User.Role role = User.Role.valueOf(roleName.toUpperCase());
             return userRepository.findByRole(role);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role: " + roleName);
+            throw new IllegalArgumentException(AppConstants.ERROR_INVALID_ROLE + roleName);
         }
     }
     
@@ -52,20 +52,16 @@ public class UserService {
             if (searchTerm == null || searchTerm.trim().isEmpty()) {
                 return userRepository.findByRole(role);
             }
-            
-            return userRepository.findByRoleAndNameOrEmailContainingIgnoreCase(role, searchTerm.trim());
+              return userRepository.findByRoleAndNameOrEmailContainingIgnoreCase(role, searchTerm.trim());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role: " + roleName);
+            throw new IllegalArgumentException(AppConstants.ERROR_INVALID_ROLE + roleName);
         }
+    }    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException(AppConstants.ERROR_USER_NOT_FOUND_WITH_EMAIL + email));
     }
-
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-    }
-    
-    public User findByEmail(String email) {
+      public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new RuntimeException(AppConstants.ERROR_USER_NOT_FOUND_WITH_EMAIL + email));
     }
     
     public Optional<User> findById(Integer id) {
@@ -87,7 +83,7 @@ public class UserService {
             user.setRole(role);
             return userRepository.save(user);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role: " + roleName);
+                        throw new IllegalArgumentException(AppConstants.ERROR_INVALID_ROLE + roleName);
         }
     }
     

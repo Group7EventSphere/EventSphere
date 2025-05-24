@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -52,7 +53,7 @@ public class User implements UserDetails {
     private Role role= Role.ATTENDEE;
 
     @Column(name = "balance")
-    private Double balance= 0.0;
+    private Double balance= AppConstants.DEFAULT_BALANCE;
 
     public enum Role {
         ADMIN, ORGANIZER, ATTENDEE

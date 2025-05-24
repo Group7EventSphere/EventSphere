@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.UUID;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 @Entity
 @Table(name = "tickets")
@@ -44,11 +45,9 @@ public class Ticket {
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
         this.ticketType = ticketType;
-        this.attendee = attendee;
-
-        // Defensive check to prevent NPE
+        this.attendee = attendee;        // Defensive check to prevent NPE
         if (attendee == null || attendee.getId() == null) {
-            this.userId = 0;
+            this.userId = AppConstants.DEFAULT_USER_ID;
         } else {
             this.userId = attendee.getId();
         }

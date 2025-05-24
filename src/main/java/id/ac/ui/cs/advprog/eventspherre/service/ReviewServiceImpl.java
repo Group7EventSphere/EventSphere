@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.Review;
 import id.ac.ui.cs.advprog.eventspherre.repository.ReviewRepository;
 import id.ac.ui.cs.advprog.eventspherre.validation.ReviewValidator;
@@ -11,11 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ReviewServiceImpl implements ReviewService {
-
-    private static final String INVALID_MSG =
-            "Invalid review: Review text cannot be empty and rating must be between 1 and 5.";
-    private static final String NOT_FOUND_MSG = "Review not found";
+public class ReviewServiceImpl implements ReviewService {    private static final String INVALID_MSG = AppConstants.ERROR_INVALID_REVIEW;
+    private static final String NOT_FOUND_MSG = AppConstants.ERROR_REVIEW_NOT_FOUND;
 
     private final ReviewRepository repo;
     private final ReviewValidator validator;
@@ -32,9 +30,8 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         Optional<Review> existing =
-                repo.findByAttendeeIdAndEventId(review.getAttendeeId(), review.getEventId());
-        if (existing.isPresent()) {
-            throw new IllegalStateException("You have already submitted a review for this event.");
+                repo.findByAttendeeIdAndEventId(review.getAttendeeId(), review.getEventId());        if (existing.isPresent()) {
+            throw new IllegalStateException(AppConstants.ERROR_ALREADY_SUBMITTED_REVIEW);
         }
 
         return repo.save(review);
