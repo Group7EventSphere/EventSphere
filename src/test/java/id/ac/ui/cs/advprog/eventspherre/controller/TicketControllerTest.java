@@ -5,10 +5,14 @@ import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentTransaction;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
+import id.ac.ui.cs.advprog.eventspherre.service.PaymentService;
+import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,15 +26,15 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -51,6 +55,8 @@ class TicketControllerTest {
     @MockBean UserService              userService;
     @MockBean EventManagementService   eventManagementService;
     @MockBean AuthenticationProvider   authenticationProvider;
+    @MockBean PaymentHandler           paymentHandler;
+    @MockBean PaymentService           paymentService;
 
     private User     attendee;
     private UUID     typeId;
@@ -67,6 +73,7 @@ class TicketControllerTest {
         sampleType = new TicketType();
         sampleType.setId(typeId);
         sampleType.setEventId(7);
+        sampleType.setPrice(new BigDecimal("100.00"));
 
         sampleEvent = new Event();
         sampleEvent.setId(7);
@@ -123,6 +130,25 @@ class TicketControllerTest {
         when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
         when(ticketService.createTicket(any(Ticket.class), eq(5))).thenReturn(List.of(new Ticket()));
 
+        // Mock payment handler to simulate successful payment
+        doAnswer(invocation -> {
+            PaymentRequest request = invocation.getArgument(0);
+            request.setProcessed(true);
+            request.setMessage("Purchase successful: balance deducted");
+            return null;
+        }).when(paymentHandler).handle(any(PaymentRequest.class));
+
+        // Mock payment service to return a transaction
+        PaymentTransaction mockTransaction = PaymentTransaction.builder()
+                .id(UUID.randomUUID())
+                .userId(attendee.getId())
+                .amount(sampleType.getPrice().doubleValue() * 5)
+                .type(PaymentRequest.PaymentType.PURCHASE)
+                .status("SUCCESS")
+                .build();
+        when(paymentService.persistRequestAndConvert(any(PaymentRequest.class), eq("SUCCESS")))
+                .thenReturn(mockTransaction);
+
         mockMvc.perform(post("/tickets/create")
                         .with(csrf())
                         .param("ticketTypeId", typeId.toString())
@@ -130,7 +156,6 @@ class TicketControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/tickets"));
     }
-
 
     @Test
     @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")

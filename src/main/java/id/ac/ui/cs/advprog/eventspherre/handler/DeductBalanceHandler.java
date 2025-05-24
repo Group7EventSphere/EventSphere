@@ -24,7 +24,7 @@ public class DeductBalanceHandler implements PaymentHandler {
                     request.setProcessed(true);
                     request.setMessage("Purchase successful: balance deducted");
                 } else {
-                    request.setProcessed(true);
+                    request.setProcessed(false);
                     request.setMessage("Payment failed: insufficient funds");
 
                 }

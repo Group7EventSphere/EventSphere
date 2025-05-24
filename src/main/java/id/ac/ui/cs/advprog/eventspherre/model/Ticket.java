@@ -37,6 +37,9 @@ public class Ticket {
     @DateTimeFormat(pattern = "dd MMM yyyy")
     private LocalDate date;
 
+    @Column(name = "transaction_id")
+    private UUID transactionId;
+
     public Ticket() {}
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {

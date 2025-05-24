@@ -5,10 +5,14 @@ import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
+import id.ac.ui.cs.advprog.eventspherre.model.PaymentTransaction;
+import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
+import id.ac.ui.cs.advprog.eventspherre.service.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,12 +32,18 @@ public class TicketController {
     private final TicketTypeService ticketTypeService;
     private final UserService userService;
     private final EventManagementService eventManagementService;
+    private final PaymentHandler paymentHandler;
+    private final PaymentService paymentService;
 
-    public TicketController(TicketService ticketService, TicketTypeService ticketTypeService, UserService userService, EventManagementService eventManagementService) {
+    public TicketController(TicketService ticketService, TicketTypeService ticketTypeService, 
+                           UserService userService, EventManagementService eventManagementService,
+                           PaymentHandler paymentHandler, PaymentService paymentService) {
         this.ticketService = ticketService;
         this.ticketTypeService = ticketTypeService;
         this.userService = userService;
         this.eventManagementService = eventManagementService;
+        this.paymentHandler = paymentHandler;
+        this.paymentService = paymentService;
     }
 
     @GetMapping("/select/{eventId}")
@@ -103,17 +113,53 @@ public class TicketController {
         TicketType ticketType = ticketTypeService.getTicketTypeById(ticketTypeId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid ticket type ID"));
 
-        // Build the ticket
-        Ticket ticket = new Ticket();
-        ticket.setAttendee(attendee);
-        ticket.setTicketType(ticketType);
+        // Calculate total price
+        double totalPrice = ticketType.getPrice().multiply(new java.math.BigDecimal(quota)).doubleValue();
 
-        // Create multiple tickets
-        ticketService.createTicket(ticket, quota);
+        // Create payment request for the purchase
+        PaymentRequest paymentRequest = PaymentRequest.builder()
+                .userId(attendee.getId())
+                .amount(totalPrice)
+                .type(PaymentRequest.PaymentType.PURCHASE)
+                .processed(false)
+                .createdAt(java.time.Instant.now())
+                .build();
+        paymentRequest.setUser(attendee);
 
-        redirectAttributes.addFlashAttribute("message", "Successfully purchased " + quota + " ticket(s).");
+        // Process payment through the chain
+        paymentHandler.handle(paymentRequest);
 
-        return "redirect:/tickets";
+        // Wait a bit for the async handler to process
+        try {
+            Thread.sleep(500); // Give time for async processing
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Check if payment was successful
+        if (paymentRequest.isProcessed()) {
+            
+            // Convert to transaction first to get the transaction ID
+            PaymentTransaction transaction = paymentService.persistRequestAndConvert(paymentRequest, "SUCCESS");
+            
+            // Payment successful, create tickets with transaction ID
+            Ticket ticket = new Ticket();
+            ticket.setAttendee(attendee);
+            ticket.setTicketType(ticketType);
+            ticket.setTransactionId(transaction.getId());
+
+            // Create multiple tickets
+            ticketService.createTicket(ticket, quota);
+
+            redirectAttributes.addFlashAttribute("message", "Successfully purchased " + quota + " ticket(s).");
+            return "redirect:/tickets";
+        } else {
+            // Payment failed - insufficient balance
+            redirectAttributes.addFlashAttribute("error", "Insufficient balance. Please top up your account.");
+            redirectAttributes.addAttribute("ticketTypeId", ticketTypeId);
+            redirectAttributes.addAttribute("quota", quota);
+            return "redirect:/tickets/create";
+        }
     }
 
     // Show detail view
