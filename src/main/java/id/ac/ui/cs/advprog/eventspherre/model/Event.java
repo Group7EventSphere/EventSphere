@@ -6,6 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter @Setter
@@ -75,5 +76,18 @@ public class Event {
     public boolean isPublic() {
         return (Boolean) details.getOrDefault("isPublic", false);
     }
-}
 
+    public void setCapacity(Integer capacity) {
+        if (details == null) {
+            details = new HashMap<>();
+        }
+        details.put("capacity", capacity);
+    }
+
+    public void setPublic(boolean isPublic) {
+        if (details == null) {
+            details = new HashMap<>();
+        }
+        details.put("isPublic", isPublic);
+    }
+}
