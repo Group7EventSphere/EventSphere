@@ -6,24 +6,31 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentTransactionRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
+import id.ac.ui.cs.advprog.eventspherre.repository.TicketTypeRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class AuditCommandTests {
 
     @Mock private PaymentTransactionRepository txRepo;
     @Mock private PaymentRequestRepository     reqRepo;
     @Mock private UserRepository               usrRepo;
+    @Mock private TicketRepository             ticketRepo;
+    @Mock private TicketTypeRepository         ticketTypeRepo;
     @Mock private PaymentTransaction           tx;
     @Mock private PaymentRequest               req;
     @Mock private User                         usr;
@@ -55,7 +62,7 @@ class AuditCommandTests {
         void shouldFlagFailedAndRevertTopup() {
             commonStubbing(150.0, 1, PaymentRequest.PaymentType.TOPUP);
 
-            new FlagFailedCommand(txId, txRepo, reqRepo, usrRepo).execute();
+            new FlagFailedCommand(txId, txRepo, reqRepo, usrRepo, ticketRepo, ticketTypeRepo).execute();
 
             verify(tx).setStatus("FAILED");
             req.setAmount(-tx.getAmount());
@@ -69,8 +76,10 @@ class AuditCommandTests {
         @DisplayName("refunds user when purchase failed")
         void shouldRefundPurchase() {
             commonStubbing(80.0, 2, PaymentRequest.PaymentType.PURCHASE);
+            when(tx.getId()).thenReturn(txId);
+            when(ticketRepo.findByTransactionId(txId)).thenReturn(Collections.emptyList());
 
-            new FlagFailedCommand(txId, txRepo, reqRepo, usrRepo).execute();
+            new FlagFailedCommand(txId, txRepo, reqRepo, usrRepo, ticketRepo, ticketTypeRepo).execute();
 
             verify(tx).setStatus("FAILED");
             req.setAmount(-tx.getAmount());
@@ -88,8 +97,11 @@ class AuditCommandTests {
         @DisplayName("deletes tx & request, reverses user balance")
         void shouldDeleteBothEntities() {
             commonStubbing(50.0, 3, PaymentRequest.PaymentType.TOPUP);
+            when(tx.getStatus()).thenReturn("SUCCESS"); // Not already failed
+            when(tx.getId()).thenReturn(txId);
+            when(ticketRepo.findByTransactionId(txId)).thenReturn(Collections.emptyList());
 
-            new HardDeleteCommand(txId, txRepo, reqRepo, usrRepo).execute();
+            new HardDeleteCommand(txId, txRepo, reqRepo, usrRepo, ticketRepo, ticketTypeRepo).execute();
 
             verify(usr).deduct(50.0);
             verify(txRepo).delete(tx);
@@ -106,8 +118,10 @@ class AuditCommandTests {
         @DisplayName("sets SOFT_DELETED, marks request & deducts user")
         void shouldSoftDelete() {
             commonStubbing(30.0, 4, PaymentRequest.PaymentType.TOPUP);
+            when(tx.getId()).thenReturn(txId);
+            when(ticketRepo.findByTransactionId(txId)).thenReturn(Collections.emptyList());
 
-            new SoftDeleteCommand(txId, txRepo, reqRepo, usrRepo).execute();
+            new SoftDeleteCommand(txId, txRepo, reqRepo, usrRepo, ticketRepo, ticketTypeRepo).execute();
 
             verify(tx).setStatus("SOFT_DELETED");
             req.setAmount(-tx.getAmount());

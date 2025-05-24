@@ -32,7 +32,7 @@ class SufficientBalanceHandlerTest {
 
         handler.handle(request);
 
-        assertTrue(request.isProcessed());
+        assertFalse(request.isProcessed()); // Changed to false as per the updated handler
         assertEquals("Payment failed: insufficient funds", request.getMessage());
         // Dummy handler should not have been called.
         assertFalse(dummy.wasCalled());

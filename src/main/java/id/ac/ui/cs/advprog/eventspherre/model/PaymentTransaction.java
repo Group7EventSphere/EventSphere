@@ -2,6 +2,8 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -31,6 +33,7 @@ public class PaymentTransaction {
     @Column(nullable = false, length = 20)
     private String status;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
