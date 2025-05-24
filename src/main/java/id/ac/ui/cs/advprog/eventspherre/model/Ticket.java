@@ -13,7 +13,6 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Ticket {
-    // private Event event;
     @Id
     @GeneratedValue
     private UUID id;
