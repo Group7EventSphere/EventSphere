@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import static id.ac.ui.cs.advprog.eventspherre.common.ViewRoutes.*;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -55,10 +55,8 @@ public class TicketTypeController {
             map.put("event", event);
             map.put("ticketTypes", ticketsByEventId.getOrDefault(event.getId(), List.of()));
             eventTicketList.add(map);
-        }
-
-        model.addAttribute("eventTicketList", eventTicketList);
-        return "ticket-type/type_list";
+        }        model.addAttribute("eventTicketList", eventTicketList);
+        return AppConstants.VIEW_TICKET_TYPE_LIST;
     }
 
     @GetMapping("/create")
@@ -68,11 +66,10 @@ public class TicketTypeController {
         boolean isOrganizer = user != null && user.getRole() == User.Role.ORGANIZER;
 
         List<Event> events = eventManagementService.getAllEvents();
-        model.addAttribute("events", events);
-        model.addAttribute("ticketType", new TicketType());
+        model.addAttribute("events", events);        model.addAttribute("ticketType", new TicketType());
         model.addAttribute("isGeneralForm", Boolean.TRUE);
         model.addAttribute("isOrganizer", isOrganizer);
-        return "ticket-type/type_form";
+        return AppConstants.VIEW_TICKET_TYPE_FORM;
     }
 
     @PostMapping("/create")
@@ -82,25 +79,21 @@ public class TicketTypeController {
                                    @RequestParam int eventId,
                                    Principal principal) {
         String userEmail = principal.getName();
-        User user = userService.getUserByEmail(userEmail);
+        User user = userService.getUserByEmail(userEmail);        ticketTypeService.create(name, price, quota, user, eventId);
 
-        ticketTypeService.create(name, price, quota, user, eventId);
-
-        return REDIRECT_TICKET_TYPES;
+        return AppConstants.REDIRECT_TICKET_TYPES;
     }
 
     @PostMapping("/delete/{id}")
     public String deleteTicketType(@PathVariable UUID id, Principal principal, RedirectAttributes redirectAttributes) {
-        User requester = userService.getUserByEmail(principal.getName());
-
-        try {
+        User requester = userService.getUserByEmail(principal.getName());        try {
             ticketTypeService.deleteTicketType(id, requester);
-            redirectAttributes.addFlashAttribute("successMessage", "Ticket type deleted successfully.");
+            redirectAttributes.addFlashAttribute("successMessage", AppConstants.SUCCESS_TICKET_TYPE_DELETED);
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
-        return REDIRECT_TICKET_TYPES;
+        return AppConstants.REDIRECT_TICKET_TYPES;
     }
 
     @GetMapping("/edit/{id}")
@@ -108,18 +101,14 @@ public class TicketTypeController {
 
         // Get the current user
         String userEmail = principal.getName();
-        User currentUser = userService.getUserByEmail(userEmail);
-
-        // Fetch and bind the ticket type
+        User currentUser = userService.getUserByEmail(userEmail);        // Fetch and bind the ticket type
         TicketType ticketType = ticketTypeService.getTicketTypeById(id)
-                .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+                .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_TYPE_NOT_FOUND));
 
         boolean isOrganizer = currentUser != null && currentUser.getRole() == User.Role.ORGANIZER;
-        model.addAttribute("isOrganizer", isOrganizer);
-
-        model.addAttribute("ticketType", ticketType);
+        model.addAttribute("isOrganizer", isOrganizer);        model.addAttribute("ticketType", ticketType);
         model.addAttribute("currentUser", currentUser); // optional
-        return "ticket-type/type_edit";
+        return AppConstants.VIEW_TICKET_TYPE_EDIT;
     }
 
     @PostMapping("edit/{id}")
@@ -128,12 +117,10 @@ public class TicketTypeController {
                                    Principal principal) {
         // Get the current user
         String userEmail = principal.getName();
-        User currentUser = userService.getUserByEmail(userEmail);
-
-        // Update the ticket type
+        User currentUser = userService.getUserByEmail(userEmail);        // Update the ticket type
         ticketTypeService.updateTicketType(id, updatedTicketType, currentUser);
 
-        return REDIRECT_TICKET_TYPES;
+        return AppConstants.REDIRECT_TICKET_TYPES;
     }
 
     @GetMapping("/{id}")

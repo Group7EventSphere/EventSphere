@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder(toBuilder = true)
@@ -44,10 +45,8 @@ public class PaymentRequest {
     this.amount   = amount;
     this.type     = type;
     this.processed= false;
-    this.createdAt= Instant.now();
-
-    Integer maybeId = (user != null ? user.getId() : null);
-    this.userId    = (maybeId != null ? maybeId : 0);
+    this.createdAt= Instant.now();    Integer maybeId = (user != null ? user.getId() : null);
+    this.userId    = (maybeId != null ? maybeId : AppConstants.DEFAULT_USER_ID);
     }
 
     public PaymentType getPaymentType() { return this.type; }

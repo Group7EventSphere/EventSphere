@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.observer;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,7 @@ public class EventLoggerObserver implements EventObserver {
     @Override
     public void onEventVisibilityChanged(Event event, boolean isPublic) {
         logger.info("Event visibility changed: {} (ID: {}) is now {}",
-                event.getTitle(), event.getId(), isPublic ? "public" : "private");
+                event.getTitle(), event.getId(), isPublic ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE);
     }
 
     @Override

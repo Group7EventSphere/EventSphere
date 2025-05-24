@@ -1,10 +1,10 @@
 package id.ac.ui.cs.advprog.eventspherre.config;
 
 import id.ac.ui.cs.advprog.eventspherre.filter.JwtAuthenticationFilter;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,8 +17,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.springframework.web.servlet.handler.HandlerExceptionResolverComposite;
 
 import java.util.List;
 
@@ -92,7 +90,7 @@ public class SecurityConfiguration {
         return (request, response, accessDeniedException) -> {
             // Check if it's an API request
             if (request.getRequestURI().startsWith("/api/")) {
-                response.setStatus(403);
+                response.setStatus(AppConstants.HTTP_STATUS_FORBIDDEN);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Access denied\",\"message\":\"You do not have permission to access this resource\"}");
             } else {
@@ -100,15 +98,19 @@ public class SecurityConfiguration {
                 response.sendRedirect("/unauthorized");
             }
         };
-    }
-
-    @Bean
+    }    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // Allow all origins
+        // SECURITY FIX: Replace wildcard with specific allowed origins
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:8080",
+            "http://localhost:3000",
+            "https://yourdomain.com" // Replace with actual production domain
+        )); 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allow all common HTTP methods
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type")); // Allow common headers
         configuration.setExposedHeaders(List.of("Authorization")); // Expose Authorization header
+        configuration.setAllowCredentials(true); // Allow credentials when not using wildcard
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration); // Only apply to API endpoints

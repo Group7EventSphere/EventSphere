@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.eventspherre.observer;
 
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 
 public class UserObserver implements EventObserver {
@@ -22,7 +23,7 @@ public class UserObserver implements EventObserver {
 
     @Override
     public void onEventVisibilityChanged(Event event, boolean isPublic) {
-        String visibility = isPublic ? "public" : "private";
+        String visibility = isPublic ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE;
         System.out.println(username + " received notification: Event visibility changed to " + visibility + " - " + event.getTitle() + " (ID: " + event.getId() + ")");
     }
 
