@@ -21,7 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -91,6 +94,32 @@ class TicketTypeControllerTest {
     }
 
     @Test
+    @DisplayName("GET /create - should set isOrganizer=true when user has ORGANIZER role")
+    void showCreateForm_shouldSetIsOrganizerTrue_whenUserIsOrganizer() throws Exception {
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        when(eventManagementService.getAllEvents()).thenReturn(List.of(sampleEvent));
+
+        mockMvc.perform(get("/ticket-types/create").principal(() -> mockUser.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket-type/type_form"))
+                .andExpect(model().attribute("isOrganizer", Boolean.TRUE));
+    }
+
+    @Test
+    @DisplayName("GET /create - should set isOrganizer=false when user is ATTENDEE")
+    void showCreateForm_shouldSetIsOrganizerFalse_whenUserIsAttendee() throws Exception {
+        mockUser.setRole(User.Role.ATTENDEE);
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        when(eventManagementService.getAllEvents()).thenReturn(List.of(sampleEvent));
+
+        mockMvc.perform(get("/ticket-types/create").principal(() -> mockUser.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket-type/type_form"))
+                .andExpect(model().attribute("isOrganizer", Boolean.FALSE));
+    }
+
+
+    @Test
     @DisplayName("POST /ticket-types/create should call service and redirect")
     void createTicketType() throws Exception {
         when(userService.getUserByEmail(anyString())).thenReturn(mockUser);
@@ -115,5 +144,102 @@ class TicketTypeControllerTest {
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ticket-types"));
+    }
+
+    @Test
+    @DisplayName("POST /delete/{id} - should redirect with errorMessage when deleteTicketType throws exception")
+    void deleteTicketType_shouldAddErrorMessage_whenServiceThrowsException() throws Exception {
+        UUID id = standard.getId();
+        String errorMsg = "Cannot delete ticket type";
+
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        doThrow(new IllegalStateException(errorMsg))
+                .when(ticketTypeService).deleteTicketType(eq(id), eq(mockUser));
+
+        mockMvc.perform(post("/ticket-types/delete/" + id)
+                        .with(csrf())
+                        .principal(() -> mockUser.getEmail()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/ticket-types"))
+                .andExpect(flash().attribute("errorMessage", errorMsg));
+    }
+
+    @Test
+    @DisplayName("GET /edit/{id} - should return edit form with ticketType, currentUser, and isOrganizer")
+    void showEditForm_shouldPopulateModelAndReturnEditView() throws Exception {
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
+
+        mockMvc.perform(get("/ticket-types/edit/" + typeId).principal(() -> mockUser.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket-type/type_edit"))
+                .andExpect(model().attribute("ticketType", standard))
+                .andExpect(model().attribute("currentUser", mockUser))
+                .andExpect(model().attribute("isOrganizer", Boolean.TRUE));
+    }
+
+    @Test
+    @DisplayName("GET /edit/{id} - should set isOrganizer=true when user is ORGANIZER")
+    void showEditForm_shouldSetIsOrganizerTrue_whenUserIsOrganizer() throws Exception {
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
+
+        mockMvc.perform(get("/ticket-types/edit/" + typeId).principal(() -> mockUser.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("ticket-type/type_edit"))
+                .andExpect(model().attribute("ticketType", standard))
+                .andExpect(model().attribute("currentUser", mockUser))
+                .andExpect(model().attribute("isOrganizer", Boolean.TRUE));
+    }
+
+    @Test
+    @DisplayName("GET /edit/{id} - should throw exception when ticket type not found")
+    void showEditForm_shouldThrowException_whenTicketTypeNotFound() throws Exception {
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/ticket-types/edit/" + typeId).principal(() -> mockUser.getEmail()))
+                .andExpect(status().isInternalServerError()) // or .is4xxClientError() depending on your error handler
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof IllegalArgumentException))
+                .andExpect(result -> assertEquals("TicketType not found", result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    @DisplayName("POST /edit/{id} - should update ticket type and redirect")
+    void updateTicketType_shouldUpdateAndRedirect() throws Exception {
+        when(userService.getUserByEmail(mockUser.getEmail())).thenReturn(mockUser);
+
+        mockMvc.perform(post("/ticket-types/edit/" + standard.getId())
+                        .with(csrf())
+                        .principal(() -> mockUser.getEmail())
+                        .param("name", standard.getName())
+                        .param("price", standard.getPrice().toPlainString())
+                        .param("quota", String.valueOf(standard.getQuota()))
+                        .param("eventId", String.valueOf(standard.getEventId())))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/ticket-types"));
+
+        verify(ticketTypeService).updateTicketType(eq(standard.getId()), any(TicketType.class), eq(mockUser));
+    }
+
+    @Test
+    @DisplayName("GET /{id} - should return ticket type when found")
+    void getTicketType_shouldReturnTicketType_whenFound() throws Exception {
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(standard));
+
+        mockMvc.perform(get("/ticket-types/" + typeId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(standard.getName()))
+                .andExpect(jsonPath("$.price").value(standard.getPrice().doubleValue()))
+                .andExpect(jsonPath("$.quota").value(standard.getQuota()));
+    }
+
+    @Test
+    @DisplayName("GET /{id} - should return 404 when ticket type not found")
+    void getTicketType_shouldReturnNotFound_whenMissing() throws Exception {
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/ticket-types/" + typeId))
+                .andExpect(status().isNotFound());
     }
 }
