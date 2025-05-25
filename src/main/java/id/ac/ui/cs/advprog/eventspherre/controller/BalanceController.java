@@ -11,6 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.util.List;
 
@@ -20,6 +23,8 @@ import java.util.List;
 @RequestMapping("/balance")
 @SessionAttributes("currentUser")
 public class BalanceController {
+
+    private static final Logger log = LoggerFactory.getLogger(BalanceController.class);
 
     private final PaymentHandler          paymentHandler;
     private final PaymentService          paymentService;
@@ -34,6 +39,7 @@ public class BalanceController {
 
     @GetMapping
     public String showPage(@ModelAttribute("currentUser") User user, Model model) {
+        log.debug("Show balance page for userId={} " , user.getId());
         // Refresh user data to get latest balance
         User refreshedUser = userService.getUserById(user.getId());
         model.addAttribute("currentUser", refreshedUser);
@@ -47,7 +53,7 @@ public String topUp(@ModelAttribute("currentUser") User user,
                     @RequestParam double amount,
                     @RequestParam String method,
                     Model model) {
-
+    log.info("Top‑up requested: userId={}, amount={}, method={}", user.getId(), amount, method);
     PaymentRequest req = new PaymentRequest(
         user,
         amount,
@@ -72,6 +78,7 @@ public String topUp(@ModelAttribute("currentUser") User user,
 
     @GetMapping("/history")
     public String history(@ModelAttribute("currentUser") User user, Model model) {
+        log.debug("Load balance history for userId={}", user.getId());
         // Refresh user data to get latest balance
         User refreshedUser = userService.getUserById(user.getId());
         List<PaymentRequest> reqs = requestRepo.findByUserId(refreshedUser.getId());

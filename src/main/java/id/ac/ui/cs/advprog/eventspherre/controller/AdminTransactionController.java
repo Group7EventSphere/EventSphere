@@ -12,6 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/admin/transactions")
 @RequiredArgsConstructor
 public class AdminTransactionController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminTransactionController.class);
 
     private final TransactionAuditService auditService;
     private final PaymentTransactionMapper mapper;
@@ -33,6 +38,8 @@ public class AdminTransactionController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "false") boolean all) {
+
+        log.debug("Listing transactions: all={}, userName={}, userEmail={}, status={}, type={}",all, userName, userEmail, status, type);
 
         List<PaymentTransaction> transactions = all
                 ? auditService.getAll()
@@ -84,10 +91,14 @@ public class AdminTransactionController {
             @PathVariable UUID id,
             @RequestParam String status) {
         
+        log.info("Updating status of txId={} to {}", id, status);
+
         if ("FAILED".equalsIgnoreCase(status)) {
             auditService.flagFailed(id);
         } else if ("SUCCESS".equalsIgnoreCase(status)) {
             auditService.markSuccess(id);
+        } else {
+            log.warn("Unrecognised status '{}' for txId={}", status, id);
         }
         
         return ResponseEntity.noContent().build();
@@ -95,25 +106,29 @@ public class AdminTransactionController {
 
     @PutMapping("/{id}/failed")
     public ResponseEntity<Void> markFailed(@PathVariable UUID id) {
+        log.info("Marking txId={} as FAILED", id);
         auditService.flagFailed(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> softDelete(@PathVariable UUID id) {
+        log.warn("Soft-deleting txId={}", id);
         auditService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/hard")
     public ResponseEntity<Void> hardDelete(@PathVariable UUID id) {
+        log.warn("Hard-deleting txId={}", id);
         auditService.hardDelete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/success")
     public ResponseEntity<Void> markSuccess(@PathVariable UUID id) {
+    log.info("Marking txId={} as SUCCESS", id);
     auditService.markSuccess(id);
     return ResponseEntity.noContent().build();
-}
+    }
 }
