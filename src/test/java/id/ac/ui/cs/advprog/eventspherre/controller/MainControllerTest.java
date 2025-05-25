@@ -1,20 +1,29 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.model.Ad;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.service.AdService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
 import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class MainControllerTest {
+
+    @Mock
+    private AdService adService;
 
     @Mock
     private UserService userService;
@@ -25,56 +34,81 @@ class MainControllerTest {
     @Mock
     private Principal principal;
 
-    @InjectMocks
-    private MainController mainController;
+    private MainController controller;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        controller = new MainController(userService, adService);
     }
 
     @Test
-    void dashboard_whenUserIsAuthenticated_shouldReturnDashboardViewWithUserData() {
-        // Arrange
-        User authenticatedUser = new User();
-        authenticatedUser.setName("Test User");
-        authenticatedUser.setEmail("test@example.com");
-        authenticatedUser.setBalance(100.0);
+    void dashboard_whenUserIsNotAuthenticated_shouldShowGuest() {
+        // GIVEN: no Principal → unauthenticated guest
+        List<Ad> emptyAds = Collections.emptyList();
+        when(adService.getAllAds()).thenReturn(emptyAds);
 
-        when(principal.getName()).thenReturn("test@example.com");
-        when(userService.getUserByEmail("test@example.com")).thenReturn(authenticatedUser);
+        // WHEN
+        String viewName = controller.dashboard(model, /* principal = */ null);
 
-        // Act
-        String viewName = mainController.dashboard(model, principal);
-
-        // Assert
+        // THEN
         assertEquals("dashboard", viewName);
-        verify(model).addAttribute("user", authenticatedUser);
-        verify(model, never()).addAttribute(eq("isGuest"), any());
-    }
 
-    @Test
-    void dashboard_whenUserIsNotAuthenticated_shouldReturnDashboardViewWithGuestData() {
-        // Act
-        String viewName = mainController.dashboard(model, null);
+        // ads must always be on the model
+        verify(model).addAttribute("ads", emptyAds);
 
-        // Assert
-        assertEquals("dashboard", viewName);
-        verify(model).addAttribute(eq("user"), any(User.class));
+        // a guest User object is created
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(model).addAttribute(eq("user"), userCaptor.capture());
+        User guest = userCaptor.getValue();
+        assertEquals("Guest", guest.getName());
+        assertEquals("Not logged in", guest.getEmail());
+        assertEquals(0.0, guest.getBalance());
+
+        // isGuest flag must be true
         verify(model).addAttribute("isGuest", true);
+
+        // userService must NOT be called at all
+        verifyNoInteractions(userService);
     }
 
     @Test
-    void dashboard_whenUserIsNotAuthenticated_shouldCreateGuestUserWithCorrectProperties() {
-        // Act
-        mainController.dashboard(model, null);
+    void dashboard_whenUserIsAuthenticated_shouldShowUser() {
+        // GIVEN: a non-null Principal
+        when(principal.getName()).thenReturn("bob@example.com");
 
-        // Assert
-        verify(model).addAttribute(eq("user"), argThat(user -> 
-            user instanceof User && 
-            "Guest".equals(((User) user).getName()) &&
-            "Not logged in".equals(((User) user).getEmail()) &&
-            ((User) user).getBalance() == 0.0
-        ));
+        // stub adService and userService
+        User bob = new User();
+        bob.setName("Bob");
+        bob.setEmail("bob@example.com");
+        bob.setBalance(999.0);
+
+        List<Ad> ads = List.of(
+                Ad.builder()
+                        .id(1L)
+                        .title("Foo")
+                        .description("Bar")
+                        .imageUrl("baz.jpg")
+                        .build()
+        );
+
+        when(adService.getAllAds()).thenReturn(ads);
+        when(userService.getUserByEmail("bob@example.com")).thenReturn(bob);
+
+        // WHEN
+        String viewName = controller.dashboard(model, principal);
+
+        // THEN
+        assertEquals("dashboard", viewName);
+
+        // ads must be loaded
+        verify(model).addAttribute("ads", ads);
+
+        // userService must be called with the principal's name
+        verify(userService).getUserByEmail("bob@example.com");
+        // and that User must be put onto the model
+        verify(model).addAttribute("user", bob);
+
+        // there should be NO isGuest attribute
+        verify(model, never()).addAttribute(eq("isGuest"), any());
     }
 }
