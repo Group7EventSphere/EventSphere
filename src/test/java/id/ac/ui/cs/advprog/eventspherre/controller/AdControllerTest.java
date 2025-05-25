@@ -1,7 +1,10 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.dto.AdRequestDto;
 import id.ac.ui.cs.advprog.eventspherre.model.Ad;
 import id.ac.ui.cs.advprog.eventspherre.service.AdService;
+import id.ac.ui.cs.advprog.eventspherre.service.ImageStorageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,126 +12,131 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Collections;
-import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
-class AdControllerTest {
+class AdRestControllerTest {
 
     private MockMvc mockMvc;
 
-    @Mock
-    private AdService adService;
+    @Mock private AdService adService;
+    @Mock private ImageStorageService imageStorageService;
 
     @InjectMocks
-    private AdController adController;
+    private AdRestController restController;
 
-    private Ad ad;
-    private final String BASE_URL = "/api/ads";
+    private ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(adController).build();
-        ad = new Ad(1L, "Test Ad", "Description", "image.jpg", "ADMIN");
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(restController)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
+                .build();
+    }
+
+    private AdRequestDto dto() {
+        return AdRequestDto.builder()
+                .title("Test Ad")
+                .description("Description")
+                .imageUrl("image.jpg")
+                .build();
+    }
+
+    private Ad entity(Long id) {
+        return Ad.builder()
+                .id(id)
+                .title("Test Ad")
+                .description("Description")
+                .imageUrl("image.jpg")
+                .build();
     }
 
     @Test
     void testCreateAd() throws Exception {
-        when(adService.createAd(any(Ad.class))).thenReturn(ad);
+        given(adService.createAd(any(Ad.class))).willReturn(entity(1L));
 
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post("/api/ads")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":1,\"title\":\"Test Ad\",\"description\":\"Description\",\"imageUrl\":\"image.jpg\",\"creatorId\":\"ADMIN\"}"))
+                        .content(mapper.writeValueAsString(dto())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("Test Ad"))
                 .andExpect(jsonPath("$.description").value("Description"))
                 .andExpect(jsonPath("$.imageUrl").value("image.jpg"));
-
-        verify(adService, times(1)).createAd(any(Ad.class));
     }
 
     @Test
     void testGetAd() throws Exception {
-        when(adService.getAd(anyLong())).thenReturn(ad);
+        given(adService.getAd(1L)).willReturn(entity(1L));
 
-        mockMvc.perform(get(BASE_URL + "/{id}", 1L))
+        mockMvc.perform(get("/api/ads/{id}", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Test Ad"))
-                .andExpect(jsonPath("$.description").value("Description"));
-
-        verify(adService, times(1)).getAd(1L);
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.imageUrl").value("image.jpg"));
     }
 
     @Test
     void testGetAdNotFound() throws Exception {
-        when(adService.getAd(anyLong())).thenReturn(null);
+        given(adService.getAd(1L)).willReturn(null);
 
-        mockMvc.perform(get(BASE_URL + "/{id}", 1L))
+        mockMvc.perform(get("/api/ads/{id}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
-
-        verify(adService, times(1)).getAd(1L);
     }
 
     @Test
     void testGetAllAds() throws Exception {
-        List<Ad> ads = Collections.singletonList(ad);
-        when(adService.getAllAds()).thenReturn(ads);
+        given(adService.getAllAds())
+                .willReturn(Collections.singletonList(entity(2L)));
 
-        mockMvc.perform(get(BASE_URL))
+        mockMvc.perform(get("/api/ads"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].title").value("Test Ad"))
-                .andExpect(jsonPath("$[0].description").value("Description"));
-
-        verify(adService, times(1)).getAllAds();
+                .andExpect(jsonPath("$[0].description").value("Description"))
+                .andExpect(jsonPath("$[0].imageUrl").value("image.jpg"));
     }
 
     @Test
     void testUpdateAd() throws Exception {
-        Ad updatedAd = new Ad(1L, "Updated Ad", "Updated Description", "updated.jpg", "ADMIN");
-        when(adService.updateAd(anyLong(), any(Ad.class))).thenReturn(updatedAd);
+        given(adService.updateAd(eq(5L), any(Ad.class)))
+                .willReturn(entity(5L));
 
-        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+        mockMvc.perform(put("/api/ads/{id}", 5L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":1,\"title\":\"Updated Ad\",\"description\":\"Updated Description\",\"imageUrl\":\"updated.jpg\",\"creatorId\":\"ADMIN\"}"))
+                        .content(mapper.writeValueAsString(dto())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated Ad"))
-                .andExpect(jsonPath("$.description").value("Updated Description"));
-
-        verify(adService, times(1)).updateAd(eq(1L), any(Ad.class));
+                .andExpect(jsonPath("$.title").value("Test Ad"))
+                .andExpect(jsonPath("$.description").value("Description"))
+                .andExpect(jsonPath("$.imageUrl").value("image.jpg"));
     }
 
     @Test
     void testUpdateAdNotFound() throws Exception {
-        when(adService.updateAd(anyLong(), any(Ad.class))).thenReturn(null);
+        given(adService.updateAd(eq(9L), any(Ad.class))).willReturn(null);
 
-        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+        mockMvc.perform(put("/api/ads/{id}", 9L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":1,\"title\":\"Updated Ad\",\"description\":\"Updated Description\",\"imageUrl\":\"updated.jpg\",\"creatorId\":\"ADMIN\"}"))
+                        .content(mapper.writeValueAsString(dto())))
                 .andExpect(status().isOk())
                 .andExpect(content().string(""));
-
-        verify(adService, times(1)).updateAd(eq(1L), any(Ad.class));
     }
 
     @Test
     void testDeleteAd() throws Exception {
-        doNothing().when(adService).deleteAd(anyLong());
+        doNothing().when(adService).deleteAd(3L);
 
-        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+        mockMvc.perform(delete("/api/ads/{id}", 3L))
                 .andExpect(status().isNoContent());
-
-        verify(adService, times(1)).deleteAd(1L);
     }
 }
