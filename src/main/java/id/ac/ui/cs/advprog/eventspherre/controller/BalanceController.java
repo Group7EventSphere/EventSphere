@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.support.SessionStatus;
 
 
 import java.util.List;
@@ -52,7 +53,8 @@ public class BalanceController {
 public String topUp(@ModelAttribute("currentUser") User user,
                     @RequestParam double amount,
                     @RequestParam String method,
-                    Model model) {
+                    Model model,
+                    SessionStatus status) {
     log.info("Top‑up requested: userId={}, amount={}, method={}", user.getId(), amount, method);
     PaymentRequest req = new PaymentRequest(
         user,
@@ -72,7 +74,7 @@ public String topUp(@ModelAttribute("currentUser") User user,
     model.addAttribute("flash",
         String.format("Top-up of %,d recorded successfully ✔", (long) tx.getAmount())
     );
-
+    status.setComplete();
     return "balance/topup";
 }
 
