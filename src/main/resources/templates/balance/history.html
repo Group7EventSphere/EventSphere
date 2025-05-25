@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" 
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, _, _)}">
+      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, ~{::styles}, ~{::scripts})}">
 <head>
   <title>Transaction History</title>
+  <th:block th:fragment="styles">
+    <link rel="stylesheet" th:href="@{/css/balance.css}">
+  </th:block>
+  <th:block th:fragment="scripts">
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      const authApiBase = /*[[ @{/api/auth/me} ]]*/ '/api/auth/me';
+      /*]]>*/
+    </script>
+    <script th:src="@{/js/balance.js}"></script>
+  </th:block>
 </head>
 <body>
   <main>
     <div class="content-container">
       <div class="page-title-container">
         <h1>Transaction History</h1>
-        <p>Current Balance: <span th:text="${balance}">0</span></p>
+        <div class="balance-display">
+          <div class="balance-label">Current Balance</div>
+          <div class="balance-amount" th:text="${#numbers.formatDecimal(balance, 0, 'POINT', 0, 'POINT')}">0</div>
+        </div>
       </div>
 
-      <div class="action-buttons">
-        <a th:href="@{/profile}" class="btn-secondary">
-          <span>Back to Profile</span>
-        </a>
-      </div>
+      <a th:href="@{/profile}" class="btn-back">Back to Profile</a>
 
       <div class="tab-menu">
         <a th:href="@{/balance}" class="tab-item">Top-up</a>
@@ -42,7 +52,9 @@
           <tbody>
             <tr th:each="req : ${requests}">
               <td th:text="${#dates.format(req.createdAt, 'yyyy-MM-dd HH:mm')}">2025-05-19 14:00</td>
-              <td th:text="${req.amount}">100000</td>
+              <td>
+                <span>Rp. </span><span th:text="${#numbers.formatDecimal(req.amount, 0, 'POINT', 0, 'POINT')}">100.000</span>
+              </td>
               <td th:text="${req.type}">TOPUP</td>
               <td>
                 <span th:if="${req.processed}" class="status success">Yes</span>

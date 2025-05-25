@@ -34,9 +34,12 @@ public class BalanceController {
 
     @GetMapping
     public String showPage(@ModelAttribute("currentUser") User user, Model model) {
-        model.addAttribute("balance", user.getBalance());
-        model.addAttribute("userName", user.getName());
-        return "topup";
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        model.addAttribute("currentUser", refreshedUser);
+        model.addAttribute("balance", refreshedUser.getBalance());
+        model.addAttribute("userName", refreshedUser.getName());
+        return "balance/topup";
     }
 
 @PostMapping
@@ -64,14 +67,18 @@ public String topUp(@ModelAttribute("currentUser") User user,
         String.format("Top-up of %,d recorded successfully ✔", (long) tx.getAmount())
     );
 
-    return "topup";
+    return "balance/topup";
 }
 
     @GetMapping("/history")
     public String history(@ModelAttribute("currentUser") User user, Model model) {
-        List<PaymentRequest> reqs = requestRepo.findByUserId(user.getId());
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        List<PaymentRequest> reqs = requestRepo.findByUserId(refreshedUser.getId());
+        model.addAttribute("currentUser", refreshedUser);
         model.addAttribute("requests", reqs);
-        model.addAttribute("userName",  user.getName());
-        return "history";
+        model.addAttribute("userName", refreshedUser.getName());
+        model.addAttribute("balance", refreshedUser.getBalance());
+        return "balance/history";
     }
 }
