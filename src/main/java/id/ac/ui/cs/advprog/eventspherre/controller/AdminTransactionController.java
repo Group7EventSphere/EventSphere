@@ -90,8 +90,6 @@ public class AdminTransactionController {
             @PathVariable UUID id,
             @RequestParam String status) {
         
-        log.info("Updating status to {}", status);
-
         if ("FAILED".equalsIgnoreCase(status)) {
             auditService.flagFailed(id);
         } else if ("SUCCESS".equalsIgnoreCase(status)) {
