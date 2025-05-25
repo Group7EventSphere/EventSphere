@@ -91,7 +91,7 @@ class EventControllerTest {
         when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
 
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"))
@@ -117,7 +117,7 @@ class EventControllerTest {
         when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);
 
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -142,7 +142,7 @@ class EventControllerTest {
         when(userService.getUserByEmail("other-organizer@example.com")).thenReturn(otherOrganizer);
 
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -157,7 +157,7 @@ class EventControllerTest {
 
         // Since we're expecting a redirect with an error message instead of a 403
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -220,13 +220,13 @@ class EventControllerTest {
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/1/edit")
-                .with(csrf())
-                .param("title", "Updated Event")
-                .param("description", "Updated Description")
-                .param("eventDate", "2024-12-31")
-                .param("location", "Updated Location")
-                .param("capacity", "200")
-                .param("public", "false"))
+                        .with(csrf())
+                        .param("title", "Updated Event")
+                        .param("description", "Updated Description")
+                        .param("eventDate", "2024-12-31")
+                        .param("location", "Updated Location")
+                        .param("capacity", "200")
+                        .param("public", "false"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -238,13 +238,13 @@ class EventControllerTest {
         // Mock the organizer user
         User mockOrganizer = new User();
         mockMvc.perform(post("/events/create")
-                .with(csrf())
-                .param("title", "") // Empty title should trigger validation error
-                .param("description", "Test Description")
-                .param("eventDate", "2024-12-31")
-                .param("location", "Jakarta")
-                .param("capacity", "100")
-                .param("public", "true"))
+                        .with(csrf())
+                        .param("title", "") // Empty title should trigger validation error
+                        .param("description", "Test Description")
+                        .param("eventDate", "2024-12-31")
+                        .param("location", "Jakarta")
+                        .param("capacity", "100")
+                        .param("public", "true"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("events/create"))
                 .andExpect(model().attributeHasErrors("eventForm"))
@@ -263,7 +263,7 @@ class EventControllerTest {
         when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/1/toggle-visibility")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -329,13 +329,13 @@ class EventControllerTest {
         );
 
         mockMvc.perform(post("/events/1/edit")
-                .with(csrf())
-                .param("title", "Updated Event")
-                .param("description", "Updated Description")
-                .param("eventDate", "2024-12-31")
-                .param("location", "Updated Location")
-                .param("capacity", "200")
-                .param("public", "false"))
+                        .with(csrf())
+                        .param("title", "Updated Event")
+                        .param("description", "Updated Description")
+                        .param("eventDate", "2024-12-31")
+                        .param("location", "Updated Location")
+                        .param("capacity", "200")
+                        .param("public", "false"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -353,13 +353,13 @@ class EventControllerTest {
         when(userService.getUserByEmail("attendee@example.com")).thenReturn(mockAttendee);
 
         mockMvc.perform(post("/events/create")
-                .with(csrf())
-                .param("title", "Attendee Event")
-                .param("description", "Attempt by attendee")
-                .param("eventDate", "2024-01-01")
-                .param("location", "Test Location")
-                .param("capacity", "50")
-                .param("public", "true"))
+                        .with(csrf())
+                        .param("title", "Attendee Event")
+                        .param("description", "Attempt by attendee")
+                        .param("eventDate", "2024-01-01")
+                        .param("location", "Test Location")
+                        .param("capacity", "50")
+                        .param("public", "true"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/create"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -386,13 +386,13 @@ class EventControllerTest {
         )).thenReturn(new Event()); // Return a new event or a mock
 
         mockMvc.perform(post("/events/create")
-                .with(csrf())
-                .param("title", "Admin Event")
-                .param("description", "Created by Admin")
-                .param("eventDate", "2025-01-01")
-                .param("location", "Admin Location")
-                .param("capacity", "150")
-                .param("public", "false"))
+                        .with(csrf())
+                        .param("title", "Admin Event")
+                        .param("description", "Created by Admin")
+                        .param("eventDate", "2025-01-01")
+                        .param("location", "Admin Location")
+                        .param("capacity", "150")
+                        .param("public", "false"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -411,13 +411,13 @@ class EventControllerTest {
 
         // Test with a valid principal
         mockMvc.perform(post("/events/create")
-                .with(csrf())
-                .param("title", "Exception Event")
-                .param("description", "Test Description")
-                .param("eventDate", "2024-12-31")
-                .param("location", "Jakarta")
-                .param("capacity", "100")
-                .param("public", "true"))
+                        .with(csrf())
+                        .param("title", "Exception Event")
+                        .param("description", "Test Description")
+                        .param("eventDate", "2024-12-31")
+                        .param("location", "Jakarta")
+                        .param("capacity", "100")
+                        .param("public", "true"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/create"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -444,7 +444,7 @@ class EventControllerTest {
         when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
 
         mockMvc.perform(post("/events/999/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -459,7 +459,7 @@ class EventControllerTest {
         doThrow(new RuntimeException("Deletion failed")).when(eventManagementService).deleteEvent(1);
 
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -473,7 +473,7 @@ class EventControllerTest {
         when(userService.getUserByEmail("admin@example.com")).thenReturn(null);
 
         mockMvc.perform(post("/events/1/delete")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -486,7 +486,7 @@ class EventControllerTest {
         when(eventManagementService.getEventById(999)).thenReturn(null);
 
         mockMvc.perform(post("/events/999/toggle-visibility")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -516,7 +516,7 @@ class EventControllerTest {
         );
 
         mockMvc.perform(post("/events/1/toggle-visibility")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("errorMessage"))
@@ -538,7 +538,7 @@ class EventControllerTest {
                 .thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/1/toggle-visibility")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"))
@@ -560,7 +560,7 @@ class EventControllerTest {
                 .thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/1/toggle-visibility")
-                .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"))
@@ -574,9 +574,9 @@ class EventControllerTest {
         when(eventManagementService.getAllEvents()).thenReturn(events);
 
         mockMvc.perform(get("/events"))
-               .andExpect(status().isOk())
-               .andExpect(view().name("events/list"))
-               .andExpect(model().attributeExists("events"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("events/list"))
+                .andExpect(model().attributeExists("events"));
     }
 
     @Test
@@ -609,27 +609,27 @@ class EventControllerTest {
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void manageEvents_shouldReturnView() throws Exception {
         when(eventManagementService.getAllEvents())
-            .thenReturn(List.of(mockEvent));
+                .thenReturn(List.of(mockEvent));
         mockMvc.perform(get("/events/manage"))
-               .andExpect(status().isOk())
-               .andExpect(view().name("events/manage"))
-               .andExpect(model().attributeExists("events"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("events/manage"))
+                .andExpect(model().attributeExists("events"));
     }
 
     @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void showCreateEventForm_shouldReturnView() throws Exception {
         mockMvc.perform(get("/events/create"))
-               .andExpect(status().isOk())
-               .andExpect(view().name("events/create"))
-               .andExpect(model().attributeExists("eventForm"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("events/create"))
+                .andExpect(model().attributeExists("eventForm"));
     }
 
     @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_shouldRedirectAfterCreation() throws Exception {
         when(userService.getUserByEmail("organizer@example.com"))
-            .thenReturn(mockOrganizer);
+                .thenReturn(mockOrganizer);
 
         when(eventManagementService.createEvent(
                 eq("Test Event"),
@@ -642,31 +642,31 @@ class EventControllerTest {
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")
-                    .with(csrf())
-                    .param("title", "Test Event")
-                    .param("description", "Test Description")
-                    .param("eventDate", "2024-12-31")
-                    .param("location", "Jakarta")
-                    .param("capacity", "100")
-                    .param("public", "true"))
-               .andExpect(status().is3xxRedirection())
-               .andExpect(redirectedUrl("/events/manage"));
+                        .with(csrf())
+                        .param("title", "Test Event")
+                        .param("description", "Test Description")
+                        .param("eventDate", "2024-12-31")
+                        .param("location", "Jakarta")
+                        .param("capacity", "100")
+                        .param("public", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/manage"));
     }
 
     @Test
     @WithMockUser(username = "attendee@example.com", roles = {"ATTENDEE"})
     void createEvent_shouldDenyAccessForNonOrganizers() throws Exception {
         when(userService.getUserByEmail("attendee@example.com"))
-            .thenReturn(null);
+                .thenReturn(null);
 
         mockMvc.perform(post("/events/create")
-                    .with(csrf())
-                    .param("title", "Test Event"))
-               .andExpect(status().is3xxRedirection())
-               .andExpect(redirectedUrl("/events/create"))
-               .andExpect(flash().attributeExists("errorMessage"))
-               .andExpect(flash().attribute("errorMessage",
-                       containsString("Cannot invoke")));
+                        .with(csrf())
+                        .param("title", "Test Event"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/events/create"))
+                .andExpect(flash().attributeExists("errorMessage"))
+                .andExpect(flash().attribute("errorMessage",
+                        containsString("Cannot invoke")));
 
     }
 

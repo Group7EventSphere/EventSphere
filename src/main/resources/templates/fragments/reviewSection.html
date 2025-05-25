@@ -38,7 +38,8 @@
     <script th:inline="javascript">
         const eventId          = /*[[${event.id}]]*/ 0;
         const currentUserEmail = /*[[${#authentication.name}]]*/ '';
-        const currentRole      = /*[[${#authentication.principal.role.name()}]]*/ 'GUEST';
+        const raw = /*[[${#authentication.authorities[0].authority}]]*/ 'GUEST';
+        const currentRole = raw.startsWith('ROLE_') ? raw.substring(5) : raw;
 
         const container     = document.getElementById('reviews-container');
         const createSection = document.getElementById('create-section');
