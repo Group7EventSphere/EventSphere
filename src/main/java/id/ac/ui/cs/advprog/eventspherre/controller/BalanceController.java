@@ -55,7 +55,7 @@ public String topUp(@ModelAttribute("currentUser") User user,
                     @RequestParam String method,
                     Model model,
                     SessionStatus status) {
-    log.info("Top‑up requested: amount={}, method={}", amount, method);
+    log.info("Top‑up requested: amount={}", amount);
     PaymentRequest req = new PaymentRequest(
         user,
         amount,
