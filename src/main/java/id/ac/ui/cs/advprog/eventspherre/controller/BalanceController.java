@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.support.SessionStatus;
 
 @Controller
 @RequiredArgsConstructor
@@ -43,7 +44,8 @@ public class BalanceController {
 public String topUp(@ModelAttribute("currentUser") User user,
                     @RequestParam double amount,
                     @RequestParam String method,
-                    Model model) {
+                    Model model,
+                    SessionStatus status) {
 
     PaymentRequest req = new PaymentRequest(
         user,
@@ -63,6 +65,7 @@ public String topUp(@ModelAttribute("currentUser") User user,
     model.addAttribute("flash",
         String.format("Top-up of %,d recorded successfully ✔", (long) tx.getAmount())
     );
+    status.setComplete();
 
     return "topup";
 }
