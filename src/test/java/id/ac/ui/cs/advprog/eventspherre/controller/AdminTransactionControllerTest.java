@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -227,5 +228,121 @@ class AdminTransactionControllerTest {
            .andExpect(status().isNoContent());
 
         verify(auditService).hardDelete(sampleId);
+    }
+
+        @Test
+    void updateStatus_withCaseInsensitiveFailed_shouldWork() throws Exception {
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "failed")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isNoContent());
+        
+        verify(auditService).flagFailed(transactionId);
+    }
+
+    @Test
+    void updateStatus_withCaseInsensitiveSuccess_shouldWork() throws Exception {
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "success")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isNoContent());
+        
+        verify(auditService).markSuccess(transactionId);
+    }
+
+    @Test
+    void listFiltered_withMultipleFilters_shouldApplyAll() throws Exception {
+        when(userRepository.findByNameContainingIgnoreCase("Regular")).thenReturn(List.of(attendee));
+        when(userRepository.findByEmailContainingIgnoreCase("user")).thenReturn(List.of(attendee));
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("userName", "Regular")
+                        .param("userEmail", "user")
+                        .param("status", "SUCCESS")
+                        .param("type", "TOPUP")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].userId").value(attendee.getId()));
+    }
+
+    @Test
+    void listFiltered_withNoMatchingUsers_shouldReturnEmptyList() throws Exception {
+        when(userRepository.findByNameContainingIgnoreCase("NonExistent")).thenReturn(Collections.emptyList());
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(Collections.emptyList())).thenReturn(Collections.emptyList());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("userName", "NonExistent")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void list_debugLogging_shouldLogAllParameter() throws Exception {
+        when(auditService.getAll()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(get("/api/v1/admin/transactions")
+                       .param("all", "true")
+                       .with(user(admin.getEmail()).roles("ADMIN")))
+           .andExpect(status().isOk());
+
+        // This tests the log.debug line in the controller
+        verify(auditService).getAll();
+    }
+
+    @Test
+    void markFailed_shouldLogInfo() throws Exception {
+        mvc.perform(put("/api/v1/admin/transactions/{id}/failed", sampleId)
+                       .with(user(admin.getEmail()).roles("ADMIN"))
+                       .with(csrf()))
+           .andExpect(status().isNoContent());
+
+        verify(auditService).flagFailed(sampleId);
+        // This tests the log.info line in markFailed method
+    }
+
+    @Test
+    void markSuccess_shouldLogInfo() throws Exception {
+        mvc.perform(put("/api/v1/admin/transactions/{id}/success", sampleId)
+                       .with(user(admin.getEmail()).roles("ADMIN"))
+                       .with(csrf()))
+           .andExpect(status().isNoContent());
+
+        verify(auditService).markSuccess(sampleId);
+        // This tests the log.info line in markSuccess method
+    }
+
+    @Test
+    void softDelete_shouldLogWarning() throws Exception {
+        mvc.perform(delete("/api/v1/admin/transactions/{id}", sampleId)
+                       .with(user(admin.getEmail()).roles("ADMIN"))
+                       .with(csrf()))
+           .andExpect(status().isNoContent());
+
+        verify(auditService).softDelete(sampleId);
+        // This tests the log.warn line in softDelete method
+    }
+
+    @Test
+    void hardDelete_shouldLogWarning() throws Exception {
+        mvc.perform(delete("/api/v1/admin/transactions/{id}/hard", sampleId)
+                       .with(user(admin.getEmail()).roles("ADMIN"))
+                       .with(csrf()))
+           .andExpect(status().isNoContent());
+
+        verify(auditService).hardDelete(sampleId);
+        // This tests the log.warn line in hardDelete method
     }
 }

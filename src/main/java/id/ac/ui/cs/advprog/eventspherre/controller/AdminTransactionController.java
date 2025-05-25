@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
@@ -39,7 +38,7 @@ public class AdminTransactionController {
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "false") boolean all) {
 
-        log.debug("Listing transactions: all={}, userName={}, userEmail={}, status={}, type={}",all, userName, userEmail, status, type);
+        log.debug("Listing transactions: all={}", all);
 
         List<PaymentTransaction> transactions = all
                 ? auditService.getAll()
@@ -49,28 +48,28 @@ public class AdminTransactionController {
             List<User> matchingUsers = userRepository.findByNameContainingIgnoreCase(userName);
             List<Integer> userIds = matchingUsers.stream()
                     .map(User::getId)
-                    .collect(Collectors.toList());
+                    .toList();
             
             transactions = transactions.stream()
                     .filter(t -> userIds.contains(t.getUserId()))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (userEmail != null && !userEmail.isEmpty()) {
             List<User> matchingUsers = userRepository.findByEmailContainingIgnoreCase(userEmail);
             List<Integer> userIds = matchingUsers.stream()
                     .map(User::getId)
-                    .collect(Collectors.toList());
+                    .toList();
             
             transactions = transactions.stream()
                     .filter(t -> userIds.contains(t.getUserId()))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (status != null && !status.isEmpty()) {
             transactions = transactions.stream()
                     .filter(t -> t.getStatus().equalsIgnoreCase(status))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (type != null && !type.isEmpty()) {
@@ -78,7 +77,7 @@ public class AdminTransactionController {
                 PaymentType paymentType = PaymentType.valueOf(type.toUpperCase());
                 transactions = transactions.stream()
                         .filter(t -> t.getPaymentType() == paymentType)
-                        .collect(Collectors.toList());
+                        .toList();
             } catch (IllegalArgumentException e) {
             }
         }
@@ -91,8 +90,6 @@ public class AdminTransactionController {
             @PathVariable UUID id,
             @RequestParam String status) {
         
-        log.info("Updating status of txId={} to {}", id, status);
-
         if ("FAILED".equalsIgnoreCase(status)) {
             auditService.flagFailed(id);
         } else if ("SUCCESS".equalsIgnoreCase(status)) {
