@@ -39,7 +39,7 @@ public class AdminTransactionController {
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "false") boolean all) {
 
-        log.debug("Listing transactions: all={}, userName={}, userEmail={}, status={}, type={}",all, userName, userEmail, status, type);
+        log.debug("Listing transactions: all={}", all);
 
         List<PaymentTransaction> transactions = all
                 ? auditService.getAll()
@@ -91,7 +91,7 @@ public class AdminTransactionController {
             @PathVariable UUID id,
             @RequestParam String status) {
         
-        log.info("Updating status of txId={} to {}", id, status);
+        log.info("Updating status to {}", status);
 
         if ("FAILED".equalsIgnoreCase(status)) {
             auditService.flagFailed(id);
