@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'id.ac.ui.cs.advprog'
@@ -25,4 +26,27 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn tasks.test
+
+    reports {
+        html.required = true
+        xml.required = false
+        csv.required = false
+    }
+
+    // default source dan class dirs sudah diambil otomatis,
+    // tapi jika kamu perlu exclude, bisa pakai:
+    // classDirectories.setFrom(
+    //     fileTree(dir: "$buildDir/classes/java/main") {
+    //         exclude 'com/yourcompany/config/**'
+    //     }
+    // )
 }
