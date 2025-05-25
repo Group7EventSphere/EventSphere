@@ -49,28 +49,28 @@ public class AdminTransactionController {
             List<User> matchingUsers = userRepository.findByNameContainingIgnoreCase(userName);
             List<Integer> userIds = matchingUsers.stream()
                     .map(User::getId)
-                    .collect(Collectors.toList());
+                    .toList();
             
             transactions = transactions.stream()
                     .filter(t -> userIds.contains(t.getUserId()))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (userEmail != null && !userEmail.isEmpty()) {
             List<User> matchingUsers = userRepository.findByEmailContainingIgnoreCase(userEmail);
             List<Integer> userIds = matchingUsers.stream()
                     .map(User::getId)
-                    .collect(Collectors.toList());
+                    .toList();
             
             transactions = transactions.stream()
                     .filter(t -> userIds.contains(t.getUserId()))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (status != null && !status.isEmpty()) {
             transactions = transactions.stream()
                     .filter(t -> t.getStatus().equalsIgnoreCase(status))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         if (type != null && !type.isEmpty()) {
@@ -78,7 +78,7 @@ public class AdminTransactionController {
                 PaymentType paymentType = PaymentType.valueOf(type.toUpperCase());
                 transactions = transactions.stream()
                         .filter(t -> t.getPaymentType() == paymentType)
-                        .collect(Collectors.toList());
+                        .toList();
             } catch (IllegalArgumentException e) {
             }
         }
