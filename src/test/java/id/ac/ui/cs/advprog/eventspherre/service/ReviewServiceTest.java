@@ -88,8 +88,11 @@ class ReviewServiceTest {
     @Test
     void updateNonExistingThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Review nonExistingReview = new Review(0, 0L, "X", 1);
+
         assertThrows(NoSuchElementException.class,
-                () -> svc.update(99L, new Review(0,0L,"X",1)));
+                () -> svc.update(99L, nonExistingReview));
     }
 
     @Test
