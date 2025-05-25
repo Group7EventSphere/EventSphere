@@ -1,5 +1,8 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
+
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.*;
@@ -24,21 +27,17 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public List<Ticket> createTicket(Ticket ticket, int quota) {
-        TicketType ticketType = ticket.getTicketType();
-
-        TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Ticket type not found"));
+        TicketType ticketType = ticket.getTicketType();        TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
+                .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_TYPE_NOT_FOUND_SERVICE));
 
         if (existingType.getQuota() < quota) {
-            throw new IllegalStateException("Not enough tickets left");
+            throw new IllegalStateException(AppConstants.ERROR_NOT_ENOUGH_TICKETS);
         }
 
         existingType.setQuota(existingType.getQuota() - quota);
-        ticketTypeRepository.save(existingType);
-
-        User attendee = ticket.getAttendee();
-        if (attendee == null || attendee.getId() == null || attendee.getId() <= 0) {
-            throw new IllegalArgumentException("Attendee must be specified with a valid user ID");
+        ticketTypeRepository.save(existingType);        User attendee = ticket.getAttendee();
+        if (attendee == null || attendee.getId() == null || attendee.getId() <= AppConstants.MIN_VALID_ID) {
+            throw new IllegalArgumentException(AppConstants.ERROR_ATTENDEE_MUST_BE_SPECIFIED);
         }
 
         List<Ticket> tickets = new ArrayList<>();
@@ -49,7 +48,7 @@ public class TicketServiceImpl implements TicketService {
             t.setAttendee(attendee);
             t.setUserId(attendee.getId());
             t.setDate(LocalDate.now());
-            t.setConfirmationCode("TKT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            t.setConfirmationCode(AppConstants.TICKET_CODE_PREFIX + UUID.randomUUID().toString().substring(0, AppConstants.CONFIRMATION_CODE_LENGTH).toUpperCase());
             t.setTransactionId(ticket.getTransactionId()); // Copy transaction ID from passed ticket
             tickets.add(ticketRepository.save(t));
         }
@@ -88,10 +87,9 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public Ticket updateTicket(UUID id, Ticket updatedTicket) {
-        // Make sure ticket exists
+    public Ticket updateTicket(UUID id, Ticket updatedTicket) {        // Make sure ticket exists
         Ticket existing = ticketRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
+                .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_NOT_FOUND_SERVICE));
 
         // Update fields (except ID and attendee which should stay the same)
         existing.setTicketType(updatedTicket.getTicketType());

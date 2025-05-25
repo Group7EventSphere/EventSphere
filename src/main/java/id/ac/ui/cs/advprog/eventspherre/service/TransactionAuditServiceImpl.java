@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.eventspherre.command.FlagFailedCommand;
 import id.ac.ui.cs.advprog.eventspherre.command.HardDeleteCommand;
 import id.ac.ui.cs.advprog.eventspherre.command.MarkSuccessCommand;
 import id.ac.ui.cs.advprog.eventspherre.command.SoftDeleteCommand;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.PaymentTransaction;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentTransactionRepository;
@@ -32,7 +33,7 @@ public class TransactionAuditServiceImpl implements TransactionAuditService {
     @Override
     @Transactional(readOnly = true)
     public List<PaymentTransaction> getActive() {
-        return txRepo.findByStatusNot("SOFT_DELETED");
+        return txRepo.findByStatusNot(AppConstants.STATUS_SOFT_DELETED);
     }
 
     @Override

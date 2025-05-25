@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class TopUpHandler implements PaymentHandler {
     @Override
     @Transactional
     public void handle(PaymentRequest request) {
-        if (request.getPaymentType() == PaymentRequest.PaymentType.TOPUP && request.getAmount() > 0) {
+        if (request.getPaymentType() == PaymentRequest.PaymentType.TOPUP && request.getAmount() > AppConstants.MIN_VALID_ID) {
             User user = userRepo.findById(request.getUser().getId()).orElseThrow();
             user.topUp(request.getAmount());
             request.setProcessed(true);

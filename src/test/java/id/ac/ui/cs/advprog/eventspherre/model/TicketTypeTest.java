@@ -1,70 +1,71 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TicketTypeTest {
+    private TicketType ticketType;
+
+    @BeforeEach
+    void setUp() {
+        ticketType = new TicketType("VIP", new BigDecimal("120.00"), 5);
+    }
+
     @Test
     void testGetName() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("75.00"), 20);
         assertEquals("VIP", ticketType.getName());
     }
 
     @Test
     void testGetPrice() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("120.00"), 5);
         assertEquals(new BigDecimal("120.00"), ticketType.getPrice());
     }
 
     @Test
     void testTicketTypeConstructorAndFields() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
+        TicketType customTicketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
 
-        assertEquals("VIP", ticketType.getName());
-        assertEquals(new BigDecimal("100.00"), ticketType.getPrice());
-        assertEquals(10, ticketType.getQuota());
-        assertNull(ticketType.getId()); // Because it hasn’t been persisted
+        assertEquals("VIP", customTicketType.getName());
+        assertEquals(new BigDecimal("100.00"), customTicketType.getPrice());
+        assertEquals(10, customTicketType.getQuota());
+        assertNull(customTicketType.getId()); // Because it hasn’t been persisted
     }
 
     @Test
     void testGetQuota() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 13);
-        assertEquals(13, ticketType.getQuota());
+        assertEquals(5, ticketType.getQuota());
     }
 
     @Test
     void testReduceQuotaWhenTicketPurchased() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
         ticketType.reduceQuota(1);
-        assertEquals(9, ticketType.getQuota());
+        assertEquals(4, ticketType.getQuota());
     }
 
     @Test
     void testThrowExceptionWhenQuotaTooLow() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 1);
+        ticketType.reduceQuota(4); // Now quota = 1
         assertThrows(IllegalArgumentException.class, () -> ticketType.reduceQuota(2));
     }
 
     @Test
     void testUpdateTicketType() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
         ticketType.setName("Regular");
         assertEquals("Regular", ticketType.getName());
     }
 
     @Test
     void testUpdateTicketQuota() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
         ticketType.setQuota(25);
         assertEquals(25, ticketType.getQuota());
     }
 
     @Test
     void testUpdateTicketPrice() {
-        TicketType ticketType = new TicketType("VIP", new BigDecimal("100.00"), 10);
         ticketType.setPrice(new BigDecimal("150.00"));
         assertEquals(new BigDecimal("150.00"), ticketType.getPrice());
     }
@@ -74,8 +75,15 @@ class TicketTypeTest {
         User organizer = new User();
         organizer.setRole(User.Role.ORGANIZER);
 
-        TicketType ticketType = TicketType.create("VIP", new BigDecimal("100.00"), 10, organizer);
-        assertEquals("VIP", ticketType.getName());
+        TicketType createdTicketType = TicketType.create("VIP", new BigDecimal("100.00"), 10, organizer);
+        assertEquals("VIP", createdTicketType.getName());
+    }
+
+    @Test
+    @DisplayName("reduceQuota - should throw when quantity is zero or negative")
+    void reduceQuota_shouldThrow_whenQuantityIsZeroOrNegative() {
+        assertThrows(IllegalArgumentException.class, () -> ticketType.reduceQuota(0));
+        assertThrows(IllegalArgumentException.class, () -> ticketType.reduceQuota(-1));
     }
 
     @Test
@@ -91,5 +99,6 @@ class TicketTypeTest {
                 TicketType.create(name, price, quota, attendee)
         );
     }
+
 }
 

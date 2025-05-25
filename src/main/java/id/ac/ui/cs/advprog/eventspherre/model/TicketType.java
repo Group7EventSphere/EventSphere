@@ -40,7 +40,6 @@ public class TicketType {
         this.name = name;
         this.price = price;
         this.quota = quota;
-        this.eventId = eventId;
     }
 
     public void reduceQuota(int quantity) {
