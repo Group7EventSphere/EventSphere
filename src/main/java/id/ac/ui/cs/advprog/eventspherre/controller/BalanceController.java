@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import org.springframework.web.bind.support.SessionStatus;
 
 @Controller
 @RequiredArgsConstructor
@@ -35,17 +34,19 @@ public class BalanceController {
 
     @GetMapping
     public String showPage(@ModelAttribute("currentUser") User user, Model model) {
-        model.addAttribute("balance", user.getBalance());
-        model.addAttribute("userName", user.getName());
-        return "topup";
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        model.addAttribute("currentUser", refreshedUser);
+        model.addAttribute("balance", refreshedUser.getBalance());
+        model.addAttribute("userName", refreshedUser.getName());
+        return "balance/topup";
     }
 
 @PostMapping
 public String topUp(@ModelAttribute("currentUser") User user,
                     @RequestParam double amount,
                     @RequestParam String method,
-                    Model model,
-                    SessionStatus status) {
+                    Model model) {
 
     PaymentRequest req = new PaymentRequest(
         user,
@@ -65,16 +66,19 @@ public String topUp(@ModelAttribute("currentUser") User user,
     model.addAttribute("flash",
         String.format("Top-up of %,d recorded successfully ✔", (long) tx.getAmount())
     );
-    status.setComplete();
 
-    return "topup";
+    return "balance/topup";
 }
 
     @GetMapping("/history")
     public String history(@ModelAttribute("currentUser") User user, Model model) {
-        List<PaymentRequest> reqs = requestRepo.findByUserId(user.getId());
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        List<PaymentRequest> reqs = requestRepo.findByUserId(refreshedUser.getId());
+        model.addAttribute("currentUser", refreshedUser);
         model.addAttribute("requests", reqs);
-        model.addAttribute("userName",  user.getName());
-        return "history";
+        model.addAttribute("userName", refreshedUser.getName());
+        model.addAttribute("balance", refreshedUser.getBalance());
+        return "balance/history";
     }
 }
