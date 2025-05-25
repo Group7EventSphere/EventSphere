@@ -26,6 +26,11 @@
                 <div class="nav-section" sec:authorize="hasAnyRole('ATTENDEE')">
                     <a th:href="@{/tickets}" class="nav-link">My Tickets</a>
                 </div>
+
+                <!-- These links will only show for organizers -->
+                <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER')">
+                    <a th:href="@{/promo-codes}" class="nav-link">Promo Codes</a>
+                </div>
                 
                 <!-- These links will only show for organizers -->
                 <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER')">
