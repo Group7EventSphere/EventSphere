@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promo Code Management - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/promo-code.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar">
+        <div class="admin-header">
+            <h2 class="admin-title">Promo Code Management</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-header card-header-custom">
+                <div class="header-container">
+                    <h3 class="header-title">Promo Codes</h3>
+                    <a href="/promo-codes/create" class="btn-add-user" title="Create New Promo Code">
+                        <span class="btn-plus-icon">+</span>
+                        Add Promo Code
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Search Section -->
+            <div class="search-filter-container">
+                <form th:action="@{/promo-codes}" method="get" class="search-form">
+                    <div class="search-input-wrapper">
+                        <div class="search-icon-wrapper">
+                            <img th:src="@{/images/icons/search.svg}" alt="Search" class="search-icon-img">
+                        </div>
+                        <input type="text" name="search" id="searchInput" class="search-input" 
+                               placeholder="Search by code or description" th:value="${search}" 
+                               aria-label="Search promo codes">
+                    </div>
+                    
+                    <!-- Clear search button only shown when search is active -->
+                    <div th:if="${search != null and !search.isEmpty()}" class="clear-filters">
+                        <a th:href="@{/promo-codes}" class="clear-btn">Clear</a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Success and error messages -->
+            <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+                Operation successful
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+                Operation failed
+            </div>
+            
+            <div th:if="${#lists.isEmpty(promoCodes)}">
+                <p>No promo codes found.</p>
+            </div>
+            
+            <div class="users-table-container" th:if="${!#lists.isEmpty(promoCodes)}">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Discount</th>
+                            <th>Valid From</th>
+                            <th>Valid Until</th>
+                            <th>Usage</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="promoCode : ${promoCodes}">
+                            <td>
+                                <span class="promo-code-cell" th:text="${promoCode.code}">CODE</span>
+                            </td>
+                            <td th:text="${promoCode.description}">Description</td>
+                            <td th:text="${promoCode.discountPercentage + '%'}">20%</td>
+                            <td th:text="${#temporals.format(promoCode.validFrom, 'dd/MM/yyyy')}">Date</td>
+                            <td th:text="${#temporals.format(promoCode.validUntil, 'dd/MM/yyyy')}">Date</td>
+                            <td>
+                                <span th:text="${promoCode.currentUsage + '/' + promoCode.maxUsage}">0/100</span>
+                            </td>
+                            <td>
+                                <span th:if="${promoCode.isActive and promoCode.isValid()}" 
+                                      class="badge badge-success">Active</span>
+                                <span th:if="${promoCode.isActive and !promoCode.isValid()}" 
+                                      class="badge badge-warning">Expired</span>
+                                <span th:unless="${promoCode.isActive}" 
+                                      class="badge badge-inactive">Inactive</span>
+                            </td>
+                            <td class="actions-cell">
+                                <!-- Edit button -->
+                                <a th:href="@{/promo-codes/edit/{id}(id=${promoCode.id})}" 
+                                   class="btn-action btn-edit">
+                                    Edit
+                                </a>
+                                
+                                <!-- Delete button -->
+                                <form th:action="@{/promo-codes/delete/{id}(id=${promoCode.id})}" 
+                                      method="post" class="form-inline">
+                                    <button type="submit" class="btn-action btn-delete" 
+                                            onclick="return confirm('Are you sure you want to delete this promo code?')">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
