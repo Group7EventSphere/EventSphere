@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${promoCode.id != null ? 'Edit' : 'Create'} + ' Promo Code - EventSphere'"></title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/promo-code.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+<body>
+    <!-- Include the navbar fragment -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="admin-header">
+                        <h2 class="admin-title" th:text="${promoCode.id != null ? 'Edit' : 'Create'} + ' Promo Code'">Promo Code</h2>
+                        <a th:href="@{/promo-codes}" class="btn btn-secondary">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                            </svg>
+                            Back to List
+                        </a>
+                    </div>
+                    
+                    <div class="card shadow-sm">
+            <div class="card-body">
+                <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+                    Operation failed
+                </div>
+                
+                <form th:action="${promoCode.id != null ? '/promo-codes/edit/' + promoCode.id : '/promo-codes/create'}"
+                      method="post" th:object="${promoCode}">
+                                
+                    <div class="form-section">
+                        <h5 class="section-header">Basic Information</h5>
+                        
+                        <div class="form-group">
+                            <label for="code">Promo Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="code" th:field="*{code}" 
+                                   required pattern="[A-Z0-9]+" title="Use only uppercase letters and numbers"
+                                   oninput="this.value = this.value.toUpperCase()" placeholder="e.g., SAVE20">
+                            <div class="form-text">Use only uppercase letters and numbers (e.g., SAVE20, SUMMER2024)</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" th:field="*{description}" 
+                                      rows="3" required placeholder="Enter a description for this promo code"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="discountPercentage">Discount Percentage <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="discountPercentage" 
+                                       th:field="*{discountPercentage}" required min="1" max="100" step="0.01"
+                                       placeholder="Enter discount percentage">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h5 class="section-header">Validity Period</h5>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="validFrom">Valid From <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control date-picker" id="validFrom" 
+                                       placeholder="DD/MM/YYYY" required>
+                                <input type="hidden" name="validFrom" id="validFromHidden">
+                            </div>
+                            <div class="form-group">
+                                <label for="validUntil">Valid Until <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control date-picker" id="validUntil" 
+                                       placeholder="DD/MM/YYYY" required>
+                                <input type="hidden" name="validUntil" id="validUntilHidden">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h5 class="section-header">Usage Limits</h5>
+                        
+                        <div class="form-group">
+                            <label for="maxUsage">Maximum Usage <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="maxUsage" 
+                                   th:field="*{maxUsage}" required min="1" placeholder="Enter maximum usage count">
+                            <div class="form-text">Maximum number of times this promo code can be used</div>
+                        </div>
+                        
+                        <div class="form-group" th:if="${promoCode.id != null}">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isActive" 
+                                       th:field="*{isActive}">
+                                <label class="form-check-label" for="isActive">
+                                    Active
+                                </label>
+                            </div>
+                            <div class="form-text">Uncheck to deactivate this promo code</div>
+                        </div>
+                        
+                        <!-- Hidden fields for create mode -->
+                        <div th:if="${promoCode.id == null}">
+                            <input type="hidden" th:field="*{isActive}" th:value="true">
+                            <input type="hidden" th:field="*{currentUsage}" th:value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a th:href="@{/promo-codes}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <span th:text="${promoCode.id != null ? 'Update' : 'Create'}"></span>
+                        </button>
+                    </div>
+                </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get elements
+        const validFromInput = document.getElementById('validFrom');
+        const validUntilInput = document.getElementById('validUntil');
+        const validFromHidden = document.getElementById('validFromHidden');
+        const validUntilHidden = document.getElementById('validUntilHidden');
+        
+        // Get promo code data safely
+        let validFromDate = null;
+        let validUntilDate = null;
+        
+        // Get dates with safe null checks
+        var validFromStr = /*[[ ${promoCode.validFrom != null ? #temporals.format(promoCode.validFrom, 'yyyy-MM-dd') : ''} ]]*/ '';
+        var validUntilStr = /*[[ ${promoCode.validUntil != null ? #temporals.format(promoCode.validUntil, 'yyyy-MM-dd') : ''} ]]*/ '';
+        
+        console.log('Raw validFromStr:', validFromStr);
+        console.log('Raw validUntilStr:', validUntilStr);
+        
+        if (validFromStr && validFromStr !== '' && validFromStr !== 'null') {
+            try {
+                // Try different date parsing approaches
+                validFromDate = new Date(validFromStr.replace(' ', 'T'));
+                if (isNaN(validFromDate.getTime())) {
+                    validFromDate = new Date(validFromStr);
+                }
+                console.log('Parsed validFrom:', validFromDate);
+            } catch (e) {
+                console.warn('Error parsing validFrom:', validFromStr, e);
+                validFromDate = null;
+            }
+        }
+        
+        if (validUntilStr && validUntilStr !== '' && validUntilStr !== 'null') {
+            try {
+                // Try different date parsing approaches
+                validUntilDate = new Date(validUntilStr.replace(' ', 'T'));
+                if (isNaN(validUntilDate.getTime())) {
+                    validUntilDate = new Date(validUntilStr);
+                }
+                console.log('Parsed validUntil:', validUntilDate);
+            } catch (e) {
+                console.warn('Error parsing validUntil:', validUntilStr, e);
+                validUntilDate = null;
+            }
+        }
+        
+        // Debug logging
+        console.log('ValidFromDate for flatpickr:', validFromDate);
+        console.log('ValidUntilDate for flatpickr:', validUntilDate);
+        
+        // Initialize Flatpickr for Valid From
+        const validFromPicker = flatpickr(validFromInput, {
+            enableTime: false,
+            dateFormat: "d/m/Y",
+            defaultDate: validFromDate,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates[0]) {
+                    // Format as yyyy-MM-dd for backend
+                    const year = selectedDates[0].getFullYear();
+                    const month = String(selectedDates[0].getMonth() + 1).padStart(2, '0');
+                    const day = String(selectedDates[0].getDate()).padStart(2, '0');
+                    validFromHidden.value = `${year}-${month}-${day}`;
+                    
+                    // Update min date for Valid Until
+                    if (typeof validUntilPicker !== 'undefined') {
+                        validUntilPicker.set('minDate', selectedDates[0]);
+                    }
+                }
+            }
+        });
+        
+        // Initialize Flatpickr for Valid Until
+        const validUntilPicker = flatpickr(validUntilInput, {
+            enableTime: false,
+            dateFormat: "d/m/Y",
+            defaultDate: validUntilDate,
+            minDate: validFromDate,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates[0]) {
+                    // Format as yyyy-MM-dd for backend
+                    const year = selectedDates[0].getFullYear();
+                    const month = String(selectedDates[0].getMonth() + 1).padStart(2, '0');
+                    const day = String(selectedDates[0].getDate()).padStart(2, '0');
+                    validUntilHidden.value = `${year}-${month}-${day}`;
+                }
+            }
+        });
+        
+        // Force set the dates if they exist (sometimes defaultDate doesn't work reliably)
+        if (validFromDate && validFromDate instanceof Date && !isNaN(validFromDate)) {
+            validFromPicker.setDate(validFromDate);
+            const year = validFromDate.getFullYear();
+            const month = String(validFromDate.getMonth() + 1).padStart(2, '0');
+            const day = String(validFromDate.getDate()).padStart(2, '0');
+            validFromHidden.value = `${year}-${month}-${day}`;
+        }
+        
+        if (validUntilDate && validUntilDate instanceof Date && !isNaN(validUntilDate)) {
+            validUntilPicker.setDate(validUntilDate);
+            const year = validUntilDate.getFullYear();
+            const month = String(validUntilDate.getMonth() + 1).padStart(2, '0');
+            const day = String(validUntilDate.getDate()).padStart(2, '0');
+            validUntilHidden.value = `${year}-${month}-${day}`;
+        }
+        
+        
+        // Handle form submission
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            if (!validFromHidden.value || !validUntilHidden.value) {
+                e.preventDefault();
+                alert('Please select both Valid From and Valid Until dates');
+                return false;
+            }
+        });
+    });
+    /*]]>*/
+    </script>
+</body>
+</html>
