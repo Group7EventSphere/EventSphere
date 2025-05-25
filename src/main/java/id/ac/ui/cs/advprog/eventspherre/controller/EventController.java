@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.eventspherre.controller;
 import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.monitoring.ProfileExecution;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
@@ -34,10 +35,9 @@ public class EventController {
     private UserService userService;
 
     @Autowired
-    private TicketTypeService ticketTypeService;
-
-    @GetMapping
+    private TicketTypeService ticketTypeService;    @GetMapping
     @PreAuthorize("isAuthenticated()")
+    @ProfileExecution(operation = "list_events", slowThresholdMs = 2000)
     public String listEvents(Model model) {        try {
             List<Event> events = eventManagementService.getAllEvents();
             model.addAttribute("events", events != null ? events : new ArrayList<>());        } catch (Exception e) {
@@ -45,16 +45,15 @@ public class EventController {
             model.addAttribute("events", new ArrayList<>());
             model.addAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_LOAD_EVENTS);
         }
-        return AppConstants.VIEW_EVENTS_LIST;
-    }    @GetMapping("/manage")
+        return AppConstants.VIEW_EVENTS_LIST;    }    @GetMapping("/manage")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @ProfileExecution(operation = "manage_events", slowThresholdMs = 1500)
     public String manageEvents(Model model) {
         model.addAttribute("events", eventManagementService.getAllEvents());
         return AppConstants.VIEW_EVENTS_MANAGE;
-    }
-
-    @GetMapping("/{eventId}/edit")
+    }    @GetMapping("/{eventId}/edit")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @ProfileExecution(operation = "show_edit_form", slowThresholdMs = 1000)
     public String showEditEventForm(@PathVariable Integer eventId,
                                     Model model,
                                     Principal principal,
@@ -90,10 +89,9 @@ public class EventController {
             ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_LOAD_EVENT);
             return AppConstants.REDIRECT_EVENTS_MANAGE;
         }
-    }
-
-    @PostMapping("/{eventId}/edit")
+    }    @PostMapping("/{eventId}/edit")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @ProfileExecution(operation = "update_event", slowThresholdMs = 2000)
     public String updateEvent(@PathVariable Integer eventId,
                               @ModelAttribute EventForm eventForm,
                               Principal principal,
@@ -114,15 +112,14 @@ public class EventController {
             ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_UPDATE_EVENT + e.getMessage());
         }
         return AppConstants.REDIRECT_EVENTS_MANAGE;
-    }
-
-    @GetMapping("/create")
-    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")    public String showCreateEventForm(Model model) {
+    }    @GetMapping("/create")
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @ProfileExecution(operation = "show_create_form", slowThresholdMs = 500)
+    public String showCreateEventForm(Model model) {
         model.addAttribute("eventForm", new EventForm());
         return AppConstants.VIEW_EVENTS_CREATE;
-    }
-
-    @PostMapping("/create")
+    }    @PostMapping("/create")
+    @ProfileExecution(operation = "create_event", slowThresholdMs = 3000)
     public String createEvent(@Valid @ModelAttribute("eventForm") EventForm eventForm,
                               org.springframework.validation.BindingResult bindingResult,
                               Principal principal,
@@ -168,10 +165,9 @@ public class EventController {
             ra.addFlashAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_CREATE_EVENT + e.getMessage());
             return AppConstants.REDIRECT_EVENTS_CREATE;
         }
-    }
-
-    @GetMapping("/{eventId}")
+    }    @GetMapping("/{eventId}")
     @PreAuthorize("isAuthenticated()")
+    @ProfileExecution(operation = "show_event_details", slowThresholdMs = 1500)
     public String showEventDetails(@PathVariable Integer eventId, Model model, RedirectAttributes ra) {
         try {
             Event event = eventManagementService.getEventById(eventId);
@@ -191,10 +187,9 @@ public class EventController {
             ra.addFlashAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_LOAD_EVENT_DETAILS);
             return AppConstants.REDIRECT_EVENTS;
         }
-    }
-
-    @PostMapping("/{eventId}/delete")
+    }    @PostMapping("/{eventId}/delete")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @ProfileExecution(operation = "delete_event", slowThresholdMs = 2000)
     public String deleteEvent(@PathVariable Integer eventId,
                               Principal principal,
                               RedirectAttributes ra) {
@@ -225,6 +220,7 @@ public class EventController {
         return AppConstants.REDIRECT_EVENTS_MANAGE;
     }    @PostMapping("/{eventId}/toggle-visibility")
     @PreAuthorize("hasRole('ADMIN')")
+    @ProfileExecution(operation = "toggle_visibility", slowThresholdMs = 1000)
     public String toggleEventVisibility(@PathVariable Integer eventId,
                                         RedirectAttributes ra) {
         try {

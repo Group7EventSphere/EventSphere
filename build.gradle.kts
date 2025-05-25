@@ -47,10 +47,17 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     testImplementation("org.springframework.security:spring-security-test")
-    
-    // RabbitMQ dependency
+      // RabbitMQ dependency
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
+    
+    // Monitoring and Observability dependencies
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+    implementation("org.springframework:spring-aspects")
+    implementation("org.aspectj:aspectjweaver")
 }
 
 tasks.withType<Test> {

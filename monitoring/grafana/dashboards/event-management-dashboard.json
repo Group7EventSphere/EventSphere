@@ -1,0 +1,281 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "EventSphere - Event Management Performance Dashboard",
+    "tags": ["eventsphere", "spring-boot", "performance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Event Operations Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(event_execution_seconds_sum[5m]) / rate(event_execution_seconds_count[5m])",
+            "legendFormat": "Average Response Time - {{operation}}",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(event_execution_seconds_bucket[5m]))",
+            "legendFormat": "95th Percentile - {{operation}}",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(event_execution_seconds_bucket[5m]))",
+            "legendFormat": "99th Percentile - {{operation}}",
+            "refId": "C"
+          }
+        ],
+        "xAxis": {
+          "show": true
+        },
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "show": true
+          }
+        ],
+        "legend": {
+          "show": true
+        },
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Event Operations Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(event_operations_total[5m])",
+            "legendFormat": "{{operation}} Operations/sec",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations per second",
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Active Events",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "event_active_events",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 9
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "rate(event_errors_total[5m]) * 100",
+            "refId": "A"
+          }
+        ],
+        "format": "percent",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 9
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Operations Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(event_database_operations_seconds_sum[5m]) / rate(event_database_operations_seconds_count[5m])",
+            "legendFormat": "Avg DB Response Time - {{operation}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 9
+        }
+      },
+      {
+        "id": 6,
+        "title": "Slow Operations Log",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "increase(event_slow_operations_total[1h])",
+            "legendFormat": "{{operation}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 13
+        }
+      },
+      {
+        "id": 7,
+        "title": "JVM Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+            "legendFormat": "Heap Memory Used",
+            "refId": "A"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+            "legendFormat": "Heap Memory Max",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Bytes",
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 21
+        }
+      },
+      {
+        "id": 8,
+        "title": "HTTP Request Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{application=\"eventsphere\"}[5m]))",
+            "legendFormat": "95th Percentile - {{uri}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(http_server_requests_seconds_sum{application=\"eventsphere\"}[5m]) / rate(http_server_requests_seconds_count{application=\"eventsphere\"}[5m])",
+            "legendFormat": "Average - {{uri}}",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration (seconds)",
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 21
+        }
+      },
+      {
+        "id": 9,
+        "title": "System CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "system_cpu_usage",
+            "legendFormat": "System CPU Usage",
+            "refId": "A"
+          },
+          {
+            "expr": "process_cpu_usage",
+            "legendFormat": "Process CPU Usage",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU Usage",
+            "max": 1,
+            "min": 0,
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 29
+        }
+      },
+      {
+        "id": 10,
+        "title": "Thread Pool Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "executor_active_threads{name=\"applicationTaskExecutor\"}",
+            "legendFormat": "Active Threads",
+            "refId": "A"
+          },
+          {
+            "expr": "executor_pool_size_threads{name=\"applicationTaskExecutor\"}",
+            "legendFormat": "Pool Size",
+            "refId": "B"
+          },
+          {
+            "expr": "executor_queue_remaining_tasks{name=\"applicationTaskExecutor\"}",
+            "legendFormat": "Queue Remaining",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count",
+            "show": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 29
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "schemaVersion": 16,
+    "version": 1
+  }
+}
