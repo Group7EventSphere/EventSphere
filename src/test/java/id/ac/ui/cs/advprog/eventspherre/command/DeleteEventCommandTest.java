@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class DeleteEventCommandTest {
+class DeleteEventCommandTest {
 
     @Mock
     private EventRepository eventRepository;
@@ -31,7 +31,7 @@ public class DeleteEventCommandTest {
     private final Integer eventId = 1;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         deleteCommand = new DeleteEventCommand(
             eventRepository,
             eventSubject,
@@ -40,7 +40,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         // Setup
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
 
@@ -54,7 +54,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testExecuteEventNotFound() {
+    void testExecuteEventNotFound() {
         // Setup
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
@@ -68,7 +68,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testUndo() {
+    void testUndo() {
         // Setup - Execute first to set the deletedEvent
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(eventRepository.save(event)).thenReturn(event);
@@ -84,7 +84,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testUndoWithoutExecute() {
+    void testUndoWithoutExecute() {
         // Act
         deleteCommand.undo();
 
@@ -94,7 +94,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testGetDeletedEvent() {
+    void testGetDeletedEvent() {
         // Setup - Execute first to set the deletedEvent
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         
@@ -108,7 +108,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testGetDeletedEventWithoutExecute() {
+    void testGetDeletedEventWithoutExecute() {
         // Act
         Event result = deleteCommand.getDeletedEvent();
 
@@ -117,7 +117,7 @@ public class DeleteEventCommandTest {
     }
 
     @Test
-    public void testUndoResetsDeletedEventToNull() {
+    void testUndoResetsDeletedEventToNull() {
         // Setup - Execute first to set the deletedEvent
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(eventRepository.save(event)).thenReturn(event);

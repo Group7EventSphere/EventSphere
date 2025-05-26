@@ -55,9 +55,8 @@ public class ProfileController {
               // Save updated user
             userService.updateUser(user.getId(), name, email, phoneNumber);
             
-            redirectAttributes.addFlashAttribute("successMessage", AppConstants.SUCCESS_PROFILE_UPDATED);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_UPDATING_PROFILE + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_PROFILE_UPDATED);        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_UPDATING_PROFILE + e.getMessage());
         }
         
         return AppConstants.REDIRECT_PROFILE;
@@ -73,24 +72,22 @@ public class ProfileController {
         
         try {
             // Get current user
-            User user = userService.getUserByEmail(principal.getName());
-              // Verify current password
+            User user = userService.getUserByEmail(principal.getName());            // Verify current password
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-                redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_CURRENT_PASSWORD_INCORRECT);
+                redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CURRENT_PASSWORD_INCORRECT);
                 return AppConstants.REDIRECT_PROFILE;
             }
             
             // Verify new password matches confirmation
             if (!newPassword.equals(confirmNewPassword)) {
-                redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_NEW_PASSWORDS_NO_MATCH);
+                redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_NEW_PASSWORDS_NO_MATCH);
                 return AppConstants.REDIRECT_PROFILE;
             }
               // Update password
             userService.updateUserPassword(user.getId(), newPassword);
             
-            redirectAttributes.addFlashAttribute("successMessage", AppConstants.SUCCESS_PASSWORD_CHANGED);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_CHANGING_PASSWORD + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_PASSWORD_CHANGED);        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CHANGING_PASSWORD + e.getMessage());
         }
         
         return AppConstants.REDIRECT_PROFILE;

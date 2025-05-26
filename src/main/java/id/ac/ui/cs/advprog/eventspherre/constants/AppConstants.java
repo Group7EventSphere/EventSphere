@@ -63,8 +63,7 @@ public final class AppConstants {
       // Visibility Status
     public static final String VISIBILITY_PUBLIC = "public";
     public static final String VISIBILITY_PRIVATE = "private";
-    
-    // Admin Controller Constants
+      // Admin Controller Constants
     public static final String ERROR_INVALID_ROLE_FILTER = "Invalid role filter. Showing search results only.";
     public static final String ERROR_INVALID_ROLE_ALL_USERS = "Invalid role filter. Showing all users.";
     public static final String ERROR_CANNOT_DELETE_OWN_ACCOUNT = "You cannot delete your own account";
@@ -78,7 +77,14 @@ public final class AppConstants {
     public static final String SUCCESS_USER_CREATED = "User created successfully";
     public static final String SUCCESS_USER_DELETED = "User deleted successfully";
     public static final String VIEW_ADMIN_USER_MANAGEMENT = "admin/user-management";
-    public static final String REDIRECT_ADMIN_USERS = "redirect:/admin/users";
+    public static final String REDIRECT_ADMIN_USERS = "redirect:/admin/users";    // Flash Attribute Keys
+    public static final String ATTR_ERROR_MESSAGE = "errorMessage";
+    public static final String ATTR_SUCCESS_MESSAGE = "successMessage";
+    
+    // Model Attribute Keys
+    public static final String ATTR_EVENTS = "events";
+    public static final String ATTR_ERROR_MESSAGE_KEY = "errorMessage";
+    public static final String ATTR_SUCCESS_MESSAGE_KEY = "successMessage";
     
     // Profile Controller Constants
     public static final String ERROR_UPDATING_PROFILE = "Error updating profile: ";
@@ -96,16 +102,25 @@ public final class AppConstants {
     public static final String VIEW_TICKET_TYPE_LIST = "ticket-type/type_list";
     public static final String VIEW_TICKET_TYPE_FORM = "ticket-type/type_form";
     public static final String VIEW_TICKET_TYPE_EDIT = "ticket-type/type_edit";
+    public static final String VIEW_TICKET_TYPE_MANAGE = "ticket-type/manage";
     public static final String REDIRECT_TICKET_TYPES = "redirect:/ticket-types";
-    
+    public static final String REDIRECT_EVENTS_VIEW = "redirect:/events/view";
+    public static final String REDIRECT_EVENTS_PREFIX = "redirect:/events/";
+    public static final String TICKET_TYPES_SUFFIX = "/ticket-types";
+    public static final String ATTR_EVENT = "event";
+    public static final String ATTR_TICKET_TYPE = "ticketType";
+    public static final String ATTR_TICKET_TYPES = "ticketTypes";
+    public static final String ATTR_IS_ORGANIZER = "isOrganizer";
+    public static final String ATTR_IS_GENERAL_FORM = "isGeneralForm";
+
     // Ticket Controller Constants
     public static final String ERROR_INVALID_TICKET_TYPE_ID = "Invalid ticket type ID";
     public static final String ERROR_INSUFFICIENT_BALANCE = "Insufficient balance. Please top up your account.";
-    public static final String SUCCESS_TICKET_PURCHASED = "Successfully purchased %d ticket(s).";
-    public static final String VIEW_TICKET_SELECT = "ticket/select";
+    public static final String SUCCESS_TICKET_PURCHASED = "Successfully purchased %d ticket(s).";    public static final String VIEW_TICKET_SELECT = "ticket/select";
     public static final String VIEW_TICKET_CREATE = "ticket/create";
     public static final String VIEW_TICKET_DETAIL = "ticket/detail";
-    public static final String VIEW_TICKET_LIST = "ticket/list";    public static final String REDIRECT_TICKETS = "redirect:/tickets";
+    public static final String VIEW_TICKET_LIST = "ticket/list";
+    public static final String REDIRECT_TICKETS = "redirect:/tickets";
     public static final String REDIRECT_TICKETS_CREATE = "redirect:/tickets/create";
     
     // Service Error Messages
@@ -167,4 +182,8 @@ public final class AppConstants {
     public static final int TEST_REDUCE_QUANTITY_4 = 4;
     public static final int TEST_USER_ID_1 = 1;
     public static final String TEST_ERROR_CANNOT_DELETE = "Cannot delete ticket type";
+
+    // Response keys
+    public static final String RESPONSE_ERROR_KEY = "error";
+    public static final String RESPONSE_MESSAGE_KEY = "message";
 }
