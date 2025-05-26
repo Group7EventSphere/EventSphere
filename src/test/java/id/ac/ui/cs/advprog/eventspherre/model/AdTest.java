@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.eventspherre.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AdTest {
@@ -24,30 +25,30 @@ class AdTest {
 
     @Test
     void testAdMissingTitle() {
-        Ad adWithNoTitle = new Ad(2L, null, "Description without title", "image2.jpg");
+        Ad underTest = new Ad(2L, null, "Description without title", "image2.jpg");
 
-        assertNull(adWithNoTitle.getTitle());
-        assertNotNull(adWithNoTitle.getDescription());
+        assertNull(underTest.getTitle());
+        assertNotNull(underTest.getDescription());
     }
 
     @Test
     void testAdMissingDescription() {
-        Ad adWithNoDescription = new Ad(3L, "Ad without description", null, "image3.jpg");
+        Ad underTest = new Ad(3L, "Ad without description", null, "image3.jpg");
 
-        assertNull(adWithNoDescription.getDescription());
-        assertNotNull(adWithNoDescription.getTitle());
+        assertNull(underTest.getDescription());
+        assertNotNull(underTest.getTitle());
     }
 
     @Test
     void testAdWithoutImageUrl() {
-        Ad adWithoutImage = new Ad(4L, "Ad without Image", "Description of ad without image", null);
+        Ad underTest = new Ad(4L, "Ad without Image", "Description of ad without image", null);
 
-        assertNull(adWithoutImage.getImageUrl());
+        assertNull(underTest.getImageUrl());
     }
 
     @Test
     void testAllArgsConstructorWithFullParameters() {
-        Ad ad = new Ad(
+        Ad underTest = new Ad(
                 1L,
                 "Ad Title",
                 "Ad Description",
@@ -56,17 +57,17 @@ class AdTest {
                 false
         );
 
-        assertEquals(1L, ad.getId());
-        assertEquals("Ad Title", ad.getTitle());
-        assertEquals("Ad Description", ad.getDescription());
-        assertEquals("http://image.url", ad.getImageUrl());
-        assertEquals("ADMIN", ad.getUserRole());
-        assertFalse(ad.isActive());
+        assertEquals(1L, underTest.getId());
+        assertEquals("Ad Title", underTest.getTitle());
+        assertEquals("Ad Description", underTest.getDescription());
+        assertEquals("http://image.url", underTest.getImageUrl());
+        assertEquals("ADMIN", underTest.getUserRole());
+        assertFalse(underTest.isActive());
     }
 
     @Test
     void testConstructorWithUserRoleOnly() {
-        Ad ad = new Ad(
+        Ad underTest = new Ad(
                 2L,
                 "Second Ad",
                 "Description",
@@ -74,42 +75,46 @@ class AdTest {
                 "ORGANIZER"
         );
 
-        assertEquals(2L, ad.getId());
-        assertEquals("Second Ad", ad.getTitle());
-        assertEquals("Description", ad.getDescription());
-        assertEquals("http://image2.url", ad.getImageUrl());
-        assertEquals("ORGANIZER", ad.getUserRole());
-        assertTrue(ad.isActive()); // karena default true
+        assertEquals(2L, underTest.getId());
+        assertEquals("Second Ad", underTest.getTitle());
+        assertEquals("Description", underTest.getDescription());
+        assertEquals("http://image2.url", underTest.getImageUrl());
+        assertEquals("ORGANIZER", underTest.getUserRole());
+        assertTrue(underTest.isActive()); // because default is true
     }
 
     @Test
     void testConstructorWithDefaults() {
-        Ad ad = new Ad(
+        Ad underTest = new Ad(
                 3L,
                 "Default Ad",
                 "Default Description",
                 "http://image3.url"
         );
 
-        assertEquals("USER", ad.getUserRole());
-        assertTrue(ad.isActive());
+        assertEquals(3L, underTest.getId());
+        assertEquals("Default Ad", underTest.getTitle());
+        assertEquals("Default Description", underTest.getDescription());
+        assertEquals("http://image3.url", underTest.getImageUrl());
+        assertEquals("USER", underTest.getUserRole());
+        assertTrue(underTest.isActive());
     }
 
     @Test
     void testSettersAndGetters() {
-        Ad ad = new Ad();
-        ad.setId(4L);
-        ad.setTitle("Title");
-        ad.setDescription("Desc");
-        ad.setImageUrl("url");
-        ad.setUserRole("MODERATOR");
-        ad.setActive(false);
+        Ad underTest = new Ad();
+        underTest.setId(4L);
+        underTest.setTitle("Title");
+        underTest.setDescription("Desc");
+        underTest.setImageUrl("url");
+        underTest.setUserRole("MODERATOR");
+        underTest.setActive(false);
 
-        assertEquals(4L, ad.getId());
-        assertEquals("Title", ad.getTitle());
-        assertEquals("Desc", ad.getDescription());
-        assertEquals("url", ad.getImageUrl());
-        assertEquals("MODERATOR", ad.getUserRole());
-        assertFalse(ad.isActive());
+        assertEquals(4L, underTest.getId());
+        assertEquals("Title", underTest.getTitle());
+        assertEquals("Desc", underTest.getDescription());
+        assertEquals("url", underTest.getImageUrl());
+        assertEquals("MODERATOR", underTest.getUserRole());
+        assertFalse(underTest.isActive());
     }
 }
