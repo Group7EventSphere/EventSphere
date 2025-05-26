@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserObserverTest {
+class UserObserverTest {
 
     @Mock
     private Event event;
@@ -25,7 +25,7 @@ public class UserObserverTest {
     private PrintStream originalOut;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         userObserver = new UserObserver(username);
         
         // Capture System.out output
@@ -39,7 +39,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testOnEventCreated() {
+    void testOnEventCreated() {
         // Act
         userObserver.onEventCreated(event);
 
@@ -52,7 +52,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testOnEventUpdated() {
+    void testOnEventUpdated() {
         // Act
         userObserver.onEventUpdated(event);
 
@@ -65,7 +65,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testOnEventVisibilityChangedToPublic() {
+    void testOnEventVisibilityChangedToPublic() {
         // Act
         userObserver.onEventVisibilityChanged(event, true);
 
@@ -78,7 +78,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testOnEventVisibilityChangedToPrivate() {
+    void testOnEventVisibilityChangedToPrivate() {
         // Act
         userObserver.onEventVisibilityChanged(event, false);
 
@@ -91,7 +91,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testOnEventDeleted() {
+    void testOnEventDeleted() {
         // Act
         userObserver.onEventDeleted(event);
 
@@ -104,7 +104,7 @@ public class UserObserverTest {
     }
 
     @Test
-    public void testConstructorSetsUsername() {
+    void testConstructorSetsUsername() {
         // Arrange
         String testUsername = "newUser";
         

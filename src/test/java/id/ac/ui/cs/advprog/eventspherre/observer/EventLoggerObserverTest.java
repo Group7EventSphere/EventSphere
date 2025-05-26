@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EventLoggerObserverTest {
+class EventLoggerObserverTest {
 
     private EventLoggerObserver eventLoggerObserver;
 
@@ -19,10 +19,8 @@ public class EventLoggerObserverTest {
     private Logger logger;
 
     @Mock
-    private Event event;
-
-    @BeforeEach
-    public void setUp() {
+    private Event event;    @BeforeEach
+    void setUp() {
         eventLoggerObserver = new EventLoggerObserver();
 
         // Use reflection to set the mocked logger
@@ -37,28 +35,22 @@ public class EventLoggerObserverTest {
         // Setup event mock
         when(event.getId()).thenReturn(1);
         when(event.getTitle()).thenReturn("Test Event");
-    }
-
-    @Test
-    public void testOnEventCreated() {
+    }    @Test
+    void testOnEventCreated() {
         // Act
         eventLoggerObserver.onEventCreated(event);
 
         // Assert
         verify(logger).info(contains("Event created"), eq("Test Event"), eq(1));
-    }
-
-    @Test
-    public void testOnEventUpdated() {
+    }    @Test
+    void testOnEventUpdated() {
         // Act
         eventLoggerObserver.onEventUpdated(event);
 
         // Assert
         verify(logger).info(contains("Event updated"), eq("Test Event"), eq(1));
-    }
-
-    @Test
-    public void testOnEventVisibilityChanged() {
+    }    @Test
+    void testOnEventVisibilityChanged() {
         // Act - test with visibility set to true
         eventLoggerObserver.onEventVisibilityChanged(event, true);
 
@@ -73,10 +65,8 @@ public class EventLoggerObserverTest {
 
         // Assert
         verify(logger).info(contains("Event visibility changed"), eq("Test Event"), eq(1), eq("private"));
-    }
-
-    @Test
-    public void testOnEventDeleted() {
+    }    @Test
+    void testOnEventDeleted() {
         // Act
         eventLoggerObserver.onEventDeleted(event);
 
@@ -85,7 +75,7 @@ public class EventLoggerObserverTest {
     }
 
     @Test
-    public void testTestingConstructor() {
+    void testTestingConstructor() {
         // Act
         EventLoggerObserver observer = new EventLoggerObserver(logger);
 

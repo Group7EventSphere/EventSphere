@@ -105,4 +105,3 @@ Caused by: java.net.ConnectException: Connection refused: getsockopt
 	at org.springframework.amqp.rabbit.connection.AbstractConnectionFactory.connect(AbstractConnectionFactory.java:647) ~[spring-rabbit-3.2.4.jar:3.2.4]
 	at org.springframework.amqp.rabbit.connection.AbstractConnectionFactory.createBareConnection(AbstractConnectionFactory.java:593) ~[spring-rabbit-3.2.4.jar:3.2.4]
 	... 47 common frames omitted
-

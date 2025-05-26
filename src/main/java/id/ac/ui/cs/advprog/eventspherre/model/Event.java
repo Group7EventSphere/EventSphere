@@ -47,6 +47,10 @@ public class Event {
     @Column
     private Map<String, Object> details = null;
 
+    // Field name constants
+    private static final String CAPACITY_FIELD = "capacity";
+    private static final String IS_PUBLIC_FIELD = "isPublic";
+
     public Event(Integer id, Map<String, Object> details) {
         this.id = id;
         this.details = details;
@@ -56,15 +60,13 @@ public class Event {
             this.title = (String) details.getOrDefault("title", "");
             this.description = (String) details.getOrDefault("description", "");
             this.eventDate = (String) details.getOrDefault("date", "");
-            this.location = (String) details.getOrDefault("location", "");
-
-            // Handle organizerId if present
+            this.location = (String) details.getOrDefault("location", "");            // Handle organizerId if present
             Object orgId = details.get("organizerId");
             if (orgId != null) {
-                if (orgId instanceof Integer) {
-                    this.organizerId = (Integer) orgId;
-                } else if (orgId instanceof String) {
-                    this.organizerId = Integer.parseInt((String) orgId);
+                if (orgId instanceof Integer integer) {
+                    this.organizerId = integer;
+                } else if (orgId instanceof String string) {
+                    this.organizerId = Integer.parseInt(string);
                 }
             }
         }
@@ -77,28 +79,24 @@ public class Event {
         // If capacity field is set directly, return it
         if (capacity != null) {
             return capacity;
-        }
-
-        // For backward compatibility, try to get from details map
-        if (details != null && details.containsKey("capacity")) {
-            Object capacityObj = details.get("capacity");
-            if (capacityObj instanceof Integer) {
-                this.capacity = (Integer) capacityObj; // Cache it in the field
+        }        // For backward compatibility, try to get from details map
+        if (details != null && details.containsKey(CAPACITY_FIELD)) {
+            Object capacityObj = details.get(CAPACITY_FIELD);
+            if (capacityObj instanceof Integer integer) {
+                this.capacity = integer; // Cache it in the field
                 return this.capacity;
-            }        }
+            }}
         return null;
     }
 
     public boolean isPublic() {
         if (isPublic != null) {
             return isPublic;
-        }
-
-        // For backward compatibility, try to get from details map
-        if (details != null && details.containsKey("isPublic")) {
-            Object isPublicObj = details.get("isPublic");
-            if (isPublicObj instanceof Boolean) {
-                this.isPublic = (Boolean) isPublicObj; // Cache it in the field
+        }        // For backward compatibility, try to get from details map
+        if (details != null && details.containsKey(IS_PUBLIC_FIELD)) {
+            Object isPublicObj = details.get(IS_PUBLIC_FIELD);
+            if (isPublicObj instanceof Boolean booleanValue) {
+                this.isPublic = booleanValue; // Cache it in the field
                 return this.isPublic;
             } else if (isPublicObj == null) {
                 // This should throw NPE for consistency with the test expectation
@@ -114,7 +112,7 @@ public class Event {
         if (details == null) {
             details = new HashMap<>();
         }
-        details.put("capacity", capacity);
+        details.put(CAPACITY_FIELD, capacity);
     }
 
     public void setPublic(boolean isPublic) {
@@ -123,6 +121,6 @@ public class Event {
         if (details == null) {
             details = new HashMap<>();
         }
-        details.put("isPublic", isPublic);
+        details.put(IS_PUBLIC_FIELD, isPublic);
     }
 }

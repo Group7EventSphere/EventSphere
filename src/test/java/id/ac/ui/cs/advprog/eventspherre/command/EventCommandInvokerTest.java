@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EventCommandInvokerTest {
+class EventCommandInvokerTest {
 
     private EventCommandInvoker commandInvoker;
 
@@ -21,12 +21,12 @@ public class EventCommandInvokerTest {
     private EventCommand mockCommand2;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         commandInvoker = new EventCommandInvoker();
     }
 
     @Test
-    public void testExecuteCommand() {
+    void testExecuteCommand() {
         // Act
         commandInvoker.executeCommand(mockCommand1);
 
@@ -35,7 +35,7 @@ public class EventCommandInvokerTest {
     }
 
     @Test
-    public void testUndoLastCommand() {
+    void testUndoLastCommand() {
         // Arrange
         commandInvoker.executeCommand(mockCommand1);
         commandInvoker.executeCommand(mockCommand2);
@@ -49,7 +49,7 @@ public class EventCommandInvokerTest {
     }
 
     @Test
-    public void testUndoLastCommandEmptyStack() {
+    void testUndoLastCommandEmptyStack() {
         // Act
         commandInvoker.undoLastCommand();
 
@@ -58,7 +58,7 @@ public class EventCommandInvokerTest {
     }
 
     @Test
-    public void testHasCommandHistory() {
+    void testHasCommandHistory() {
         // Assert - initially empty
         assertFalse(commandInvoker.hasCommandHistory());
 
@@ -76,7 +76,7 @@ public class EventCommandInvokerTest {
     }
 
     @Test
-    public void testClearCommandHistory() {
+    void testClearCommandHistory() {
         // Arrange
         commandInvoker.executeCommand(mockCommand1);
         commandInvoker.executeCommand(mockCommand2);

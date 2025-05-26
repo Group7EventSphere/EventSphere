@@ -7,8 +7,8 @@ import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,32 +24,26 @@ import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/events")
+@RequiredArgsConstructor
 public class EventController {
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
-    @Autowired
-    private EventManagementService eventManagementService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private TicketTypeService ticketTypeService;
-
-    @GetMapping
+    private final EventManagementService eventManagementService;
+    private final UserService userService;
+    private final TicketTypeService ticketTypeService;    @GetMapping
     @PreAuthorize("isAuthenticated()")
     public String listEvents(Model model) {        try {
             List<Event> events = eventManagementService.getAllEvents();
-            model.addAttribute("events", events != null ? events : new ArrayList<>());        } catch (Exception e) {
+            model.addAttribute(AppConstants.ATTR_EVENTS, events != null ? events : new ArrayList<>());        } catch (Exception e) {
             logger.error("Error listing events", e);
-            model.addAttribute("events", new ArrayList<>());
-            model.addAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_LOAD_EVENTS);
+            model.addAttribute(AppConstants.ATTR_EVENTS, new ArrayList<>());
+            model.addAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_COULD_NOT_LOAD_EVENTS);
         }
         return AppConstants.VIEW_EVENTS_LIST;
     }    @GetMapping("/manage")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     public String manageEvents(Model model) {
-        model.addAttribute("events", eventManagementService.getAllEvents());
+        model.addAttribute(AppConstants.ATTR_EVENTS, eventManagementService.getAllEvents());
         return AppConstants.VIEW_EVENTS_MANAGE;
     }
 
@@ -59,19 +53,17 @@ public class EventController {
                                     Model model,
                                     Principal principal,
                                     RedirectAttributes ra) {
-        try {
-            Event event = eventManagementService.getEventById(eventId);
+        try {            Event event = eventManagementService.getEventById(eventId);
             if (event == null) {
-                ra.addFlashAttribute("errorMessage", "Event not found.");
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Event not found.");
                 return "redirect:/events/manage";
             }
 
             User user = userService.getUserByEmail(principal.getName());
             boolean isAdmin = user.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean isOrganizer = event.getOrganizerId().equals(user.getId());
-            if (!isAdmin && !isOrganizer) {
-                ra.addFlashAttribute("errorMessage", "Not authorized to edit.");
+            boolean isOrganizer = event.getOrganizerId().equals(user.getId());            if (!isAdmin && !isOrganizer) {
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Not authorized to edit.");
                 return "redirect:/events/manage";
             }
 
@@ -87,7 +79,7 @@ public class EventController {
             model.addAttribute("eventId", eventId);
             return "events/edit";        } catch (Exception e) {
             logger.error("Error loading edit form", e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_LOAD_EVENT);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_LOAD_EVENT);
             return AppConstants.REDIRECT_EVENTS_MANAGE;
         }
     }
@@ -108,10 +100,10 @@ public class EventController {
                     eventForm.getLocation(),
                     eventForm.getCapacity(),
                     eventForm.isPublic()
-            );            ra.addFlashAttribute("successMessage", AppConstants.SUCCESS_EVENT_UPDATED);
+            );            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_UPDATED);
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_UPDATING_EVENT, eventId, e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_UPDATE_EVENT + e.getMessage());
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_UPDATE_EVENT + e.getMessage());
         }
         return AppConstants.REDIRECT_EVENTS_MANAGE;
     }
@@ -141,7 +133,7 @@ public class EventController {
             // The variable name "currentUser" is used to match the expected NPE message in the test.
             Integer organizerId = currentUser.getId();            // Role check for users who are found (not null)
             if (currentUser.getRole() != User.Role.ORGANIZER && currentUser.getRole() != User.Role.ADMIN) {
-                ra.addFlashAttribute("errorMessage", AppConstants.ERROR_NOT_AUTHORIZED_CREATE);
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_NOT_AUTHORIZED_CREATE);
                 return AppConstants.REDIRECT_EVENTS_CREATE;
             }
 
@@ -154,18 +146,17 @@ public class EventController {
                     organizerId,
                     eventForm.getCapacity(),
                     eventForm.isPublic()            );
-            ra.addFlashAttribute("successMessage", AppConstants.SUCCESS_EVENT_CREATED);
+            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_CREATED);
             return AppConstants.REDIRECT_EVENTS_MANAGE;
-        } catch (NullPointerException e) {
-            // This catch block is specifically for the test createEvent_shouldDenyAccessForNonOrganizers
+        } catch (NullPointerException e) {            // This catch block is specifically for the test createEvent_shouldDenyAccessForNonOrganizers
             logger.warn(AppConstants.LOG_WARN_NPE_EVENT_CREATION, 
                 (principal != null ? principal.getName() : AppConstants.NULL_PRINCIPAL), e.getMessage(), e);
-            ra.addFlashAttribute("errorMessage", e.getMessage()); // e.getMessage() will be the NPE detail string
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, e.getMessage()); // e.getMessage() will be the NPE detail string
             return AppConstants.REDIRECT_EVENTS_CREATE;
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_CREATING_EVENT_BY_PRINCIPAL, 
                 (principal != null ? principal.getName() : AppConstants.NULL_PRINCIPAL), e.getMessage(), e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_CREATE_EVENT + e.getMessage());
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_COULD_NOT_CREATE_EVENT + e.getMessage());
             return AppConstants.REDIRECT_EVENTS_CREATE;
         }
     }
@@ -173,10 +164,9 @@ public class EventController {
     @GetMapping("/{eventId}")
     @PreAuthorize("isAuthenticated()")
     public String showEventDetails(@PathVariable Integer eventId, Model model, RedirectAttributes ra) {
-        try {
-            Event event = eventManagementService.getEventById(eventId);
+        try {            Event event = eventManagementService.getEventById(eventId);
             if (event == null) {
-                ra.addFlashAttribute("errorMessage", AppConstants.ERROR_EVENT_NOT_FOUND);
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_EVENT_NOT_FOUND);
                 return AppConstants.REDIRECT_EVENTS;
             }
 
@@ -184,11 +174,9 @@ public class EventController {
             var ticketTypes = ticketTypeService.getTicketTypesByEventId(eventId);
 
             model.addAttribute("event", event);
-            model.addAttribute("ticketTypes", ticketTypes != null ? ticketTypes : new ArrayList<>());            return AppConstants.VIEW_EVENTS_DETAIL;
-
-        } catch (Exception e) {
+            model.addAttribute("ticketTypes", ticketTypes != null ? ticketTypes : new ArrayList<>());            return AppConstants.VIEW_EVENTS_DETAIL;        } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_LOADING_EVENT_DETAILS, eventId, e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_COULD_NOT_LOAD_EVENT_DETAILS);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_COULD_NOT_LOAD_EVENT_DETAILS);
             return AppConstants.REDIRECT_EVENTS;
         }
     }
@@ -205,32 +193,31 @@ public class EventController {
             // Check if the current user is either an admin or the organizer of this event
             User user = userService.getUserByEmail(principal.getName());            // Add null check for user
             if (user == null) {
-                ra.addFlashAttribute("errorMessage", AppConstants.ERROR_USER_NOT_FOUND);
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_USER_NOT_FOUND);
                 return AppConstants.REDIRECT_EVENTS_MANAGE;
             }
 
             boolean isAdmin = user.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             boolean isOrganizer = event.getOrganizerId().equals(user.getId());            if (!isAdmin && !isOrganizer) {
-                ra.addFlashAttribute("errorMessage", AppConstants.ERROR_NOT_AUTHORIZED_DELETE);
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_NOT_AUTHORIZED_DELETE);
                 return AppConstants.REDIRECT_EVENTS_MANAGE;
             }            // Delete the event
             eventManagementService.deleteEvent(eventId);
-            ra.addFlashAttribute("successMessage", AppConstants.SUCCESS_EVENT_DELETED);
+            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_DELETED);
 
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_DELETING_EVENT, eventId, e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_DELETE_EVENT + e.getMessage());
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_DELETE_EVENT + e.getMessage());
         }
         return AppConstants.REDIRECT_EVENTS_MANAGE;
     }    @PostMapping("/{eventId}/toggle-visibility")
     @PreAuthorize("hasRole('ADMIN')")
     public String toggleEventVisibility(@PathVariable Integer eventId,
                                         RedirectAttributes ra) {
-        try {
-            Event event = eventManagementService.getEventById(eventId);
+        try {            Event event = eventManagementService.getEventById(eventId);
             if (event == null) {
-                ra.addFlashAttribute("errorMessage", AppConstants.ERROR_EVENT_NOT_FOUND);
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_EVENT_NOT_FOUND);
                 return AppConstants.REDIRECT_EVENTS_MANAGE;
             }
 
@@ -243,13 +230,12 @@ public class EventController {
                     event.getEventDate(),
                     event.getLocation(),
                     event.getCapacity(),
-                    newVisibility
-            );            String visibilityStatus = newVisibility ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE;
-            ra.addFlashAttribute("successMessage", AppConstants.SUCCESS_VISIBILITY_CHANGED + visibilityStatus + ".");
+                    newVisibility            );            String visibilityStatus = newVisibility ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE;
+            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_VISIBILITY_CHANGED + visibilityStatus + ".");
 
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_TOGGLING_VISIBILITY, eventId, e);
-            ra.addFlashAttribute("errorMessage", AppConstants.ERROR_FAILED_TO_TOGGLE_VISIBILITY + e.getMessage());
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_TOGGLE_VISIBILITY + e.getMessage());
         }
         return AppConstants.REDIRECT_EVENTS_MANAGE;
     }
