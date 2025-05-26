@@ -1,23 +1,34 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" 
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, _, _)}">
+      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, ~{::styles}, ~{::scripts})}">
 <head>
   <title>Top‑Up Balance</title>
+  <th:block th:fragment="styles">
+    <link rel="stylesheet" th:href="@{/css/balance.css}">
+  </th:block>
+  <th:block th:fragment="scripts">
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      const authApiBase = /*[[ @{/api/auth/me} ]]*/ '/api/auth/me';
+      const topupUrl = /*[[ @{/balance} ]]*/ '/balance';
+      /*]]>*/
+    </script>
+    <script th:src="@{/js/balance.js}"></script>
+  </th:block>
 </head>
 <body>
   <main>
     <div class="content-container">
       <div class="page-title-container">
         <h1>Top‑Up Balance</h1>
-        <p>Current Balance: <span th:text="${balance}">0</span></p>
+        <div class="balance-display">
+          <div class="balance-label">Current Balance</div>
+          <div class="balance-amount" th:text="${#numbers.formatDecimal(balance, 0, 'POINT', 0, 'POINT')}">0</div>
+        </div>
       </div>
 
-      <div class="action-buttons">
-        <a th:href="@{/profile}" class="btn-secondary">
-          <span>Back to Profile</span>
-        </a>
-      </div>
+      <a th:href="@{/profile}" class="btn-back">Back to Profile</a>
 
       <div th:if="${flash}" class="alert-message">
         <p th:text="${flash}"></p>
@@ -28,16 +39,20 @@
         <a th:href="@{/balance/history}" class="tab-item">Transaction History</a>
       </div>
 
-      <form method="post" th:action="@{/balance}" class="form">
+      <form method="post" th:action="@{/balance}" class="form" id="topupForm">
         <div class="form-group">
           <label>Select Amount</label>
           <div class="amount-options">
-            <button type="button" class="btn-amount preset-btn" data-value="100000">100,000</button>
-            <button type="button" class="btn-amount preset-btn" data-value="200000">200,000</button>
-            <button type="button" class="btn-amount preset-btn" data-value="500000">500,000</button>
+            <div class="preset-amounts">
+              <button type="button" class="btn-amount preset-btn" data-value="100000">100.000</button>
+              <button type="button" class="btn-amount preset-btn" data-value="200000">200.000</button>
+              <button type="button" class="btn-amount preset-btn" data-value="500000">500.000</button>
+            </div>
             <div class="other-amount">
-              <span>Other:</span>
-              <input type="number" min="1" name="amount" id="amountInput" placeholder="Amount" />
+              <span>Other Amount:</span>
+              <div class="input-wrapper">
+                <input type="number" min="1" name="amount" id="amountInput" placeholder="Enter amount" />
+              </div>
             </div>
           </div>
         </div>
@@ -47,32 +62,28 @@
           <div class="radio-options">
             <div class="radio-option">
               <input type="radio" name="method" value="GOPAY" id="gopay" checked>
-              <label for="gopay">Gopay</label>
+              <label for="gopay">
+                <img th:src="@{/images/icons/gopay-logo.png}" alt="GoPay" class="payment-logo">
+              </label>
             </div>
             <div class="radio-option">
               <input type="radio" name="method" value="OVO" id="ovo">
-              <label for="ovo">Ovo</label>
+              <label for="ovo">
+                <img th:src="@{/images/icons/ovo-logo.png}" alt="OVO" class="payment-logo">
+              </label>
             </div>
             <div class="radio-option">
               <input type="radio" name="method" value="DANA" id="dana">
-              <label for="dana">Dana</label>
+              <label for="dana">
+                <img th:src="@{/images/icons/dana-logo.png}" alt="DANA" class="payment-logo">
+              </label>
             </div>
           </div>
         </div>
 
-        <button class="btn-primary" type="submit">Proceed to Payment</button>
+        <button class="btn-payment" type="submit">Proceed to Payment</button>
       </form>
     </div>
   </main>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      Array.from(document.querySelectorAll('.preset-btn')).forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.getElementById('amountInput').value = btn.dataset.value;
-        });
-      });
-    });
-  </script>
 </body>
 </html>
