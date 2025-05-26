@@ -77,12 +77,11 @@ class JwtAuthenticationFilterTest {
     @Test
     void doFilterInternal_WithNonApiUrl_ShouldSkipJwtFilter() throws ServletException, IOException {
         // Arrange
-        when(request.getRequestURI()).thenReturn("/events");
-
-        // Act
+        when(request.getRequestURI()).thenReturn("/events");        // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert        verify(filterChain).doFilter(request, response);
+        // Assert
+        verify(filterChain).doFilter(request, response);
         verifyNoInteractions(jwtService, userDetailsService);
     }
 
