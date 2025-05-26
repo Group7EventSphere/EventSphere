@@ -45,10 +45,10 @@ class PaymentTransactionDTOTest {
                 UUID.randomUUID(), a.userId(), 10.0, "TOPUP", "SUCCESS", ts
         );
 
-        assertThat(a).isEqualTo(b);
-        assertThat(a).hasSameHashCodeAs(b);
-
-        assertThat(a).isNotEqualTo(c);
+        assertThat(a)
+            .isEqualTo(b)
+            .hasSameHashCodeAs(b)
+            .isNotEqualTo(c);
     }
 
     @Test
