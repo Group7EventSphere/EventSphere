@@ -21,13 +21,11 @@ import java.util.stream.Collectors;
 public class AdRestController {
 
     private final AdService adService;
-    private final ImageStorageService imageStorageService;
 
     @Autowired
     public AdRestController(AdService adService,
                         ImageStorageService imageStorageService) {
         this.adService = adService;
-        this.imageStorageService = imageStorageService;
     }
 
     // Create Ad via DTO
