@@ -92,6 +92,10 @@ class AdRepositoryTest {
         repo.save(Ad.builder().title("Off").description("2").imageUrl("off.jpg").active(false).build());
 
         List<Ad> activeList = repo.findByActiveTrue();
-        assertThat(activeList).allSatisfy(ad -> assertThat(ad.isActive()).isTrue());
+
+        assertThat(activeList)
+                .isNotEmpty()
+                // verify every element really is active
+                .allSatisfy(ad -> assertThat(ad.isActive()).isTrue());
     }
 }
