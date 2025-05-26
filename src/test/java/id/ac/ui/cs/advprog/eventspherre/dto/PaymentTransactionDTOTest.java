@@ -46,7 +46,7 @@ class PaymentTransactionDTOTest {
         );
 
         assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).hasSameHashCodeAs(b);
 
         assertThat(a).isNotEqualTo(c);
     }

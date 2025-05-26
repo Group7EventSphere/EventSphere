@@ -68,7 +68,7 @@ public class HardDeleteCommand implements AuditCommand {
         }
     }
 
-    private void restoreTicketQuota(UUID transactionId) {
+        private void restoreTicketQuota(UUID transactionId) {
         List<Ticket> tickets = ticketRepo.findByTransactionId(transactionId);
         if (tickets.isEmpty()) {
             return;
@@ -79,12 +79,12 @@ public class HardDeleteCommand implements AuditCommand {
                 t -> t.getTicketType().getId(),
                 java.util.stream.Collectors.counting()
             ))
-            .forEach((ticketTypeId, count) -> {
+            .forEach((ticketTypeId, count) -> 
                 ticketTypeRepo.findById(ticketTypeId).ifPresent(ticketType -> {
                     ticketType.setQuota(ticketType.getQuota() + count.intValue());
                     ticketTypeRepo.save(ticketType);
-                });
-            });
+                })
+            );
         
         ticketRepo.deleteByTransactionId(transactionId);
     }

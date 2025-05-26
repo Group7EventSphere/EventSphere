@@ -5,7 +5,6 @@ import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class PaymentRequestMapper {
@@ -25,7 +24,7 @@ public class PaymentRequestMapper {
     public List<PaymentRequestDTO> toDtoList(List<PaymentRequest> list) {
         return list.stream()
                    .map(this::toDto)
-                   .collect(Collectors.toList());
+                   .toList();
     }
 
     public PaymentRequest toEntity(PaymentRequestDTO dto) {
