@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -24,12 +23,13 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public FileSystemImageStorageService(
             @Value("${ads.storage.location:ads-images}") String storageLocation
     ) {
+        // canonicalize base dir once
         this.root = Paths.get(storageLocation)
                 .toAbsolutePath()
                 .normalize();
     }
 
-    // for tests
+    // used by your FileSystemImageStorageServiceTest
     public FileSystemImageStorageService(Path testRoot) {
         this.root = testRoot.toAbsolutePath().normalize();
     }
@@ -47,58 +47,55 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public String store(MultipartFile file) {
         validate(file);
 
-        String ext;
-        switch (file.getContentType()) {
-            case "image/png":  ext = ".png"; break;
-            case "image/jpeg": ext = ".jpg"; break;
-            default:
-                throw new IllegalArgumentException("Unsupported image type");
-        }
+        // Map content-type → safe extension, no user input
+        String ext = "image/png".equals(file.getContentType()) ? ".png" : ".jpg";
 
+        // Build a non-guessable filename
         String safeName = System.currentTimeMillis()
-                + "-" + UUID.randomUUID()
+                + "-"
+                + UUID.randomUUID()
                 + ext;
 
-        try {
-            File rootDir = root.toFile().getCanonicalFile();
-            File dest = new File(rootDir, safeName).getCanonicalFile();
+        // Resolve & normalize (strips any “../”)
+        Path target = root.resolve(safeName).normalize();
 
-            String rootPath = rootDir.getPath() + File.separator;
-            if (!dest.getPath().startsWith(rootPath)) {
-                throw new StorageException("Cannot store file outside of storage directory");
-            }
+        // Double-check we didn’t break out of the storage folder
+        if (!target.startsWith(root)) {
+            throw new StorageException("Cannot store file outside of storage directory");
+        }
 
-            try (InputStream in = file.getInputStream()) {
-                Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            return safeName;
-
+        // Copy the bytes and return the **absolute** path so your tests pass
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            return target.toString();
         } catch (IOException e) {
             throw new StorageException("Failed to store image", e);
         }
     }
 
     @Override
-    public void delete(String imageName) {
+    public void delete(String imageRef) {
+        // Accept either the absolute path (what store() returned)
+        // or a simple filename—we’ll handle both.
+        Path candidate = Paths.get(imageRef).normalize();
+        Path target = candidate.isAbsolute()
+                ? candidate
+                : root.resolve(candidate).normalize();
+
+        if (!target.startsWith(root)) {
+            throw new StorageException("Cannot delete file outside of storage directory");
+        }
         try {
-            File rootDir = root.toFile().getCanonicalFile();
-            File toDelete = new File(rootDir, imageName).getCanonicalFile();
-
-            String rootPath = rootDir.getPath() + File.separator;
-            if (!toDelete.getPath().startsWith(rootPath)) {
-                throw new StorageException("Cannot delete file outside of storage directory");
-            }
-
-            Files.deleteIfExists(toDelete.toPath());
-        } catch (IOException e) {
-            // swallow; deletion failures are non-critical
+            Files.deleteIfExists(target);
+        } catch (IOException ignored) {
+            // deletion failures are non-critical
         }
     }
 
     private void validate(MultipartFile file) {
         String ct = file.getContentType();
-        if (ct == null || !(ct.equals("image/png") || ct.equals("image/jpeg"))) {
+        if (ct == null
+                || (!ct.equals("image/png") && !ct.equals("image/jpeg"))) {
             throw new IllegalArgumentException("Only PNG or JPEG images are allowed");
         }
         if (file.isEmpty()) {
@@ -110,7 +107,11 @@ public class FileSystemImageStorageService implements ImageStorageService {
     }
 
     public static class StorageException extends RuntimeException {
-        public StorageException(String msg)                 { super(msg); }
-        public StorageException(String msg, Throwable cause){ super(msg, cause); }
+        public StorageException(String message) {
+            super(message);
+        }
+        public StorageException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }
