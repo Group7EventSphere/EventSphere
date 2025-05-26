@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ErrorController implements org.springframework.boot.web.servlet.error.ErrorController {
     
     private static final String ERROR_CODE_ATTRIBUTE = "errorCode";
+    private static final String ERROR_MESSAGE_ATTRIBUTE = "errorMessage";
     
     @GetMapping("/unauthorized")
     public String unauthorized() {
@@ -22,19 +23,18 @@ public class ErrorController implements org.springframework.boot.web.servlet.err
         
         if (status != null) {
             int statusCode = Integer.parseInt(status.toString());
-            
-            if (statusCode == AppConstants.HTTP_STATUS_NOT_FOUND) {
+              if (statusCode == AppConstants.HTTP_STATUS_NOT_FOUND) {
                 model.addAttribute(ERROR_CODE_ATTRIBUTE, String.valueOf(AppConstants.HTTP_STATUS_NOT_FOUND));
-                model.addAttribute("errorMessage", AppConstants.ERROR_PAGE_NOT_FOUND);
+                model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, AppConstants.ERROR_PAGE_NOT_FOUND);
             } else if (statusCode == AppConstants.HTTP_STATUS_FORBIDDEN) {
                 model.addAttribute(ERROR_CODE_ATTRIBUTE, String.valueOf(AppConstants.HTTP_STATUS_FORBIDDEN));
                 return AppConstants.VIEW_UNAUTHORIZED;
             } else if (statusCode == AppConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR) {
                 model.addAttribute(ERROR_CODE_ATTRIBUTE, String.valueOf(AppConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR));
-                model.addAttribute("errorMessage", AppConstants.ERROR_INTERNAL_SERVER);
+                model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, AppConstants.ERROR_INTERNAL_SERVER);
             }
         } else {
-            model.addAttribute("errorMessage", AppConstants.ERROR_UNEXPECTED);
+            model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, AppConstants.ERROR_UNEXPECTED);
         }
         
         return AppConstants.VIEW_ERROR;

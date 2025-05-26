@@ -111,12 +111,11 @@ public final class AppConstants {
     public static final String ATTR_TICKET_TYPE = "ticketType";
     public static final String ATTR_TICKET_TYPES = "ticketTypes";
     public static final String ATTR_IS_ORGANIZER = "isOrganizer";
-    public static final String ATTR_IS_GENERAL_FORM = "isGeneralForm";
-
-    // Ticket Controller Constants
+    public static final String ATTR_IS_GENERAL_FORM = "isGeneralForm";    // Ticket Controller Constants
     public static final String ERROR_INVALID_TICKET_TYPE_ID = "Invalid ticket type ID";
     public static final String ERROR_INSUFFICIENT_BALANCE = "Insufficient balance. Please top up your account.";
-    public static final String SUCCESS_TICKET_PURCHASED = "Successfully purchased %d ticket(s).";    public static final String VIEW_TICKET_SELECT = "ticket/select";
+    public static final String SUCCESS_TICKET_PURCHASED = "Successfully purchased %d ticket(s).";
+    public static final String VIEW_TICKET_SELECT = "ticket/select";
     public static final String VIEW_TICKET_CREATE = "ticket/create";
     public static final String VIEW_TICKET_DETAIL = "ticket/detail";
     public static final String VIEW_TICKET_LIST = "ticket/list";

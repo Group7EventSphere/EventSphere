@@ -86,8 +86,10 @@ public class ProfileController {
               // Update password
             userService.updateUserPassword(user.getId(), newPassword);
             
-            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_PASSWORD_CHANGED);        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_PASSWORD_CHANGED);
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CHANGING_PASSWORD + e.getMessage());
+            return AppConstants.REDIRECT_PROFILE;
         }
         
         return AppConstants.REDIRECT_PROFILE;

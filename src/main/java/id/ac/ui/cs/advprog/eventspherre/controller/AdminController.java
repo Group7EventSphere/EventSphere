@@ -210,6 +210,13 @@ public class AdminController {
         User user = userService.getUserById(id);        // Prevent deletion of the current user
         if (principal != null && principal.getName().equals(user.getEmail())) {
             redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CANNOT_DELETE_OWN_ACCOUNT);
+            // Preserve the filter and search state
+            if (currentRole != null && !currentRole.isEmpty()) {
+                redirectAttributes.addAttribute("role", currentRole);
+            }
+            if (currentSearch != null && !currentSearch.isEmpty()) {
+                redirectAttributes.addAttribute("search", currentSearch);
+            }
             return AppConstants.REDIRECT_ADMIN_USERS;
         }
           try {
