@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -24,12 +23,14 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public FileSystemImageStorageService(
             @Value("${ads.storage.location:ads-images}") String storageLocation
     ) {
-        this.root = Paths.get(storageLocation).toAbsolutePath().normalize();
+        this.root = Paths.get(storageLocation)
+                .toAbsolutePath()
+                .normalize();
     }
 
-    // for testing
-    public FileSystemImageStorageService(Path root) {
-        this.root = root.toAbsolutePath().normalize();
+    // For testing
+    public FileSystemImageStorageService(Path testRoot) {
+        this.root = testRoot.toAbsolutePath().normalize();
     }
 
     @PostConstruct
@@ -45,35 +46,29 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public String store(MultipartFile file) {
         validate(file);
 
-        // Extract and whitelist extension only
-        String original = file.getOriginalFilename();
-        String ext = "";
-        if (original != null) {
-            int dot = original.lastIndexOf('.');
-            if (dot > 0 && dot < original.length() - 1) {
-                String rawExt = original.substring(dot).toLowerCase(Locale.ROOT);
-                if (".png".equals(rawExt) || ".jpg".equals(rawExt) || ".jpeg".equals(rawExt)) {
-                    ext = rawExt;
-                } else {
-                    throw new IllegalArgumentException("Only .png, .jpg or .jpeg extensions are allowed");
-                }
-            }
+        String ext;
+        switch (file.getContentType()) {
+            case "image/png" :
+                ext = ".png";
+                break;
+            case "image/jpeg":
+                ext = ".jpg";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported image type");
         }
 
-        // Build a safe filename
         String safeName = System.currentTimeMillis()
-                + "-" + UUID.randomUUID().toString()
+                + "-"
+                + UUID.randomUUID()
                 + ext;
 
-        // Resolve against root and normalize
         Path target = root.resolve(safeName).normalize();
 
-        // Ensure the target is still within the root directory
         if (!target.startsWith(root)) {
             throw new StorageException("Cannot store file outside of storage directory");
         }
 
-        // Copy bytes
         try (InputStream in = file.getInputStream()) {
             Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
             return safeName;
@@ -84,22 +79,22 @@ public class FileSystemImageStorageService implements ImageStorageService {
 
     @Override
     public void delete(String imageName) {
-        // Only delete under our root
         Path target = root.resolve(imageName).normalize();
         if (!target.startsWith(root)) {
             throw new StorageException("Cannot delete file outside of storage directory");
         }
         try {
             Files.deleteIfExists(target);
-        } catch (IOException e) {
-            // non‐critical, just swallow
+        } catch (IOException ignored) {
+            // Deletion failures are non-critical
         }
     }
 
     private void validate(MultipartFile file) {
         String ct = file.getContentType();
         if (ct == null
-                || (!ct.equals("image/png") && !ct.equals("image/jpeg"))) {
+                || !(ct.equals("image/png")
+                || ct.equals("image/jpeg"))) {
             throw new IllegalArgumentException("Only PNG or JPEG images are allowed");
         }
         if (file.isEmpty()) {
