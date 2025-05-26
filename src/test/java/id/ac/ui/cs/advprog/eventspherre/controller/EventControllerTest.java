@@ -17,11 +17,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.logging.Logger;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,8 +28,14 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 
 @WebMvcTest(EventController.class)
 @Import(WebSecurityTestConfig.class)
@@ -52,11 +55,8 @@ class EventControllerTest {
     private TicketTypeService ticketTypeService;
 
     @MockBean
-    private AuthenticationProvider authenticationProvider;
-
-    private User mockOrganizer;
+    private AuthenticationProvider authenticationProvider;    private User mockOrganizer;
     private Event mockEvent;
-    private UUID sampleId;
 
     @BeforeEach
     void setUp() {
@@ -72,22 +72,17 @@ class EventControllerTest {
         mockEvent.setId(1);
         mockEvent.setTitle("Test Event");
         mockEvent.setDescription("Test Description");
-        mockEvent.setEventDate("2024-12-31");
-        mockEvent.setLocation("Jakarta");
+        mockEvent.setEventDate("2024-12-31");        mockEvent.setLocation("Jakarta");
         mockEvent.setOrganizerId(1);
-
-        sampleId = UUID.randomUUID();
-    }
-
-    @Test
+    }    @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void deleteEvent_shouldRedirectAfterDeletion() throws Exception {
-        Event mockEvent = new Event();
-        mockEvent.setId(1);
-        mockEvent.setTitle("Test Event");
-        mockEvent.setOrganizerId(1); // Same as mockOrganizer.getId()
+        Event localMockEvent = new Event();
+        localMockEvent.setId(1);
+        localMockEvent.setTitle("Test Event");
+        localMockEvent.setOrganizerId(1); // Same as mockOrganizer.getId()
 
-        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(eventManagementService.getEventById(1)).thenReturn(localMockEvent);
         when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
 
         mockMvc.perform(post("/events/1/delete")
@@ -106,14 +101,12 @@ class EventControllerTest {
         mockAdmin.setId(2);
         mockAdmin.setEmail("admin@example.com");
         mockAdmin.setName("Test Admin");
-        mockAdmin.setRole(User.Role.ADMIN);
+        mockAdmin.setRole(User.Role.ADMIN);        Event localMockEvent = new Event();
+        localMockEvent.setId(1);
+        localMockEvent.setTitle("Test Event");
+        localMockEvent.setOrganizerId(1); // Different from admin's ID
 
-        Event mockEvent = new Event();
-        mockEvent.setId(1);
-        mockEvent.setTitle("Test Event");
-        mockEvent.setOrganizerId(1); // Different from admin's ID
-
-        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(eventManagementService.getEventById(1)).thenReturn(localMockEvent);
         when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);
 
         mockMvc.perform(post("/events/1/delete")
@@ -130,15 +123,14 @@ class EventControllerTest {
         User otherOrganizer = new User();
         otherOrganizer.setId(3);
         otherOrganizer.setEmail("other-organizer@example.com");
-        otherOrganizer.setName("Other Organizer");
-        otherOrganizer.setRole(User.Role.ORGANIZER);
+        otherOrganizer.setName("Other Organizer");        otherOrganizer.setRole(User.Role.ORGANIZER);
 
-        Event mockEvent = new Event();
-        mockEvent.setId(1);
-        mockEvent.setTitle("Test Event");
-        mockEvent.setOrganizerId(1); // mockOrganizer's ID, not otherOrganizer's
+        Event localMockEvent = new Event();
+        localMockEvent.setId(1);
+        localMockEvent.setTitle("Test Event");
+        localMockEvent.setOrganizerId(1); // mockOrganizer's ID, not otherOrganizer's
 
-        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
+        when(eventManagementService.getEventById(1)).thenReturn(localMockEvent);
         when(userService.getUserByEmail("other-organizer@example.com")).thenReturn(otherOrganizer);
 
         mockMvc.perform(post("/events/1/delete")
@@ -208,15 +200,14 @@ class EventControllerTest {
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void updateEvent_shouldRedirectAfterUpdate() throws Exception {
         when(userService.getUserByEmail("organizer@example.com")).thenReturn(mockOrganizer);
-        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
-        when(eventManagementService.updateEvent(
-                eq(1),
-                eq("Updated Event"),
-                eq("Updated Description"),
-                eq("2024-12-31"),
-                eq("Updated Location"),
-                eq(200),
-                eq(false)
+        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);        when(eventManagementService.updateEvent(
+                1,
+                "Updated Event",
+                "Updated Description",
+                "2024-12-31",
+                "Updated Location",
+                200,
+                false
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/1/edit")
@@ -230,13 +221,9 @@ class EventControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/events/manage"))
                 .andExpect(flash().attributeExists("successMessage"));
-    }
-
-    @Test
+    }    @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_withValidationErrors_shouldReturnFormWithErrors() throws Exception {
-        // Mock the organizer user
-        User mockOrganizer = new User();
         mockMvc.perform(post("/events/create")
                         .with(csrf())
                         .param("title", "") // Empty title should trigger validation error
@@ -374,15 +361,14 @@ class EventControllerTest {
         mockAdmin.setEmail("admin@example.com");
         mockAdmin.setRole(User.Role.ADMIN);
 
-        when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);
-        when(eventManagementService.createEvent(
-                eq("Admin Event"),
-                eq("Created by Admin"),
-                eq("2025-01-01"),
-                eq("Admin Location"),
-                eq(mockAdmin.getId()),
-                eq(150),
-                eq(false)
+        when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);        when(eventManagementService.createEvent(
+                "Admin Event",
+                "Created by Admin",
+                "2025-01-01",
+                "Admin Location",
+                mockAdmin.getId(),
+                150,
+                false
         )).thenReturn(new Event()); // Return a new event or a mock
 
         mockMvc.perform(post("/events/create")
@@ -503,16 +489,15 @@ class EventControllerTest {
         mockAdmin.setRole(User.Role.ADMIN);
 
         when(userService.getUserByEmail("admin@example.com")).thenReturn(mockAdmin);
-        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);
-        // The controller will toggle to false (private) since mockEvent.isPublic() is true
+        when(eventManagementService.getEventById(1)).thenReturn(mockEvent);        // The controller will toggle to false (private) since mockEvent.isPublic() is true
         doThrow(new RuntimeException("Toggle failed")).when(eventManagementService).updateEvent(
-                eq(1),
-                eq(mockEvent.getTitle()),
-                eq(mockEvent.getDescription()),
-                eq(mockEvent.getEventDate()),
-                eq(mockEvent.getLocation()),
-                eq(mockEvent.getCapacity()),
-                eq(false)
+                1,
+                mockEvent.getTitle(),
+                mockEvent.getDescription(),
+                mockEvent.getEventDate(),
+                mockEvent.getLocation(),
+                mockEvent.getCapacity(),
+                false
         );
 
         mockMvc.perform(post("/events/1/toggle-visibility")
@@ -623,22 +608,18 @@ class EventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("events/create"))
                 .andExpect(model().attributeExists("eventForm"));
-    }
-
-    @Test
+    }    @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_shouldRedirectAfterCreation() throws Exception {
         when(userService.getUserByEmail("organizer@example.com"))
-                .thenReturn(mockOrganizer);
-
-        when(eventManagementService.createEvent(
-                eq("Test Event"),
-                eq("Test Description"),
-                eq("2024-12-31"),
-                eq("Jakarta"),
-                eq(mockOrganizer.getId()),
-                anyInt(),
-                anyBoolean()
+                .thenReturn(mockOrganizer);        when(eventManagementService.createEvent(
+                "Test Event",
+                "Test Description",
+                "2024-12-31",
+                "Jakarta",
+                mockOrganizer.getId(),
+                100,
+                true
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")

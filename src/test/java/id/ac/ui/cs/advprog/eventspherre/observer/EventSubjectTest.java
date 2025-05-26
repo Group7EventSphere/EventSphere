@@ -12,7 +12,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
-public class EventSubjectTest {
+class EventSubjectTest {
 
     private EventSubject eventSubject;
 
@@ -26,12 +26,12 @@ public class EventSubjectTest {
     private Event event;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         eventSubject = new EventSubject();
     }
 
     @Test
-    public void testAddObserver() {
+    void testAddObserver() {
         // Add observer and notify
         eventSubject.addObserver(observer1);
         eventSubject.notifyEventCreated(event);
@@ -41,7 +41,7 @@ public class EventSubjectTest {
     }
 
     @Test
-    public void testRemoveObserver() {
+    void testRemoveObserver() {
         // Add observer
         eventSubject.addObserver(observer1);
 
@@ -56,7 +56,7 @@ public class EventSubjectTest {
     }
 
     @Test
-    public void testNotifyEventCreated() {
+    void testNotifyEventCreated() {
         // Add observers
         eventSubject.addObserver(observer1);
         eventSubject.addObserver(observer2);
@@ -70,7 +70,7 @@ public class EventSubjectTest {
     }
 
     @Test
-    public void testNotifyEventUpdated() {
+    void testNotifyEventUpdated() {
         // Add observers
         eventSubject.addObserver(observer1);
         eventSubject.addObserver(observer2);
@@ -84,7 +84,7 @@ public class EventSubjectTest {
     }
 
     @Test
-    public void testNotifyEventVisibilityChanged() {
+    void testNotifyEventVisibilityChanged() {
         // Add observers
         eventSubject.addObserver(observer1);
         eventSubject.addObserver(observer2);
@@ -99,7 +99,7 @@ public class EventSubjectTest {
     }
 
     @Test
-    public void testNotifyEventDeleted() {
+    void testNotifyEventDeleted() {
         // Add observers
         eventSubject.addObserver(observer1);
         eventSubject.addObserver(observer2);

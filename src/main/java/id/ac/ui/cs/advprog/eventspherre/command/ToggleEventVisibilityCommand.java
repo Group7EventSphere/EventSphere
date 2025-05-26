@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class ToggleEventVisibilityCommand implements EventCommand {
+public class    ToggleEventVisibilityCommand implements EventCommand {
     private final EventRepository eventRepository;
     private final EventSubject eventSubject;
     private final Integer eventId;

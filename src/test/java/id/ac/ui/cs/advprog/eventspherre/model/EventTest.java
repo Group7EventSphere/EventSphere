@@ -21,13 +21,11 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class EventTest {
+class EventTest {
     private EventRepository mockEventRepository;
-    private EventSubject mockEventSubject;
-    private EventCommandInvoker mockCommandInvoker;
+    private EventSubject mockEventSubject;    private EventCommandInvoker mockCommandInvoker;
     private EventManagementService eventManager;
     private Map<Integer, Event> eventDatabase;
-    private Integer currentId;
 
     @BeforeEach
     void setUp() {
@@ -39,14 +37,13 @@ public class EventTest {
 
         // Configure mock behavior for save
         when(mockEventRepository.save(any(Event.class))).thenAnswer(invocation -> {
-            Event eventArg = invocation.getArgument(0);
-            Event eventToStoreAndReturn = new Event();
+            Event eventArg = invocation.getArgument(0);            Event eventToStoreAndReturn = new Event();
 
-            Integer currentId = eventArg.getId();
-            if (currentId == null) {
-                currentId = idGenerator.getAndIncrement();
+            Integer eventId = eventArg.getId();
+            if (eventId == null) {
+                eventId = idGenerator.getAndIncrement();
             }
-            eventToStoreAndReturn.setId(currentId);
+            eventToStoreAndReturn.setId(eventId);
 
             eventToStoreAndReturn.setTitle(eventArg.getTitle());
             eventToStoreAndReturn.setDescription(eventArg.getDescription());
@@ -71,9 +68,7 @@ public class EventTest {
                 eventToStoreAndReturn.getDetails().put("isPublic", eventArg.getDetails().get("isPublic"));
             } else {
                 eventToStoreAndReturn.getDetails().put("isPublic", eventArg.isPublic());
-            }
-
-            eventDatabase.put(currentId, eventToStoreAndReturn);
+            }            eventDatabase.put(eventId, eventToStoreAndReturn);
             return eventToStoreAndReturn;
         });
 
@@ -363,13 +358,19 @@ public class EventTest {
         event.setPublic(true);
         assertNotNull(event.getDetails());
         assertTrue(event.isPublic());
-    }
-
-    @Test
+    }    @Test
     void testCapacityDefaultValue() {
         Event event = new Event();
-        // If capacity is not set, getCapacity should return null or a default value
+        // Test capacity default initialization
         assertNull(event.getCapacity());
+        
+        // Initially details map should be null
+        assertNull(event.getDetails());
+        
+        // After setting capacity, details map should be initialized
+        event.setCapacity(100);
+        assertNotNull(event.getDetails());
+        assertEquals(100, event.getCapacity());
     }
 
     @Test

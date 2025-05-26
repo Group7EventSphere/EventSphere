@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {    private static final String INVALID_MSG = AppConstants.ERROR_INVALID_REVIEW;
@@ -68,11 +67,5 @@ public class ReviewServiceImpl implements ReviewService {    private static fina
     @Override
     public List<Review> findByEventId(int eventId) {
         return repo.findByEventId(eventId);
-    }
-
-    @Override
-    public List<Review> getReviewsByEventId(UUID eventUuid) {
-        int id = eventUuid.hashCode();
-        return repo.findByEventId(id);
     }
 }

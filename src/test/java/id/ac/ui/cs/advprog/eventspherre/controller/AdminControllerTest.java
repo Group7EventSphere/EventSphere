@@ -280,24 +280,25 @@ class AdminControllerTest {
         assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
-    }
-
-    @Test
+    }    @Test
     void updateUser_shouldPreventChangingOwnAdminRole() {
         // Arrange
         when(principal.getName()).thenReturn("admin@example.com");
         when(userService.getUserById(1)).thenReturn(adminUser);
+        when(userService.updateUser(1, "Admin User", "admin@example.com", "1234567890")).thenReturn(adminUser);
 
         // Act
         String viewName = adminController.updateUser(
                 1, "Admin User", "admin@example.com", "1234567890", 
                 "ORGANIZER", principal, redirectAttributes, null, null);
-
+        
         // Assert
         assertEquals("redirect:/admin/users", viewName);
         verify(userService).updateUser(1, "Admin User", "admin@example.com", "1234567890");
+        verify(userService).getUserById(1);
         // Should not update role for admin's own account
-        verify(userService, times(0)).updateUserRole(1, "ORGANIZER");
+        verify(userService, never()).updateUserRole(1, "ORGANIZER");
+        
         verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
     }
 
@@ -337,12 +338,10 @@ class AdminControllerTest {
         verify(redirectAttributes).addAttribute("search", "search");
     }
 
-    @Test
-    void createUser_shouldRegisterUserAndSetRole() {
+    @Test    void createUser_shouldRegisterUserAndSetRole() {
         // Arrange
         User newUser = new User();
         newUser.setId(3);
-        RegisterUserDto capturedDto = new RegisterUserDto();
         when(authenticationService.signup(any(RegisterUserDto.class))).thenReturn(newUser);
 
         // Act
