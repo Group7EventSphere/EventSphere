@@ -7,10 +7,13 @@ import id.ac.ui.cs.advprog.eventspherre.repository.AdRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.*;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -18,8 +21,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -48,27 +57,24 @@ class AdServiceTest {
                 .build();
         requestDto = new AdRequestDto("T", "D", "U");
 
-        // --- mock the remote DTO (package‐private ctor) ---
+        // --- mock the remote DTO ---
         AdResponseDTO responseDto = mock(AdResponseDTO.class);
         when(responseDto.getId()).thenReturn(1L);
         when(responseDto.getTitle()).thenReturn("T");
         when(responseDto.getDescription()).thenReturn("D");
         when(responseDto.getImageUrl()).thenReturn("U");
 
-        // --- stub WebClient chain once for both REST tests ---
-        when(webClientBuilder.baseUrl("http://localhost:8080/api"))
-                .thenReturn(webClientBuilder);
-        when(webClientBuilder.build())
-                .thenReturn(webClient);
+        // --- stub WebClient chain ---
+        when(webClientBuilder.baseUrl("http://localhost:8080/api")).thenReturn(webClientBuilder);
+        when(webClientBuilder.build()).thenReturn(webClient);
 
         doReturn(uriSpec).when(webClient).post();
         doReturn(bodySpec).when(uriSpec).uri("/api/ads");
         doReturn(headersSpec).when(bodySpec).bodyValue(requestDto);
         doReturn(responseSpec).when(headersSpec).retrieve();
-        doReturn(Mono.just(responseDto))
-                .when(responseSpec).bodyToMono(eq(AdResponseDTO.class));
+        doReturn(Mono.just(responseDto)).when(responseSpec).bodyToMono(AdResponseDTO.class);
 
-        // --- finally construct the service under test ---
+        // --- construct service under test ---
         adService = new AdService(webClientBuilder, adRepository);
     }
 
@@ -90,14 +96,15 @@ class AdServiceTest {
 
     @Test
     void testAddAdFromRest_noResponse_throws() {
-        // override just the bodyToMono → empty()
-        doReturn(Mono.empty())
-                .when(responseSpec).bodyToMono(eq(AdResponseDTO.class));
+        // override bodyToMono → empty()
+        doReturn(Mono.empty()).when(responseSpec).bodyToMono(AdResponseDTO.class);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () ->
-                adService.addAdFromRest(requestDto)
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> adService.addAdFromRest(requestDto)
         );
-        assertEquals("No response from /api/ads", ex.getMessage());
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+        assertEquals("No response body from /api/ads", ex.getReason());
     }
 
     @Test
@@ -126,8 +133,7 @@ class AdServiceTest {
 
     @Test
     void testGetAllAds() {
-        Ad other = Ad.builder()
-                .id(2L).title("X").description("Y").imageUrl("Z").build();
+        Ad other = Ad.builder().id(2L).title("X").description("Y").imageUrl("Z").build();
         when(adRepository.findAll()).thenReturn(Arrays.asList(adEntity, other));
 
         List<Ad> list = adService.getAllAds();
@@ -139,8 +145,7 @@ class AdServiceTest {
 
     @Test
     void testUpdateAdFound() {
-        Ad updated = Ad.builder()
-                .id(1L).title("TT").description("DD").imageUrl("UU").build();
+        Ad updated = Ad.builder().id(1L).title("TT").description("DD").imageUrl("UU").build();
         when(adRepository.existsById(1L)).thenReturn(true);
         when(adRepository.save(any(Ad.class))).thenReturn(updated);
 
@@ -162,7 +167,6 @@ class AdServiceTest {
     @Test
     void testDeleteAd() {
         doNothing().when(adRepository).deleteById(1L);
-
         adService.deleteAd(1L);
         verify(adRepository).deleteById(1L);
     }
