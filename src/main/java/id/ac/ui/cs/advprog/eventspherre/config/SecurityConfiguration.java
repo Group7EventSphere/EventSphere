@@ -55,6 +55,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/events/manage/**", "/api/events/**").hasAnyRole("ADMIN", "ORGANIZER")
                 .requestMatchers("/balance/**").hasAnyRole("ATTENDEE", "ORGANIZER") // Require ATTENDEE or ORGANIZER role for balance pages
                 .requestMatchers("/reviews/**").hasAnyRole("ADMIN", "ORGANIZER", "ATTENDEE")// Require ADMIN or ORGANIZER role for managing events
+                .requestMatchers("/actuator/**").permitAll() // Allow access to actuator endpoints
                 .anyRequest().authenticated()
             )
             // Configure form login (traditional web flow)
