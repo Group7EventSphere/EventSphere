@@ -13,13 +13,11 @@ import org.springframework.stereotype.Controller;
 public class AdController {
 
     private final AdService adService;
-    private final ImageStorageService imageStorageService;
 
     @Autowired
     public AdController(AdService adService,
                         ImageStorageService imageStorageService) {
         this.adService = adService;
-        this.imageStorageService = imageStorageService;
     }
 
     @GetMapping("/create")
