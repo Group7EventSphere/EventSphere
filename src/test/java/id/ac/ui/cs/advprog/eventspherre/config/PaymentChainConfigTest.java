@@ -1,4 +1,3 @@
-/*************  ✨ Windsurf Command 🌟  *************/
 package id.ac.ui.cs.advprog.eventspherre.config;
 
 import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
@@ -8,7 +7,6 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.PaymentRequestRepository;
 import id.ac.ui.cs.advprog.eventspherre.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -19,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class PaymentChainConfigTest {
@@ -77,7 +76,6 @@ class PaymentChainConfigTest {
         verify(reqRepo).save(req);
     }
 
-    @Disabled
     @Test
     void testPaymentHandlerChainSubmitsToExecutor() {
         // Arrange
@@ -92,5 +90,67 @@ class PaymentChainConfigTest {
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         verify(executor, times(1)).submit(captor.capture());
         assertNotNull(captor.getValue(), "Runnable submitted to executor should not be null");
+    }
+    
+    @Test
+    void testPaymentHandlerChainSetNext() {
+        PaymentHandler mockHandler = mock(PaymentHandler.class);
+        
+        chainHandler.setNext(mockHandler);
+        
+
+        assertNotNull(chainHandler, "Chain handler should not be null after setNext");
+        
+        PaymentRequest req = mock(PaymentRequest.class);
+        when(req.getPaymentType()).thenReturn(PaymentRequest.PaymentType.TOPUP);
+        
+        chainHandler.handle(req);
+        
+        verify(executor, atLeastOnce()).submit(any(Runnable.class));
+    }
+
+    @Test
+    void testPaymentHandlerChainHandleExecutesAsynchronously() {
+        PaymentRequest req = mock(PaymentRequest.class);
+        when(req.getPaymentType()).thenReturn(PaymentRequest.PaymentType.TOPUP);
+        when(req.getAmount()).thenReturn(25.0);
+
+        chainHandler.handle(req);
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(executor, times(1)).submit(runnableCaptor.capture());
+        
+        Runnable submittedTask = runnableCaptor.getValue();
+        assertNotNull(submittedTask, "Submitted task should not be null");
+        
+        verify(executor).submit(any(Runnable.class));
+    }
+
+    @Test
+    void testLambdaHandleExecutesSufficientHandler() {
+        User user = new User();
+        user.setId(1);
+        user.setBalance(100.0);
+
+        PaymentRequest req = mock(PaymentRequest.class);
+        when(req.getPaymentType()).thenReturn(PaymentRequest.PaymentType.PURCHASE);
+        when(req.getAmount()).thenReturn(50.0);
+        when(req.getUser()).thenReturn(user);
+        when(userRepo.findById(1)).thenReturn(Optional.of(user));
+
+        chainHandler.handle(req);
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(executor, times(1)).submit(runnableCaptor.capture());
+        
+        Runnable lambdaTask = runnableCaptor.getValue();
+        assertNotNull(lambdaTask, "Lambda task should not be null");
+
+        lambdaTask.run();
+
+
+        verify(req, atLeastOnce()).getPaymentType();
+        verify(req, atLeastOnce()).getAmount();
+        verify(req, atLeastOnce()).getUser();
     }
 }
