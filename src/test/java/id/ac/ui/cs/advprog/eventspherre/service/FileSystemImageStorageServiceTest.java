@@ -4,12 +4,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class FileSystemImageStorageServiceTest {
 
@@ -20,7 +23,6 @@ class FileSystemImageStorageServiceTest {
 
     @BeforeEach
     void setUp() {
-        // point the service at our temp directory
         service = new FileSystemImageStorageService(tempRoot);
         service.init();
     }
@@ -39,22 +41,24 @@ class FileSystemImageStorageServiceTest {
         );
 
         String saved = service.store(png);
-
         Path savedPath = Path.of(saved);
+
         assertTrue(Files.exists(savedPath), "Stored file must exist on disk");
-        assertArrayEquals(content, Files.readAllBytes(savedPath), "Content must match");
+        assertArrayEquals(content,
+                Files.readAllBytes(savedPath),
+                "Content must match");
     }
 
     @Test
-    void store_validJpeg_shouldSaveFile() throws IOException {
+    void store_validJpeg_shouldSaveFile() {
         byte[] content = "jpeg data".getBytes();
         MockMultipartFile jpg = new MockMultipartFile(
                 "file", "photo.jpg", "image/jpeg", content
         );
 
         String saved = service.store(jpg);
-
-        assertTrue(Files.exists(Path.of(saved)));
+        assertTrue(Files.exists(Path.of(saved)),
+                "JPEG store must create the file");
     }
 
     @Test
@@ -95,24 +99,57 @@ class FileSystemImageStorageServiceTest {
     }
 
     @Test
-    void delete_existingFile_shouldRemoveIt() throws IOException {
-        // first store a file
+    void delete_existingFile_shouldRemoveIt() {
         MockMultipartFile png = new MockMultipartFile(
                 "file", "toDelete.png", "image/png", "data".getBytes()
         );
         String path = service.store(png);
         Path saved = Path.of(path);
-        assertTrue(Files.exists(saved));
+        assertTrue(Files.exists(saved), "File should exist before delete()");
 
-        // now delete
         service.delete(path);
         assertFalse(Files.exists(saved), "File should be gone after delete()");
     }
 
     @Test
     void delete_nonExistingFile_shouldNotThrow() {
-        assertDoesNotThrow(() -> service.delete(
-                tempRoot.resolve("no-such-file.png").toString()
-        ));
+        assertDoesNotThrow(() ->
+                service.delete(tempRoot.resolve("no-such-file.png").toString())
+        );
+    }
+
+    // ===== New tests to cover IOException paths =====
+
+    @Test
+    void init_rootIsAFile_shouldWrapIOException() throws IOException {
+        // make a file at the path instead of a directory
+        Path fileInsteadOfDir = Files.createTempFile("not-a-dir", ".txt");
+        FileSystemImageStorageService svc = new FileSystemImageStorageService(fileInsteadOfDir);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, svc::init);
+        assertTrue(ex.getMessage().contains("Could not create storage directory"));
+        assertTrue(ex.getCause() instanceof IOException);
+    }
+
+    @Test
+    void store_whenInputStreamFails_shouldWrapIOException() throws IOException {
+        // re-init service
+        service = new FileSystemImageStorageService(tempRoot);
+        service.init();
+
+        // mock a multipart file whose getInputStream() throws
+        MultipartFile broken = mock(MultipartFile.class);
+        when(broken.getContentType()).thenReturn("image/png");
+        when(broken.isEmpty()).thenReturn(false);
+        when(broken.getSize()).thenReturn(123L);
+        when(broken.getOriginalFilename()).thenReturn("bad.png");
+        when(broken.getInputStream()).thenThrow(new IOException("boom"));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> service.store(broken)
+        );
+        assertTrue(ex.getMessage().contains("Failed to store image"));
+        assertTrue(ex.getCause() instanceof IOException);
     }
 }
