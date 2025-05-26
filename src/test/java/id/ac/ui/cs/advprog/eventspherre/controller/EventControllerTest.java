@@ -602,9 +602,7 @@ class EventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("events/create"))
                 .andExpect(model().attributeExists("eventForm"));
-    }
-
-    @Test
+    }    @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_shouldRedirectAfterCreation() throws Exception {
         when(userService.getUserByEmail("organizer@example.com"))
@@ -614,8 +612,8 @@ class EventControllerTest {
                 "2024-12-31",
                 "Jakarta",
                 mockOrganizer.getId(),
-                anyInt(),
-                anyBoolean()
+                100,
+                true
         )).thenReturn(mockEvent);
 
         mockMvc.perform(post("/events/create")

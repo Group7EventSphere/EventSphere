@@ -88,9 +88,7 @@ public class AdminController {
         model.addAttribute("availableRoles", Arrays.asList(User.Role.values()));
         
         return AppConstants.VIEW_ADMIN_USER_MANAGEMENT;
-    }
-    
-    @PostMapping("/users/{id}/update")
+    }    @PostMapping("/users/{id}/update")
     public String updateUser(
             @PathVariable Integer id, 
             @RequestParam String name, 
@@ -113,21 +111,26 @@ public class AdminController {
                 User user = userService.getUserById(id);
                 
                 // Check if user is trying to change their own role (admin restriction)
-                boolean isCurrentUser = user.getEmail().equals(currentUserEmail);                if (isCurrentUser && user.getRole() == User.Role.ADMIN) {
-                    // Skip role update for admin's own account                    redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED_NO_ROLE);
+                boolean isCurrentUser = user.getEmail().equals(currentUserEmail);
+                
+                if (isCurrentUser && user.getRole() == User.Role.ADMIN) {
+                    // Skip role update for admin's own account
+                    redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED_NO_ROLE);
                 } else {
                     userService.updateUserRole(id, role);
                     redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED);
                 }
             } else {
-                redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED);}
+                redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED);
+            }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_UPDATING_USER + e.getMessage());
         }
         
         // Preserve the filter and search state
         if (currentRole != null && !currentRole.isEmpty()) {
-            redirectAttributes.addAttribute("role", currentRole);        }
+            redirectAttributes.addAttribute("role", currentRole);
+        }
         if (currentSearch != null && !currentSearch.isEmpty()) {
             redirectAttributes.addAttribute("search", currentSearch);
         }

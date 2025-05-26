@@ -364,8 +364,13 @@ class EventTest {
         // Test capacity default initialization
         assertNull(event.getCapacity());
         
-        // Verify details map is not null after initialization
+        // Initially details map should be null
+        assertNull(event.getDetails());
+        
+        // After setting capacity, details map should be initialized
+        event.setCapacity(100);
         assertNotNull(event.getDetails());
+        assertEquals(100, event.getCapacity());
     }
 
     @Test
