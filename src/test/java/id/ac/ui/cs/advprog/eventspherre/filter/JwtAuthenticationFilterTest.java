@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -80,41 +82,15 @@ class JwtAuthenticationFilterTest {
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
-        verify(filterChain).doFilter(request, response);
+        // Assert        verify(filterChain).doFilter(request, response);
         verifyNoInteractions(jwtService, userDetailsService);
     }
 
-    @Test
-    void doFilterInternal_WithPublicApiEndpoint_ShouldSkipJwtFilter() throws ServletException, IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/auth/login", "/api/auth/signup", "/api/auth/refresh-token"})
+    void doFilterInternal_WithPublicApiEndpoints_ShouldSkipJwtFilter(String endpoint) throws ServletException, IOException {
         // Arrange
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
-
-        // Act
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
-        verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(jwtService, userDetailsService);
-    }
-
-    @Test
-    void doFilterInternal_WithApiSignupEndpoint_ShouldSkipJwtFilter() throws ServletException, IOException {
-        // Arrange
-        when(request.getRequestURI()).thenReturn("/api/auth/signup");
-
-        // Act
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
-        verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(jwtService, userDetailsService);
-    }
-
-    @Test
-    void doFilterInternal_WithApiRefreshTokenEndpoint_ShouldSkipJwtFilter() throws ServletException, IOException {
-        // Arrange
-        when(request.getRequestURI()).thenReturn("/api/auth/refresh-token");
+        when(request.getRequestURI()).thenReturn(endpoint);
 
         // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -131,9 +107,7 @@ class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn(null);
 
         // Act
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);        // Assert
         verify(filterChain).doFilter(request, response);
         verifyNoInteractions(jwtService, userDetailsService);
     }
