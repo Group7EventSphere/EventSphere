@@ -23,39 +23,28 @@
     <div class="order-main">
         <h1>My Order</h1>
 
-        <!-- Sample static card -->
-        <div class="order-card">
-            <div class="order-title">Event 1 Ticket</div>
-            <div class="order-price">Rp 100.000</div>
-            <div class="order-line">
-                <span class="order-status upcoming">Upcoming</span> |
-                <span class="order-date">17 May 2025</span>
-            </div>
-            <div class="order-details"><a href="#">Details</a></div>
-        </div>
-
         <!-- Dynamic order loop -->
-        <div th:each="ticket : ${tickets}">
-            <div class="order-card" th:classappend="${ticket.status != 'Success' && ticket.status != 'Upcoming'} ? ' highlight'">
-                <div class="order-title" th:text="${ticket.ticketType.name}">Ticket Title</div>
-                <div class="order-price" th:text="'Rp ' + ${ticket.ticketType.price}">Rp Price</div>
-
-                <div class="order-line" th:if="${ticket.status != null}">
-                    <span class="order-status" th:classappend=" ' ' + ${ticket.status.toLowerCase() }"
-                          th:text="${ticket.status}">Status</span> |
-                    <span class="order-date" th:text="${#temporals.format(ticket.date, 'dd MMM yyyy')}">Date</span>
+        <div th:each="entry : ${ticketWithEventList}">
+            <div class="order-card">
+                <div class="order-event-name" th:text="${entry.event.title}">Event Name</div>
+                <div class="order-title" th:text="${entry.ticket.ticketType.name}">Ticket Title</div>
+                <div class="order-price"
+                     th:text="'Rp ' + ${#numbers.formatDecimal(entry.ticket.ticketType.price, 0, 'COMMA', 2, 'POINT')}">
+                    Rp 100.000,00
                 </div>
 
-                <div class="order-line" th:if="${ticket.status == null}">
-                    <span class="order-status">No status</span>
+                <div class="order-line">
+            <span class="order-date"
+                  th:text="${#temporals.format(entry.ticket.date, 'dd MMM yyyy')}">17 May 2025</span>
                 </div>
+                <div class="order-cc" th:text="${entry.ticket.confirmationCode}">TKT-1923810</div>
 
                 <div class="order-details">
-                    <a th:if="${ticket.status == 'Success'}" th:href="@{/tickets/{id}(id=${ticket.id})}">Details</a>
-                    <span th:if="${ticket.status != 'Success'}" class="text-light">—</span>
+                    <a th:href="@{/events/{id}(id=${entry.event.id})}">Details</a>
                 </div>
             </div>
         </div>
+
 
     </div>
 </div>

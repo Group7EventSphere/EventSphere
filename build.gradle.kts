@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "6.0.1.5171"
     id("jacoco")
+    id("io.freefair.lombok") version "8.11"
 }
 
 group = "id.ac.ui.cs.advprog"
@@ -48,6 +49,10 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     testImplementation("org.springframework.security:spring-security-test")
+    
+    // RabbitMQ dependency
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
+    testImplementation("org.springframework.amqp:spring-rabbit-test")
 }
 
 tasks.withType<Test> {
@@ -86,6 +91,6 @@ sonar {
         property("sonar.projectKey", "Group7EventSphere_EventSphere")
         property("sonar.organization", "group7eventsphere")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
     }
 }

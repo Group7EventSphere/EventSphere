@@ -112,8 +112,14 @@
             
             <div class="profile-info">
                 <h3>Account Balance</h3>
-                <p><strong>Current Balance:</strong> <span th:text="${'$' + user.balance}">$0.00</span></p>
+                <div class="balance-display">
+                    <div class="balance-label">Current Balance</div>
+                    <div class="balance-amount" th:text="${#numbers.formatDecimal(user.balance, 0, 'POINT', 0, 'POINT')}">0</div>
+                </div>
                 <p class="form-note">For questions about your balance, please contact support.</p>
+                <div class="form-actions">
+                    <a th:href="@{/balance}" class="btn btn-primary">Top Up Balance</a>
+                </div>
             </div>
         </div>
     </div>

@@ -16,7 +16,7 @@ public class SufficientBalanceHandler implements PaymentHandler {
         if (request.getPaymentType() == PaymentRequest.PaymentType.PURCHASE) {
             User user = request.getUser();
             if (user.getBalance() < request.getAmount()) {
-                request.setProcessed(true);
+                request.setProcessed(false);
                 request.setMessage("Payment failed: insufficient funds");
                 return; // Stop the chain if funds are insufficient.
             }

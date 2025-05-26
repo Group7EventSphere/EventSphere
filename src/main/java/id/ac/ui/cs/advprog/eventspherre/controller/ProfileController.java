@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 
@@ -26,15 +27,13 @@ public class ProfileController {
     public ProfileController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
-    }
-
-    @GetMapping
+    }    @GetMapping
     public String profilePage(Model model, Principal principal) {
         // Get current user
         User user = userService.getUserByEmail(principal.getName());
         model.addAttribute("user", user);
         
-        return "profile";
+        return AppConstants.VIEW_PROFILE;
     }
     
     @PostMapping("/update")
@@ -53,16 +52,15 @@ public class ProfileController {
             user.setName(name);
             user.setEmail(email);
             user.setPhoneNumber(phoneNumber);
-            
-            // Save updated user
+              // Save updated user
             userService.updateUser(user.getId(), name, email, phoneNumber);
             
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully");
+            redirectAttributes.addFlashAttribute("successMessage", AppConstants.SUCCESS_PROFILE_UPDATED);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating profile: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_UPDATING_PROFILE + e.getMessage());
         }
         
-        return "redirect:/profile";
+        return AppConstants.REDIRECT_PROFILE;
     }
     
     @PostMapping("/change-password")
@@ -76,27 +74,25 @@ public class ProfileController {
         try {
             // Get current user
             User user = userService.getUserByEmail(principal.getName());
-            
-            // Verify current password
+              // Verify current password
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Current password is incorrect");
-                return "redirect:/profile";
+                redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_CURRENT_PASSWORD_INCORRECT);
+                return AppConstants.REDIRECT_PROFILE;
             }
             
             // Verify new password matches confirmation
             if (!newPassword.equals(confirmNewPassword)) {
-                redirectAttributes.addFlashAttribute("errorMessage", "New passwords do not match");
-                return "redirect:/profile";
+                redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_NEW_PASSWORDS_NO_MATCH);
+                return AppConstants.REDIRECT_PROFILE;
             }
-            
-            // Update password
+              // Update password
             userService.updateUserPassword(user.getId(), newPassword);
             
-            redirectAttributes.addFlashAttribute("successMessage", "Password changed successfully");
+            redirectAttributes.addFlashAttribute("successMessage", AppConstants.SUCCESS_PASSWORD_CHANGED);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error changing password: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", AppConstants.ERROR_CHANGING_PASSWORD + e.getMessage());
         }
         
-        return "redirect:/profile";
+        return AppConstants.REDIRECT_PROFILE;
     }
 }

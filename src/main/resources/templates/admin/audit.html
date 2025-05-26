@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layouts/base :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>Transaction Audit - EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/audit.css}">
+</head>
+<body>
+    <main>
+        <div class="audit-header">
+            <h2 class="audit-title">Transaction Audit</h2>
+        </div>
+        
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="userNameFilter">User Name</label>
+                <input type="text" id="userNameFilter" class="filter-input" placeholder="Search by name">
+            </div>
+            
+            <div class="filter-group">
+                <label for="userEmailFilter">User Email</label>
+                <input type="text" id="userEmailFilter" class="filter-input" placeholder="Search by email">
+            </div>
+            
+            <div class="filter-group">
+                <label for="statusFilter">Payment Status</label>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="SUCCESS">Success</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="SOFT_DELETED">Deleted</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="typeFilter">Payment Type</label>
+                <select id="typeFilter" class="filter-select">
+                    <option value="">All Types</option>
+                    <option value="TOPUP">Top Up</option>
+                    <option value="PURCHASE">Purchase</option>
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                <button id="resetFiltersBtn" class="btn btn-secondary">Reset</button>
+                <div class="show-all-toggle" style="margin-left: 10px;">
+                    <label>
+                        <input type="checkbox" id="showAllToggle"> Include Deleted
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div id="loadingIndicator" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+                
+                <div id="noDataMessage" class="no-data" style="display: none;">
+                    No transactions found matching the current filters.
+                </div>
+                
+                <table class="transactions-table" id="txTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- User Detail Modal -->
+        <div id="userDetailModal" class="user-detail-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">User Details</h3>
+                    <button class="modal-close" onclick="closeUserDetailModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-detail-item">
+                        <div class="user-detail-label">User ID</div>
+                        <div id="userDetailId" class="user-detail-value"></div>
+                    </div>
+                    <div class="user-detail-item">
+                        <div class="user-detail-label">Name</div>
+                        <div id="userDetailName" class="user-detail-value"></div>
+                    </div>
+                    <div class="user-detail-item">
+                        <div class="user-detail-label">Email</div>
+                        <div id="userDetailEmail" class="user-detail-value"></div>
+                    </div>
+                    <div class="user-detail-item">
+                        <div class="user-detail-label">Current Balance</div>
+                        <div id="userDetailBalance" class="user-detail-value"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Thymeleaf will replace this with the actual URL at render time
+        const base = /*[[ @{/api/v1/admin/transactions} ]]*/ '/api/v1/admin/transactions';
+        const userApiBase = /*[[ @{/api/v1/admin/users} ]]*/ '/api/v1/admin/users';
+        /*]]>*/
+    </script>
+    <script th:src="@{/js/audit.js}"></script>
+</body>
+</html>

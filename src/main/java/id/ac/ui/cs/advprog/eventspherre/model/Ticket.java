@@ -7,13 +7,13 @@ import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.UUID;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 @Entity
 @Table(name = "tickets")
 @Getter
 @Setter
 public class Ticket {
-    // private Event event;
     @Id
     @GeneratedValue
     private UUID id;
@@ -38,15 +38,16 @@ public class Ticket {
     @DateTimeFormat(pattern = "dd MMM yyyy")
     private LocalDate date;
 
+    @Column(name = "transaction_id")
+    private UUID transactionId;
+
     public Ticket() {}
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
         this.ticketType = ticketType;
-        this.attendee = attendee;
-
-        // Defensive check to prevent NPE
+        this.attendee = attendee;        // Defensive check to prevent NPE
         if (attendee == null || attendee.getId() == null) {
-            this.userId = 0;
+            this.userId = AppConstants.DEFAULT_USER_ID;
         } else {
             this.userId = attendee.getId();
         }

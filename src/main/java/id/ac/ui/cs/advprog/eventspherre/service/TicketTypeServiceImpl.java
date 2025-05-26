@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.repository.TicketRepository;
@@ -18,6 +19,7 @@ public class TicketTypeServiceImpl implements TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
     private final TicketRepository ticketRepository;
+    private final TicketService ticketService;
 
     @Override
     public TicketType create(String name, BigDecimal price, int quota, User user, int eventId) {
@@ -31,9 +33,8 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     }
 
     @Override
-    public TicketType updateTicketType(UUID id, TicketType updated, User editor) {
-        TicketType existing = ticketTypeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+    public TicketType updateTicketType(UUID id, TicketType updated, User editor) {        TicketType existing = ticketTypeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_TYPE_NOT_FOUND));
 
         existing.setName(updated.getName());
         existing.setPrice(updated.getPrice());
@@ -43,14 +44,13 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     }
 
     @Override
-    public void deleteTicketType(UUID id, User requester) {
-        if (requester.getRole() != User.Role.ADMIN) {
-            throw new IllegalArgumentException("Only admins can delete ticket types");
+    public void deleteTicketType(UUID id, User requester) {        if (requester.getRole() != User.Role.ADMIN) {
+            throw new IllegalArgumentException(AppConstants.ERROR_ONLY_ADMINS_DELETE_TICKET_TYPES);
         }
 
-        // Check if any tickets reference this ticket type
-        if (ticketRepository.existsByTicketTypeId(id)) {
-            throw new IllegalStateException("Cannot delete ticket type with existing tickets.");
+        // Step 1: Delete associated tickets
+        ticketService.deleteTicketsByTicketTypeId(id);        if (ticketRepository.existsByTicketTypeId(id)) {
+            throw new IllegalStateException(AppConstants.ERROR_CANNOT_DELETE_TICKET_TYPE_WITH_TICKETS);
         }
 
         // Safe to delete
@@ -69,9 +69,8 @@ public class TicketTypeServiceImpl implements TicketTypeService {
     }
 
     @Override
-    public void associateWithEvent(UUID ticketTypeId, int eventId) {
-        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("TicketType not found"));
+    public void associateWithEvent(UUID ticketTypeId, int eventId) {        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_TYPE_NOT_FOUND));
 
         ticketType.setEventId(eventId);
         ticketTypeRepository.save(ticketType);
@@ -79,6 +78,6 @@ public class TicketTypeServiceImpl implements TicketTypeService {
 
     @Override
     public List<TicketType> getTicketTypesByEventId(Integer eventId) {
-        return List.of();
+        return ticketTypeRepository.findByEventId(eventId);
     }
 }
