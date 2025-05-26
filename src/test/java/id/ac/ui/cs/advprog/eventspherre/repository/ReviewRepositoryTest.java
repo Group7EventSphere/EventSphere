@@ -22,13 +22,12 @@ class ReviewRepositoryTest {
     private ReviewRepository repo;
       @Autowired
     private UserRepository userRepo;
-      private Long user1Id, user2Id, user10Id, user20Id, user100Id, user200Id;
+      private Long user1Id, user10Id, user20Id, user100Id, user200Id;
     
     @BeforeEach
     void setUp() {
         // Create test users and get their generated IDs
         user1Id = createUser("user1@test.com", "User One");
-        user2Id = createUser("user2@test.com", "User Two");
         user10Id = createUser("user10@test.com", "User Ten");
         user20Id = createUser("user20@test.com", "User Twenty");
         user100Id = createUser("user100@test.com", "User Hundred");
