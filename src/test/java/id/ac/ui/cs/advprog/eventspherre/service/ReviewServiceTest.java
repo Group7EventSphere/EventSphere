@@ -6,6 +6,8 @@ import id.ac.ui.cs.advprog.eventspherre.validation.DefaultReviewValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -88,8 +90,11 @@ class ReviewServiceTest {
     @Test
     void updateNonExistingThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Review nonExistingReview = new Review(0, 0L, "X", 1);
+
         assertThrows(NoSuchElementException.class,
-                () -> svc.update(99L, new Review(0,0L,"X",1)));
+                () -> svc.update(99L, nonExistingReview));
     }
 
     @Test
@@ -118,5 +123,21 @@ class ReviewServiceTest {
         assertFalse(svc.delete(8L));
         verify(repo, never()).deleteById(any());
     }
+
+    @Test
+    void findByEventId_returnsList() {
+        List<Review> stub = Arrays.asList(
+                new Review(1, 7L, "Good", 5),
+                new Review(1, 7L, "Bad", 2)
+        );
+        when(repo.findByEventId(7)).thenReturn(stub);
+
+        List<Review> actual = svc.findByEventId(7);
+
+        assertSame(stub, actual);
+        verify(repo).findByEventId(7);
+    }
 }
+
+
 

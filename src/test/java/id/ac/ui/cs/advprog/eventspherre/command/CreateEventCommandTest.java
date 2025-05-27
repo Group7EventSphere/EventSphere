@@ -15,7 +15,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CreateEventCommandTest {
+class CreateEventCommandTest {
 
     @Mock
     private EventRepository eventRepository;
@@ -37,7 +37,7 @@ public class CreateEventCommandTest {
     private final Boolean isPublic = true;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         createEventCommand = new CreateEventCommand(
             eventRepository,
             eventSubject,
@@ -48,11 +48,10 @@ public class CreateEventCommandTest {
             organizerId,
             capacity,
             isPublic
-        );
-    }
+        );    }
 
     @Test
-    public void testExecute() {
+    void testExecute() {
         // Setup the mock behavior that's needed for this test
         when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
 
@@ -80,7 +79,7 @@ public class CreateEventCommandTest {
     }
 
     @Test
-    public void testUndo() {
+    void testUndo() {
         // Arrange
         when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
         createEventCommand.execute();
@@ -90,11 +89,10 @@ public class CreateEventCommandTest {
 
         // Assert
         verify(eventRepository).delete(savedEvent);
-        verify(eventSubject).notifyEventDeleted(savedEvent);
-    }
+        verify(eventSubject).notifyEventDeleted(savedEvent);    }
 
     @Test
-    public void testUndoWithoutExecute() {
+    void testUndoWithoutExecute() {
         // Act
         createEventCommand.undo();
 
@@ -104,7 +102,7 @@ public class CreateEventCommandTest {
     }
 
     @Test
-    public void testGetEvent() {
+    void testGetEvent() {
         // Arrange
         when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
         createEventCommand.execute();

@@ -17,11 +17,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateEventCommandTest {
+class UpdateEventCommandTest {
 
     @Mock
     private EventRepository eventRepository;
@@ -46,10 +45,8 @@ public class UpdateEventCommandTest {
     private final Boolean isPublic = false;
 
     private final Integer organizerId = 456;
-    private final Map<String, Object> originalDetails = new HashMap<>();
-
-    @BeforeEach
-    public void setUp() {
+    private final Map<String, Object> originalDetails = new HashMap<>();    @BeforeEach
+    void setUp() {
         // Setup original event details
         originalDetails.put("title", "Original Event");
         originalDetails.put("description", "Original Description");
@@ -71,10 +68,8 @@ public class UpdateEventCommandTest {
             capacity,
             isPublic
         );
-    }
-
-    @Test
-    public void testExecute() {
+    }    @Test
+    void testExecute() {
         // Setup mocks for this test
         when(originalEvent.getDetails()).thenReturn(originalDetails);
         when(originalEvent.getOrganizerId()).thenReturn(organizerId);
@@ -96,9 +91,8 @@ public class UpdateEventCommandTest {
         verify(originalEvent).setLocation(location);
         verify(originalEvent).setCapacity(capacity);
         verify(originalEvent).setPublic(isPublic);
-        verify(originalEvent).setUpdatedAt(any(Instant.class));
-
-        // Verify details map was updated
+        verify(originalEvent).setUpdatedAt(any(Instant.class));        // Verify details map was updated
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Object>> detailsCaptor = ArgumentCaptor.forClass(Map.class);
         verify(originalEvent).setDetails(detailsCaptor.capture());
         Map<String, Object> capturedDetails = detailsCaptor.getValue();
@@ -113,10 +107,8 @@ public class UpdateEventCommandTest {
         // Verify repository save and notification
         verify(eventRepository).save(originalEvent);
         verify(eventSubject).notifyEventUpdated(updatedEvent);
-    }
-
-    @Test
-    public void testExecuteEventNotFound() {
+    }    @Test
+    void testExecuteEventNotFound() {
         // Arrange
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
@@ -125,10 +117,11 @@ public class UpdateEventCommandTest {
 
         // Assert
         verify(eventRepository).findById(eventId);
-        verify(eventRepository, never()).save(any(Event.class));
-        verify(eventSubject, never()).notifyEventUpdated(any(Event.class));
-    }    @Test
-    public void testUndo() {
+        verify(eventRepository, never()).save(any(Event.class));        verify(eventSubject, never()).notifyEventUpdated(any(Event.class));
+    }
+
+    @Test
+    void testUndo() {
         // Setup - Execute first
         when(originalEvent.getDetails()).thenReturn(new HashMap<>(originalDetails));
         when(originalEvent.getOrganizerId()).thenReturn(organizerId);
@@ -144,15 +137,15 @@ public class UpdateEventCommandTest {
         when(eventRepository.save(any(Event.class))).thenReturn(originalEvent);
 
         // Act
-        updateEventCommand.undo();
-
-        // Assert
+        updateEventCommand.undo();        // Assert
         verify(eventRepository).findById(eventId);
         verify(originalEvent).setDetails(any(Map.class));
         verify(eventRepository).save(originalEvent);
         verify(eventSubject).notifyEventUpdated(originalEvent);
-    }    @Test
-    public void testUndoEventNotFound() {
+    }
+
+    @Test
+    void testUndoEventNotFound() {
         // Setup - Execute first
         when(originalEvent.getDetails()).thenReturn(new HashMap<>(originalDetails));
         when(originalEvent.getOrganizerId()).thenReturn(organizerId);
@@ -171,10 +164,11 @@ public class UpdateEventCommandTest {
 
         // Assert
         verify(eventRepository).findById(eventId);
-        verify(eventRepository, never()).save(any(Event.class));
-        verify(eventSubject, never()).notifyEventUpdated(any(Event.class));
-    }    @Test
-    public void testGetEvent() {
+        verify(eventRepository, never()).save(any(Event.class));        verify(eventSubject, never()).notifyEventUpdated(any(Event.class));
+    }
+
+    @Test
+    void testGetEvent() {
         // Setup mocks for execute
         when(originalEvent.getDetails()).thenReturn(originalDetails);
         when(originalEvent.getOrganizerId()).thenReturn(organizerId);

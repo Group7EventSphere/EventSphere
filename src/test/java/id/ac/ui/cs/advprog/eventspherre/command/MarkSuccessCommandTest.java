@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class MarkSuccessCommandTest {
+class MarkSuccessCommandTest {
 
     @Mock
     private PaymentTransactionRepository txRepo;

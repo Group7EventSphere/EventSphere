@@ -11,6 +11,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.support.SessionStatus;
+
 
 import java.util.List;
 
@@ -21,30 +25,41 @@ import java.util.List;
 @SessionAttributes("currentUser")
 public class BalanceController {
 
+    private static final Logger log = LoggerFactory.getLogger(BalanceController.class);
+
     private final PaymentHandler          paymentHandler;
     private final PaymentService          paymentService;
     private final PaymentRequestRepository requestRepo;
     private final UserService             userService;
 
-    @ModelAttribute("currentUser")
+    private static final String CURRENT_USER = "currentUser";
+    private static final String BALANCE = "balance";
+    private static final String USER_NAME = "userName";
+
+    @ModelAttribute(CURRENT_USER)
     public User loadCurrentUser(Authentication auth) {
         return userService.getUserByEmail(auth.getName());
     }
 
 
     @GetMapping
-    public String showPage(@ModelAttribute("currentUser") User user, Model model) {
-        model.addAttribute("balance", user.getBalance());
-        model.addAttribute("userName", user.getName());
-        return "topup";
+    public String showPage(@ModelAttribute(CURRENT_USER) User user, Model model) {
+        log.debug("Show balance page for userId={} " , user.getId());
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        model.addAttribute(CURRENT_USER, refreshedUser);
+        model.addAttribute(BALANCE, refreshedUser.getBalance());
+        model.addAttribute(USER_NAME, refreshedUser.getName());
+        return "balance/topup";
     }
 
 @PostMapping
-public String topUp(@ModelAttribute("currentUser") User user,
+public String topUp(@ModelAttribute(CURRENT_USER) User user,
                     @RequestParam double amount,
                     @RequestParam String method,
-                    Model model) {
-
+                    Model model,
+                    SessionStatus status) {
+    log.info("Top‑up requested: amount={}", amount);
     PaymentRequest req = new PaymentRequest(
         user,
         amount,
@@ -57,21 +72,26 @@ public String topUp(@ModelAttribute("currentUser") User user,
     PaymentTransaction tx = paymentService.persistRequestAndConvert(req, "SUCCESS");
     User refreshed = userService.getUserById(user.getId());
 
-    model.addAttribute("currentUser", refreshed);
-    model.addAttribute("balance",  refreshed.getBalance());
-    model.addAttribute("userName", refreshed.getName());
+    model.addAttribute(CURRENT_USER, refreshed);
+    model.addAttribute(BALANCE,  refreshed.getBalance());
+    model.addAttribute(USER_NAME, refreshed.getName());
     model.addAttribute("flash",
         String.format("Top-up of %,d recorded successfully ✔", (long) tx.getAmount())
     );
-
-    return "topup";
+    status.setComplete();
+    return "balance/topup";
 }
 
     @GetMapping("/history")
-    public String history(@ModelAttribute("currentUser") User user, Model model) {
-        List<PaymentRequest> reqs = requestRepo.findByUserId(user.getId());
+    public String history(@ModelAttribute(CURRENT_USER) User user, Model model) {
+        log.debug("Load balance history for userId={}", user.getId());
+        // Refresh user data to get latest balance
+        User refreshedUser = userService.getUserById(user.getId());
+        List<PaymentRequest> reqs = requestRepo.findByUserId(refreshedUser.getId());
+        model.addAttribute(CURRENT_USER, refreshedUser);
         model.addAttribute("requests", reqs);
-        model.addAttribute("userName",  user.getName());
-        return "history";
+        model.addAttribute(USER_NAME, refreshedUser.getName());
+        model.addAttribute(BALANCE, refreshedUser.getBalance());
+        return "balance/history";
     }
 }

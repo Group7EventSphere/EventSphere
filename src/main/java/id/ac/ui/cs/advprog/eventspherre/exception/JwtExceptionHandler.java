@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.exception;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -16,45 +17,35 @@ import java.util.Map;
 
 @RestControllerAdvice
 @Profile("!test")
-public class JwtExceptionHandler extends ResponseEntityExceptionHandler {
-
-    @ExceptionHandler(ExpiredJwtException.class)
+public class JwtExceptionHandler extends ResponseEntityExceptionHandler {    @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<Map<String, String>> handleExpiredJwtException(ExpiredJwtException e) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", "Unauthorized");
-        response.put("message", "JWT token has expired");
+        response.put(AppConstants.RESPONSE_ERROR_KEY, AppConstants.JWT_ERROR_UNAUTHORIZED);
+        response.put(AppConstants.RESPONSE_MESSAGE_KEY, AppConstants.JWT_ERROR_EXPIRED);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(UnsupportedJwtException.class)
+    }    @ExceptionHandler(UnsupportedJwtException.class)
     public ResponseEntity<Map<String, String>> handleUnsupportedJwtException(UnsupportedJwtException e) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", "Unauthorized");
-        response.put("message", "Unsupported JWT token");
+        response.put(AppConstants.RESPONSE_ERROR_KEY, AppConstants.JWT_ERROR_UNAUTHORIZED);
+        response.put(AppConstants.RESPONSE_MESSAGE_KEY, AppConstants.JWT_ERROR_UNSUPPORTED);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(MalformedJwtException.class)
+    }    @ExceptionHandler(MalformedJwtException.class)
     public ResponseEntity<Map<String, String>> handleMalformedJwtException(MalformedJwtException e) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", "Unauthorized");
-        response.put("message", "Malformed JWT token");
+        response.put(AppConstants.RESPONSE_ERROR_KEY, AppConstants.JWT_ERROR_UNAUTHORIZED);
+        response.put(AppConstants.RESPONSE_MESSAGE_KEY, AppConstants.JWT_ERROR_MALFORMED);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(SignatureException.class)
+    }    @ExceptionHandler(SignatureException.class)
     public ResponseEntity<Map<String, String>> handleSignatureException(SignatureException e) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", "Unauthorized");
-        response.put("message", "Invalid JWT signature");
+        response.put(AppConstants.RESPONSE_ERROR_KEY, AppConstants.JWT_ERROR_UNAUTHORIZED);
+        response.put(AppConstants.RESPONSE_MESSAGE_KEY, AppConstants.JWT_ERROR_INVALID_SIGNATURE);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
+    }    @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", "Bad Request");
-        response.put("message", e.getMessage());
+        response.put(AppConstants.RESPONSE_ERROR_KEY, AppConstants.JWT_ERROR_BAD_REQUEST);
+        response.put(AppConstants.RESPONSE_MESSAGE_KEY, e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

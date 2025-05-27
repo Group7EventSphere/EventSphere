@@ -4,16 +4,18 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
-
+import org.hibernate.annotations.CreationTimestamp;
+import java.math.BigDecimal;
 import java.util.UUID;
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 @Entity
 @Table(name = "tickets")
 @Getter
 @Setter
 public class Ticket {
-    // private Event event;
     @Id
     @GeneratedValue
     private UUID id;
@@ -38,15 +40,29 @@ public class Ticket {
     @DateTimeFormat(pattern = "dd MMM yyyy")
     private LocalDate date;
 
+    @Column(name = "transaction_id")
+    private UUID transactionId;
+    
+    @Column(name = "purchase_price")
+    private BigDecimal purchasePrice;
+    
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+    
+    @Column(name = "discount_percentage")
+    private BigDecimal discountPercentage;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     public Ticket() {}
 
     public Ticket(TicketType ticketType, User attendee, String confirmationCode) {
         this.ticketType = ticketType;
-        this.attendee = attendee;
-
-        // Defensive check to prevent NPE
+        this.attendee = attendee;        // Defensive check to prevent NPE
         if (attendee == null || attendee.getId() == null) {
-            this.userId = 0;
+            this.userId = AppConstants.DEFAULT_USER_ID;
         } else {
             this.userId = attendee.getId();
         }

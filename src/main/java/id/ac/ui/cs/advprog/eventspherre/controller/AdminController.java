@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
+import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.dto.RegisterUserDto;
 import id.ac.ui.cs.advprog.eventspherre.service.AuthenticationService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
@@ -24,10 +25,9 @@ import java.util.Arrays;
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-    
-    @GetMapping
+      @GetMapping
     public String redirectToUserManagement() {
-        return "redirect:/admin/users";
+        return AppConstants.REDIRECT_ADMIN_USERS;
     }
 
     private final UserService userService;
@@ -51,21 +51,18 @@ public class AdminController {
         if (role != null && !role.isEmpty()) {
             // If both role filter and search term are provided
             if (search != null && !search.isEmpty()) {
-                try {
-                    users = userService.searchUsersByRoleAndTerm(role, search);
-                } catch (IllegalArgumentException e) {
+                try {                    users = userService.searchUsersByRoleAndTerm(role, search);                } catch (IllegalArgumentException e) {
                     // If invalid role is provided, fallback to just search
                     users = userService.searchUsers(search);
-                    model.addAttribute("errorMessage", "Invalid role filter. Showing search results only.");
+                    model.addAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_INVALID_ROLE_FILTER);
                 }
             } else {
                 // If only role filter is provided
                 try {
-                    users = userService.getUsersByRole(role);
-                } catch (IllegalArgumentException e) {
+                    users = userService.getUsersByRole(role);                } catch (IllegalArgumentException e) {
                     // If invalid role is provided, fallback to all users
                     users = userService.getAllUsers();
-                    model.addAttribute("errorMessage", "Invalid role filter. Showing all users.");
+                    model.addAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_INVALID_ROLE_ALL_USERS);
                 }
             }
         } else if (search != null && !search.isEmpty()) {
@@ -87,14 +84,11 @@ public class AdminController {
         // Add the current filter and search values for preserving the state
         model.addAttribute("currentRole", role);
         model.addAttribute("currentSearch", search);
-        
-        // Add available roles for the dropdown
+          // Add available roles for the dropdown
         model.addAttribute("availableRoles", Arrays.asList(User.Role.values()));
         
-        return "admin/user-management";
-    }
-    
-    @PostMapping("/users/{id}/update")
+        return AppConstants.VIEW_ADMIN_USER_MANAGEMENT;
+    }    @PostMapping("/users/{id}/update")
     public String updateUser(
             @PathVariable Integer id, 
             @RequestParam String name, 
@@ -118,18 +112,19 @@ public class AdminController {
                 
                 // Check if user is trying to change their own role (admin restriction)
                 boolean isCurrentUser = user.getEmail().equals(currentUserEmail);
+                
                 if (isCurrentUser && user.getRole() == User.Role.ADMIN) {
                     // Skip role update for admin's own account
-                    redirectAttributes.addFlashAttribute("successMessage", "User updated successfully. Note: You cannot change your own role as an admin.");
+                    redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED_NO_ROLE);
                 } else {
                     userService.updateUserRole(id, role);
-                    redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
+                    redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED);
                 }
             } else {
-                redirectAttributes.addFlashAttribute("successMessage", "User updated successfully");
+                redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_UPDATED);
             }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_UPDATING_USER + e.getMessage());
         }
         
         // Preserve the filter and search state
@@ -140,7 +135,7 @@ public class AdminController {
             redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin/users";
+        return AppConstants.REDIRECT_ADMIN_USERS;
     }
     
     @PostMapping("/users/{id}/update-password")
@@ -149,23 +144,20 @@ public class AdminController {
             @RequestParam String newPassword,
             RedirectAttributes redirectAttributes,
             @RequestParam(required = false) String currentRole,
-            @RequestParam(required = false) String currentSearch) {
-        try {
-            userService.updateUserPassword(id, newPassword);
-            redirectAttributes.addFlashAttribute("successMessage", "Password updated successfully");
+            @RequestParam(required = false) String currentSearch) {        try {
+            userService.updateUserPassword(id, newPassword);            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_PASSWORD_UPDATED);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating password: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_UPDATING_PASSWORD + e.getMessage());
         }
         
         // Preserve the filter and search state
         if (currentRole != null && !currentRole.isEmpty()) {
             redirectAttributes.addAttribute("role", currentRole);
         }
-        if (currentSearch != null && !currentSearch.isEmpty()) {
-            redirectAttributes.addAttribute("search", currentSearch);
+        if (currentSearch != null && !currentSearch.isEmpty()) {            redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin/users";
+        return AppConstants.REDIRECT_ADMIN_USERS;
     }
     
     @PostMapping("/users/create")
@@ -191,23 +183,20 @@ public class AdminController {
             
             // Set the user role
             if (role.equals("ADMIN") || role.equals("ORGANIZER") || role.equals("ATTENDEE")) {
-                userService.updateUserRole(newUser.getId(), role);
-            }
-            
-            redirectAttributes.addFlashAttribute("successMessage", "User created successfully");
+                userService.updateUserRole(newUser.getId(), role);            }            
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_CREATED);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error creating user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CREATING_USER + e.getMessage());
         }
         
         // Preserve the filter and search state
         if (currentRole != null && !currentRole.isEmpty()) {
             redirectAttributes.addAttribute("role", currentRole);
         }
-        if (currentSearch != null && !currentSearch.isEmpty()) {
-            redirectAttributes.addAttribute("search", currentSearch);
+        if (currentSearch != null && !currentSearch.isEmpty()) {            redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin/users";
+        return AppConstants.REDIRECT_ADMIN_USERS;
     }
     
     @PostMapping("/users/{id}/delete")
@@ -218,29 +207,31 @@ public class AdminController {
             @RequestParam(required = false) String currentRole,
             @RequestParam(required = false) String currentSearch) {
         // Get the user to check if it's the current user
-        User user = userService.getUserById(id);
-        
-        // Prevent deletion of the current user
+        User user = userService.getUserById(id);        // Prevent deletion of the current user
         if (principal != null && principal.getName().equals(user.getEmail())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "You cannot delete your own account");
-            return "redirect:/admin/users";
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_CANNOT_DELETE_OWN_ACCOUNT);
+            // Preserve the filter and search state
+            if (currentRole != null && !currentRole.isEmpty()) {
+                redirectAttributes.addAttribute("role", currentRole);
+            }
+            if (currentSearch != null && !currentSearch.isEmpty()) {
+                redirectAttributes.addAttribute("search", currentSearch);
+            }
+            return AppConstants.REDIRECT_ADMIN_USERS;
         }
-        
-        try {
-            userService.deleteUser(id);
-            redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully");
+          try {
+            userService.deleteUser(id);            redirectAttributes.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE, AppConstants.SUCCESS_USER_DELETED);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, AppConstants.ERROR_DELETING_USER + e.getMessage());
         }
         
         // Preserve the filter and search state
         if (currentRole != null && !currentRole.isEmpty()) {
             redirectAttributes.addAttribute("role", currentRole);
         }
-        if (currentSearch != null && !currentSearch.isEmpty()) {
-            redirectAttributes.addAttribute("search", currentSearch);
+        if (currentSearch != null && !currentSearch.isEmpty()) {            redirectAttributes.addAttribute("search", currentSearch);
         }
         
-        return "redirect:/admin/users";
+        return AppConstants.REDIRECT_ADMIN_USERS;
     }
 }

@@ -20,19 +20,34 @@
                 <!-- These links will show for all authenticated users -->
                 <div class="nav-section" sec:authorize="isAuthenticated()" >
                     <a th:href="@{/events}" class="nav-link">Events</a>
+                </div>
+
+                 <!-- These links will only show for attendee -->
+                <div class="nav-section" sec:authorize="hasAnyRole('ATTENDEE')">
                     <a th:href="@{/tickets}" class="nav-link">My Tickets</a>
                 </div>
+
+                <!-- These links will only show for organizers -->
+                <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER')">
+                    <a th:href="@{/promo-codes}" class="nav-link">Promo Codes</a>
+                </div>
                 
+                <!-- These links will only show for organizers -->
+                <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER')">
+                    <a th:href="@{/events/manage}" class="nav-link">Manage Events</a>
+                </div>
+
                 <!-- These links will only show for organizers and admins -->
                 <div class="nav-section" sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')">
-                    <a th:href="@{/events/manage}" class="nav-link">Manage Events</a>
                     <a th:href="@{/ticket-types}" class="nav-link">Manage Tickets</a>
                 </div>
                 
                 <!-- These links will only show for admins -->
                 <div class="nav-section" sec:authorize="hasRole('ADMIN')">
-                    <a th:href="@{/admin}" class="nav-link">Admin Panel</a>
+                    <a th:href="@{/admin/users}" class="nav-link">User Management</a>
+                    <a th:href="@{/admin/audit}" class="nav-link">Audit</a>
                 </div>
+
             </div>
             
             <div class="navbar-auth">
