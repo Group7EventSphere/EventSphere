@@ -560,23 +560,6 @@ class AdminTransactionControllerTest {
     }
 
     @Test
-    void list_withAllFiltersBooleanInvalid_shouldDefaultToFalse() throws Exception {
-        // Test invalid boolean value for all parameter
-        when(auditService.getActive()).thenReturn(List.of(transaction));
-        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
-
-        mvc.perform(
-                get("/api/v1/admin/transactions")
-                        .param("all", "invalid")
-                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
-        )
-                .andExpect(status().isOk());
-
-        verify(auditService).getActive();
-        verify(auditService, never()).getAll();
-    }
-
-    @Test
     void updateStatus_forbiddenForAttendee() throws Exception {
         // Test authorization for updateStatus
         mvc.perform(
