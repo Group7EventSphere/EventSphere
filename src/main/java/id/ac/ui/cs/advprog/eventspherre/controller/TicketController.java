@@ -306,7 +306,8 @@ public class TicketController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            logger.info("Validating promo code: {}, ticketPrice: {}, quota: {}", promoCode, ticketPrice, quota);
+            // Avoid logging user-controlled data directly
+            logger.info("Validating promo code request received for validation process.");
             PromoCode promo = promoCodeService.getPromoCodeByCode(promoCode.trim());
             if (promo.isValid()) {
                 BigDecimal basePrice = ticketPrice.multiply(new BigDecimal(quota));
