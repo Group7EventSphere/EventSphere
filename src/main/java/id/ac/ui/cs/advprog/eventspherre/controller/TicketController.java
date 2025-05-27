@@ -27,10 +27,14 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/tickets")
 public class TicketController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
 
     private final TicketService ticketService;
     private final TicketTypeService ticketTypeService;
@@ -302,7 +306,7 @@ public class TicketController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            System.out.println("Validating promo code: " + promoCode + ", ticketPrice: " + ticketPrice + ", quota: " + quota);
+            logger.info("Validating promo code: {}, ticketPrice: {}, quota: {}", promoCode, ticketPrice, quota);
             PromoCode promo = promoCodeService.getPromoCodeByCode(promoCode.trim());
             if (promo.isValid()) {
                 BigDecimal basePrice = ticketPrice.multiply(new BigDecimal(quota));

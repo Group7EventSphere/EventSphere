@@ -8,7 +8,6 @@ import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -48,7 +47,7 @@ public class MainController {
         List<Event> recentEvents = allPublicEvents.stream()
                 .sorted((e1, e2) -> Integer.compare(e2.getId(), e1.getId())) // Sort by ID descending (newest first)
                 .limit(5)
-                .collect(Collectors.toList());
+                .toList();
         model.addAttribute("recentEvents", recentEvents);
         
         return "dashboard";
