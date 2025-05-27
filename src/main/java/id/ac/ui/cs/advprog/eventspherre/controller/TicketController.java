@@ -172,7 +172,7 @@ public class TicketController {
             
             // Set price information
             ticket.setOriginalPrice(ticketType.getPrice());
-            ticket.setPurchasePrice(new BigDecimal(totalPrice / quota)); // Price per ticket after discount
+            ticket.setPurchasePrice(BigDecimal.valueOf(totalPrice / quota)); // Price per ticket after discount
             // Increment promo code usage if one was applied
             if (appliedPromoCode != null) {
                 ticket.setDiscountPercentage(appliedPromoCode.getDiscountPercentage());
