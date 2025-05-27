@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EventManagementServiceTest {
+class EventManagementServiceTest {
 
     private EventManagementService eventManagementService;
 
@@ -41,35 +41,29 @@ public class EventManagementServiceTest {
     private EventObserver eventObserver;
 
     @Mock
-    private Event mockEvent;
-
-    @BeforeEach
-    public void setUp() {
+    private Event mockEvent;    @BeforeEach
+    void setUp() {
         eventManagementService = new EventManagementService(
             eventRepository,
             eventSubject,
             commandInvoker
         );
-    }
-
-    @Test
-    public void testRegisterObserver() {
+    }    @Test
+    void testRegisterObserver() {
         // Act
         eventManagementService.registerObserver(eventObserver);
 
         // Assert
         verify(eventSubject).addObserver(eventObserver);
-    }
-
-    @Test
-    public void testUnregisterObserver() {
+    }    @Test
+    void testUnregisterObserver() {
         // Act
         eventManagementService.unregisterObserver(eventObserver);
 
         // Assert
         verify(eventSubject).removeObserver(eventObserver);
     }    @Test
-    public void testCreateEvent() {
+    void testCreateEvent() {
         // Arrange
         String title = "Test Event";
         String description = "Test Description";
@@ -98,12 +92,11 @@ public class EventManagementServiceTest {
 
         // Assert
         verify(commandInvoker).executeCommand(commandCaptor.capture());
-        CreateEventCommand capturedCommand = commandCaptor.getValue();
 
         // Verify command properties through reflection
         assertEquals(mockEvent, result);
     }    @Test
-    public void testUpdateEvent() {
+    void testUpdateEvent() {
         // Arrange
         Integer eventId = 1;
         String title = "Updated Event";
@@ -136,7 +129,7 @@ public class EventManagementServiceTest {
         verify(commandInvoker).executeCommand(commandCaptor.capture());
         assertEquals(mockEvent, result);
     }    @Test
-    public void testToggleEventVisibility() {
+    void testToggleEventVisibility() {
         // Arrange
         Integer eventId = 1;
 
@@ -162,10 +155,8 @@ public class EventManagementServiceTest {
         // Assert
         verify(commandInvoker).executeCommand(commandCaptor.capture());
         assertEquals(mockEvent, result);
-    }
-
-    @Test
-    public void testUndoLastOperation_Success() {
+    }    @Test
+    void testUndoLastOperation_Success() {
         // Arrange
         when(commandInvoker.hasCommandHistory()).thenReturn(true);
 
@@ -175,10 +166,8 @@ public class EventManagementServiceTest {
         // Assert
         assertTrue(result);
         verify(commandInvoker).undoLastCommand();
-    }
-
-    @Test
-    public void testUndoLastOperation_NoHistory() {
+    }    @Test
+    void testUndoLastOperation_NoHistory() {
         // Arrange
         when(commandInvoker.hasCommandHistory()).thenReturn(false);
 
@@ -188,10 +177,8 @@ public class EventManagementServiceTest {
         // Assert
         assertFalse(result);
         verify(commandInvoker, never()).undoLastCommand();
-    }
-
-    @Test
-    public void testGetEvent() {
+    }    @Test
+    void testGetEvent() {
         // Arrange
         Integer eventId = 1;
         when(eventRepository.findById(eventId)).thenReturn(java.util.Optional.of(mockEvent));
@@ -201,10 +188,8 @@ public class EventManagementServiceTest {
 
         // Assert
         assertEquals(mockEvent, result);
-    }
-
-    @Test
-    public void testGetAllEvents() {
+    }    @Test
+    void testGetAllEvents() {
         // Arrange
         List<Event> events = new ArrayList<>();
         events.add(mockEvent);
@@ -216,7 +201,7 @@ public class EventManagementServiceTest {
         // Assert
         assertEquals(events, result);
     }    @Test
-    public void testCreateEventAsync() throws Exception {
+    void testCreateEventAsync() throws Exception {
         // Arrange
         String title = "Async Event";
         String description = "Async Description";
@@ -240,10 +225,8 @@ public class EventManagementServiceTest {
         // Assert
         Event result = futureResult.get();  // Will block until complete
         assertEquals(mockEvent, result);
-    }
-
-    @Test
-    public void testUpdateEventAsync() throws Exception {
+    }    @Test
+    void testUpdateEventAsync() throws Exception {
         // Arrange
         Integer eventId = 1;
         String title = "Async Updated Event";
@@ -267,10 +250,8 @@ public class EventManagementServiceTest {
         // Assert
         Event result = futureResult.get();  // Will block until complete
         assertEquals(mockEvent, result);
-    }
-
-    @Test
-    public void testFindEventsByOrganizerId() {
+    }    @Test
+    void testFindEventsByOrganizerId() {
         // Arrange
         Integer organizerId = 123;
         List<Event> events = new ArrayList<>();
@@ -282,10 +263,8 @@ public class EventManagementServiceTest {
 
         // Assert
         assertEquals(events, result);
-    }
-
-    @Test
-    public void testFindPublicEvents() {
+    }    @Test
+    void testFindPublicEvents() {
         // Arrange
         List<Event> events = new ArrayList<>();
         events.add(mockEvent);
@@ -296,10 +275,8 @@ public class EventManagementServiceTest {
 
         // Assert
         assertEquals(events, result);
-    }
-
-    @Test
-    public void testGetEventById() {
+    }    @Test
+    void testGetEventById() {
         // Arrange
         Integer eventId = 1;
         when(eventRepository.findById(eventId)).thenReturn(java.util.Optional.of(mockEvent));

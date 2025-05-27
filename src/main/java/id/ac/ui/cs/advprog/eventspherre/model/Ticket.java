@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
-
+import org.hibernate.annotations.CreationTimestamp;
+import java.math.BigDecimal;
 import java.util.UUID;
 import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
@@ -40,6 +42,19 @@ public class Ticket {
 
     @Column(name = "transaction_id")
     private UUID transactionId;
+    
+    @Column(name = "purchase_price")
+    private BigDecimal purchasePrice;
+    
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+    
+    @Column(name = "discount_percentage")
+    private BigDecimal discountPercentage;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public Ticket() {}
 

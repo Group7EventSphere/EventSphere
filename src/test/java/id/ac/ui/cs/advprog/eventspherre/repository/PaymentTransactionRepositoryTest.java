@@ -27,7 +27,7 @@ class PaymentTransactionRepositoryTest {
         tx1.setAmount(100.0);
         tx1.setType(PaymentRequest.PaymentType.TOPUP);
         tx1.setRequestId(UUID.randomUUID());
-        tx1 = repo.saveAndFlush(tx1);
+        repo.saveAndFlush(tx1);
 
         PaymentTransaction tx2 = new PaymentTransaction();
         tx2.setStatus("SOFT_DELETED");

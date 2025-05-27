@@ -7,11 +7,13 @@ import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.model.PaymentRequest;
 import id.ac.ui.cs.advprog.eventspherre.model.PaymentTransaction;
+import id.ac.ui.cs.advprog.eventspherre.model.PromoCode;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import id.ac.ui.cs.advprog.eventspherre.service.PaymentService;
+import id.ac.ui.cs.advprog.eventspherre.service.PromoCodeService;
 import id.ac.ui.cs.advprog.eventspherre.handler.PaymentHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,15 +22,16 @@ import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,13 +54,14 @@ class TicketControllerTest {
 
     @Autowired MockMvc mockMvc;
 
-    @MockBean TicketService            ticketService;
-    @MockBean TicketTypeService        ticketTypeService;
-    @MockBean UserService              userService;
-    @MockBean EventManagementService   eventManagementService;
-    @MockBean AuthenticationProvider   authenticationProvider;
-    @MockBean PaymentHandler           paymentHandler;
-    @MockBean PaymentService           paymentService;
+    @MockitoBean TicketService            ticketService;
+    @MockitoBean TicketTypeService        ticketTypeService;
+    @MockitoBean UserService              userService;
+    @MockitoBean EventManagementService   eventManagementService;
+    @MockitoBean AuthenticationProvider   authenticationProvider;
+    @MockitoBean PaymentHandler           paymentHandler;
+    @MockitoBean PaymentService           paymentService;
+    @MockitoBean PromoCodeService         promoCodeService;
 
     @InjectMocks
     TicketController ticketController;
@@ -389,5 +393,163 @@ class TicketControllerTest {
                 .andExpect(redirectedUrl("/tickets/create?ticketTypeId=" + typeId + "&quota=2"))
                 .andExpect(flash().attribute("error", "Insufficient balance. Please top up your account."))
                 .andExpect(model().attributeDoesNotExist("ticket"));  // optional
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should create ticket with promo code discount")
+    void createTicket_withValidPromoCode_shouldApplyDiscount() throws Exception {
+        // Setup promo code
+        PromoCode promoCode = PromoCode.builder()
+                .id(1)
+                .code("SAVE20")
+                .discountPercentage(new BigDecimal("20"))
+                .validFrom(LocalDate.now().minusDays(1))
+                .validUntil(LocalDate.now().plusDays(30))
+                .maxUsage(100)
+                .currentUsage(5)
+                .isActive(true)
+                .organizerId(1)
+                .build();
+
+        User organizer = new User();
+        organizer.setId(1);
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+        when(promoCodeService.getPromoCodeByCode("SAVE20")).thenReturn(promoCode);
+        when(userService.getUserById(1)).thenReturn(organizer);
+        when(promoCodeService.updatePromoCode(eq(1), any(PromoCode.class), eq(organizer))).thenReturn(promoCode);
+
+        // Mock successful payment with discounted amount
+        doAnswer(invocation -> {
+            PaymentRequest request = invocation.getArgument(0);
+            request.setProcessed(true);
+            request.setMessage("Purchase successful with promo code");
+            return null;
+        }).when(paymentHandler).handle(any(PaymentRequest.class));
+
+        PaymentTransaction mockTransaction = PaymentTransaction.builder()
+                .id(UUID.randomUUID())
+                .userId(attendee.getId())
+                .amount(80.0) // 100 - 20% discount = 80
+                .type(PaymentRequest.PaymentType.PURCHASE)
+                .status("SUCCESS")
+                .build();
+        when(paymentService.persistRequestAndConvert(any(PaymentRequest.class), eq("SUCCESS")))
+                .thenReturn(mockTransaction);
+
+        mockMvc.perform(post("/tickets/create")
+                        .with(csrf())
+                        .param("ticketTypeId", typeId.toString())
+                        .param("quota", "1")
+                        .param("promoCode", "SAVE20"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tickets"))
+                .andExpect(flash().attribute("message", "Successfully purchased 1 ticket(s). with promo code applied!"));
+
+        // Verify promo code service was called to update usage
+        verify(promoCodeService).updatePromoCode(eq(1), any(PromoCode.class), eq(organizer));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should reject invalid promo code")
+    void createTicket_withInvalidPromoCode_shouldRejectWithError() throws Exception {
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+        when(promoCodeService.getPromoCodeByCode("INVALID")).thenThrow(new IllegalArgumentException("Promo code not found"));
+
+        mockMvc.perform(post("/tickets/create")
+                        .with(csrf())
+                        .param("ticketTypeId", typeId.toString())
+                        .param("quota", "1")
+                        .param("promoCode", "INVALID"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tickets/create?ticketTypeId=" + typeId + "&quota=1"))
+                .andExpect(flash().attribute("error", "Promo code not found"));
+
+        // Verify payment handler was not called
+        verify(paymentHandler, never()).handle(any(PaymentRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should reject expired promo code")
+    void createTicket_withExpiredPromoCode_shouldRejectWithError() throws Exception {
+        // Setup expired promo code
+        PromoCode expiredPromoCode = PromoCode.builder()
+                .id(1)
+                .code("EXPIRED")
+                .discountPercentage(new BigDecimal("10"))
+                .validFrom(LocalDate.now().minusDays(30))
+                .validUntil(LocalDate.now().minusDays(1)) // Expired yesterday
+                .maxUsage(100)
+                .currentUsage(5)
+                .isActive(true)
+                .organizerId(1)
+                .build();
+
+        when(userService.getUserByEmail("attendee@example.com")).thenReturn(attendee);
+        when(ticketTypeService.getTicketTypeById(typeId)).thenReturn(Optional.of(sampleType));
+        when(promoCodeService.getPromoCodeByCode("EXPIRED")).thenReturn(expiredPromoCode);
+
+        mockMvc.perform(post("/tickets/create")
+                        .with(csrf())
+                        .param("ticketTypeId", typeId.toString())
+                        .param("quota", "1")
+                        .param("promoCode", "EXPIRED"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tickets/create?ticketTypeId=" + typeId + "&quota=1"))
+                .andExpect(flash().attribute("error", "Invalid or expired promo code"));
+
+        verify(paymentHandler, never()).handle(any(PaymentRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should validate promo code via API")
+    void validatePromoCode_withValidCode_shouldReturnDiscountDetails() throws Exception {
+        PromoCode validPromoCode = PromoCode.builder()
+                .id(1)
+                .code("SAVE15")
+                .discountPercentage(new BigDecimal("15"))
+                .validFrom(LocalDate.now().minusDays(1))
+                .validUntil(LocalDate.now().plusDays(30))
+                .maxUsage(100)
+                .currentUsage(10)
+                .isActive(true)
+                .organizerId(1)
+                .build();
+
+        when(promoCodeService.getPromoCodeByCode("SAVE15")).thenReturn(validPromoCode);
+
+        mockMvc.perform(post("/tickets/validate-promo")
+                        .with(csrf())
+                        .param("promoCode", "SAVE15")
+                        .param("ticketPrice", "100.00")
+                        .param("quota", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(true))
+                .andExpect(jsonPath("$.discountPercentage").value(15))
+                .andExpect(jsonPath("$.discountAmount").value(30.0))
+                .andExpect(jsonPath("$.finalPrice").value(170.0))
+                .andExpect(jsonPath("$.message").value("Promo code applied successfully!"));
+    }
+
+    @Test
+    @WithMockUser(username = "attendee@example.com", roles = "ATTENDEE")
+    @DisplayName("Should reject invalid promo code via API")
+    void validatePromoCode_withInvalidCode_shouldReturnError() throws Exception {
+        when(promoCodeService.getPromoCodeByCode("NOTFOUND")).thenThrow(new IllegalArgumentException("Promo code not found"));
+
+        mockMvc.perform(post("/tickets/validate-promo")
+                        .with(csrf())
+                        .param("promoCode", "NOTFOUND")
+                        .param("ticketPrice", "100.00")
+                        .param("quota", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(false))
+                .andExpect(jsonPath("$.message").value("Promo code not found"));
     }
 }

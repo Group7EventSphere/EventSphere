@@ -1,8 +1,6 @@
 package id.ac.ui.cs.advprog.eventspherre.service;
 
 import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
-
-import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 import id.ac.ui.cs.advprog.eventspherre.model.Ticket;
 import id.ac.ui.cs.advprog.eventspherre.model.TicketType;
 import id.ac.ui.cs.advprog.eventspherre.model.*;
@@ -23,11 +21,11 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
     private final TicketTypeRepository ticketTypeRepository;
-
-
     @Override
     public List<Ticket> createTicket(Ticket ticket, int quota) {
-        TicketType ticketType = ticket.getTicketType();        TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
+        TicketType ticketType = ticket.getTicketType();
+        
+        TicketType existingType = ticketTypeRepository.findById(ticketType.getId())
                 .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_TICKET_TYPE_NOT_FOUND_SERVICE));
 
         if (existingType.getQuota() < quota) {
@@ -50,6 +48,12 @@ public class TicketServiceImpl implements TicketService {
             t.setDate(LocalDate.now());
             t.setConfirmationCode(AppConstants.TICKET_CODE_PREFIX + UUID.randomUUID().toString().substring(0, AppConstants.CONFIRMATION_CODE_LENGTH).toUpperCase());
             t.setTransactionId(ticket.getTransactionId()); // Copy transaction ID from passed ticket
+            
+            // Copy price information from the original ticket
+            t.setOriginalPrice(ticket.getOriginalPrice());
+            t.setPurchasePrice(ticket.getPurchasePrice());
+            t.setDiscountPercentage(ticket.getDiscountPercentage());
+            
             tickets.add(ticketRepository.save(t));
         }
 

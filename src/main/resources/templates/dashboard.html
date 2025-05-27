@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - EventSphere</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -35,60 +37,183 @@
     <!-- Include the navbar fragment -->
     <div th:replace="~{fragments/navbar :: navbar}"></div>
     
-    <!-- Main content container -->
-    <div class="main-content with-navbar">
-        <div class="dashboard-content">
-            <h2>Welcome to Your Dashboard</h2>
-            <p>This is where you'll manage your events and tickets.</p>
-            
-            <!-- User Profile Information -->
-            <div class="card">
-                <h3>Profile Information</h3>
-                <div class="profile-details">
-                    <p><strong>Name:</strong> <span th:text="${user.name}">User Name</span></p>
-                    <p><strong>Email:</strong> <span th:text="${user.email}">user@example.com</span></p>
-                    
-                    <!-- Show different content for guests vs authenticated users -->
-                    <div th:if="${isGuest}">
-                        <p class="guest-message">You are browsing as a guest. <a th:href="@{/login}" class="btn-link">Login</a> or <a th:href="@{/register}" class="btn-link">Register</a> to access all features.</p>
-                    </div>
-                    <div th:unless="${isGuest}">
-                        <p><strong>Phone:</strong> <span th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not provided'}">Phone Number</span></p>
-                        <p><strong>Balance:</strong> $<span th:text="${user.balance}">0.00</span></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-container" th:if="${!#lists.isEmpty(ads)}">
-                <div class="ads-carousel">
-                    <img th:each="ad : ${ads}"
-                         th:src="@{${ad.imageUrl}}"
-                         class="carousel-image"
-                         alt="Ad image"/>
-                </div>
-            </div>
-            
-            <!-- Placeholder for future dashboard content -->
-            <div class="card card-highlight">
-                <h3>Coming Soon</h3>
-                <p>Event management features are under development.</p>
+    <!-- Jumbotron Section (Full Width) -->
+    <div class="jumbotron-section">
+        <!-- Background Image -->
+        <div class="jumbotron-background">
+            <!-- Gradient Overlay with reduced opacity -->
+            <div class="jumbotron-overlay"></div>
+        </div>
+        
+        <!-- Jumbotron Content -->
+        <div class="jumbotron-content">
+            <!-- Buttons at the bottom with no text overlay -->
+            <div class="jumbotron-buttons">
+                <a th:href="@{/events}" class="btn jumbotron-btn-primary">
+                    Explore Events
+                </a>
+                <a th:href="@{/about}" class="btn jumbotron-btn-secondary">
+                    Learn More
+                </a>
             </div>
         </div>
     </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function(){
-        const slides = document.querySelectorAll('.carousel-image');
-        if (slides.length > 0) {
-            let idx = 0;
-            slides[idx].classList.add('active');
-            setInterval(() => {
-                slides[idx].classList.remove('active');
-                idx = (idx + 1) % slides.length;
-                slides[idx].classList.add('active');
-            }, 4000);
-        }
-    });
-</script>
+    
+    <!-- Main content container -->
+    <div class="main-content with-navbar" style="margin-top: 30px;">
+        
+        <div class="admin-header">
+            <h2 class="admin-title">Dashboard</h2>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <!-- User Info Card -->
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div style="padding: 20px;">
+                    <h4 style="margin: 0 0 16px 0; font-size: 1.125rem; font-weight: 600;">Your Profile</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div>
+                            <span style="opacity: 0.9;">Name:</span>
+                            <strong style="margin-left: 8px;" th:text="${user.name}">User Name</strong>
+                        </div>
+                        <div>
+                            <span style="opacity: 0.9;">Email:</span>
+                            <strong style="margin-left: 8px;" th:text="${user.email}">user@example.com</strong>
+                        </div>
+                        <div th:unless="${isGuest}">
+                            <span style="opacity: 0.9;">Balance:</span>
+                            <strong style="margin-left: 8px;">IDR <span th:text="${#numbers.formatDecimal(user.balance, 0, 'COMMA', 2, 'POINT')}">0,00</span></strong>
+                        </div>
+                    </div>
+                    <div th:if="${isGuest}" style="margin-top: 16px;">
+                        <p style="font-size: 0.875rem; opacity: 0.9;">You are browsing as a guest.</p>
+                        <div style="margin-top: 12px;">
+                            <a th:href="@{/login}" style="background-color: white; color: #667eea; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block; margin-right: 8px;">Login</a>
+                            <a th:href="@{/register}" style="background-color: rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block;">Register</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Card -->
+            <div class="card" th:unless="${isGuest}">
+                <div class="quick-actions-content">
+                    <h4 class="quick-actions-title">Quick Actions</h4>
+                    <div class="quick-actions-list">
+                        <a th:href="@{/events}" class="btn btn-primary" style="text-align: center; display: block;">Browse Events</a>
+                        <a th:href="@{/tickets}" class="btn btn-outline-primary" style="text-align: center; display: block;">My Tickets</a>
+                        <a th:href="@{/balance}" class="btn btn-outline-primary" style="text-align: center; display: block;">Top Up Balance</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Card -->
+            <div class="card" th:unless="${isGuest}">
+                <div class="stats-card-content">
+                    <h4 class="stats-card-title">Your Stats</h4>
+                    <div class="stats-list">
+                        <div class="balance-box">
+                            <p class="balance-label">Current Balance</p>
+                            <p class="balance-value">
+                                IDR <span th:text="${#numbers.formatDecimal(user.balance, 0, 'COMMA', 2, 'POINT')}">0,00</span>
+                            </p>
+                        </div>
+                        <div class="transaction-history-link">
+                            <a th:href="@{/balance/history}">View Transaction History →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Events Section -->
+        <div class="card">
+            <div class="card-header card-header-custom">
+                <div class="header-container">
+                    <h3 class="header-title">Recent Events</h3>
+                </div>
+            </div>
+            
+            <div style="padding: 20px;">
+                <!-- Debug info - remove in production -->
+                <div th:if="${recentEvents == null}" class="debug-info">
+                    <strong>Debug:</strong> recentEvents is null
+                </div>
+                
+                <div th:if="${recentEvents != null and recentEvents.isEmpty()}" class="no-events-container">
+                    <div class="no-events-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <p class="no-events-text">No public events available at the moment.</p>
+                    <p class="no-events-subtext">Check back later for exciting new events!</p>
+                </div>
+                
+                <div th:if="${recentEvents != null and !recentEvents.isEmpty()}" class="events-grid">
+                    <div th:each="event : ${recentEvents}" class="event-card">
+                        <div class="event-card-layout">
+                            <div class="event-card-content">
+                                <h4 class="event-title">
+                                    <a th:href="@{/events/{id}(id=${event.id})}" th:text="${event.title}">Event Title</a>
+                                </h4>
+                                <p class="event-description" th:text="${#strings.abbreviate(event.description, 150)}">Event description</p>
+                                
+                                <div class="event-meta">
+                                    <div class="event-meta-item">
+                                        <svg class="event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span th:text="${event.eventDate}">2024-12-31</span>
+                                    </div>
+                                    <div class="event-meta-item" th:if="${event.location != null}">
+                                        <svg class="event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        <span th:text="${event.location}">Location</span>
+                                    </div>
+                                    <div class="event-meta-item" th:if="${event.capacity != null}">
+                                        <svg class="event-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                        </svg>
+                                        <span th:text="${event.capacity} + ' seats'">100 seats</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="event-card-action">
+                                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-primary" style="white-space: nowrap;">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="browse-all-events">
+                    <a th:href="@{/events}" class="btn btn-primary">Browse All Events</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Info for Guests -->
+        <div th:if="${isGuest}" class="card guest-info-card">
+            <div class="guest-info-card-content">
+                <h3 class="guest-info-card-title">Join EventSphere Today!</h3>
+                <p class="guest-info-card-text">Create an account to unlock all features:</p>
+                <ul class="guest-info-card-list">
+                    <li>Purchase tickets for exclusive events</li>
+                    <li>Manage your bookings and tickets</li>
+                    <li>Get personalized event recommendations</li>
+                    <li>Access member-only discounts</li>
+                </ul>
+                <a th:href="@{/register}" class="btn btn-primary">Sign Up Now</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard specific JavaScript -->
+    <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

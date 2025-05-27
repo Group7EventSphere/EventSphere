@@ -14,20 +14,27 @@ import id.ac.ui.cs.advprog.eventspherre.service.TicketService;
 import id.ac.ui.cs.advprog.eventspherre.service.TicketTypeService;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import id.ac.ui.cs.advprog.eventspherre.service.PaymentService;
+import id.ac.ui.cs.advprog.eventspherre.service.PromoCodeService;
+import id.ac.ui.cs.advprog.eventspherre.model.PromoCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/tickets")
 public class TicketController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
 
     private final TicketService ticketService;
     private final TicketTypeService ticketTypeService;
@@ -35,16 +42,19 @@ public class TicketController {
     private final EventManagementService eventManagementService;
     private final PaymentHandler paymentHandler;
     private final PaymentService paymentService;
+    private final PromoCodeService promoCodeService;
 
     public TicketController(TicketService ticketService, TicketTypeService ticketTypeService, 
                            UserService userService, EventManagementService eventManagementService,
-                           PaymentHandler paymentHandler, PaymentService paymentService) {
+                           PaymentHandler paymentHandler, PaymentService paymentService,
+                           PromoCodeService promoCodeService) {
         this.ticketService = ticketService;
         this.ticketTypeService = ticketTypeService;
         this.userService = userService;
         this.eventManagementService = eventManagementService;
         this.paymentHandler = paymentHandler;
         this.paymentService = paymentService;
+        this.promoCodeService = promoCodeService;
     }
 
     @GetMapping("/select/{eventId}")
@@ -98,6 +108,7 @@ public class TicketController {
     @PostMapping("/create")
     public String createTicket(@RequestParam("ticketTypeId") UUID ticketTypeId,
                                @RequestParam("quota") int quota,
+                               @RequestParam(value = "promoCode", required = false) String promoCode,
                                Principal principal,
                                RedirectAttributes redirectAttributes) {
 
@@ -105,8 +116,31 @@ public class TicketController {
         TicketType ticketType = ticketTypeService.getTicketTypeById(ticketTypeId)
                 .orElseThrow(() -> new IllegalArgumentException(AppConstants.ERROR_INVALID_TICKET_TYPE_ID));
 
-        // Calculate total price
-        double totalPrice = ticketType.getPrice().multiply(new java.math.BigDecimal(quota)).doubleValue();
+        // Calculate base total price
+        BigDecimal basePrice = ticketType.getPrice().multiply(new BigDecimal(quota));
+        double totalPrice = basePrice.doubleValue();
+        
+        // Apply promo code discount if provided
+        PromoCode appliedPromoCode = null;
+        if (promoCode != null && !promoCode.trim().isEmpty()) {
+            try {
+                appliedPromoCode = promoCodeService.getPromoCodeByCode(promoCode.trim());
+                if (appliedPromoCode.isValid()) {
+                    BigDecimal discountAmount = basePrice.multiply(appliedPromoCode.getDiscountPercentage().divide(new BigDecimal(100)));
+                    totalPrice = basePrice.subtract(discountAmount).doubleValue();
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "Invalid or expired promo code");
+                    redirectAttributes.addAttribute("ticketTypeId", ticketTypeId);
+                    redirectAttributes.addAttribute("quota", quota);
+                    return AppConstants.REDIRECT_TICKETS_CREATE;
+                }
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("error", "Promo code not found");
+                redirectAttributes.addAttribute("ticketTypeId", ticketTypeId);
+                redirectAttributes.addAttribute("quota", quota);
+                return AppConstants.REDIRECT_TICKETS_CREATE;
+            }
+        }
 
         // Create payment request for the purchase
         PaymentRequest paymentRequest = PaymentRequest.builder()
@@ -138,10 +172,28 @@ public class TicketController {
             Ticket ticket = new Ticket();
             ticket.setAttendee(attendee);
             ticket.setTicketType(ticketType);
-            ticket.setTransactionId(transaction.getId());            // Create multiple tickets
+            ticket.setTransactionId(transaction.getId());
+            
+            // Set price information
+            ticket.setOriginalPrice(ticketType.getPrice());
+            ticket.setPurchasePrice(BigDecimal.valueOf(totalPrice / quota)); // Price per ticket after discount
+            // Increment promo code usage if one was applied
+            if (appliedPromoCode != null) {
+                ticket.setDiscountPercentage(appliedPromoCode.getDiscountPercentage());
+                appliedPromoCode.incrementUsage();
+                promoCodeService.updatePromoCode(appliedPromoCode.getId(), appliedPromoCode, 
+                    userService.getUserById(appliedPromoCode.getOrganizerId()));
+            } else {
+                ticket.setDiscountPercentage(BigDecimal.ZERO);
+            }
+            
+            // Create multiple tickets
             ticketService.createTicket(ticket, quota);
 
-            redirectAttributes.addFlashAttribute("message", String.format(AppConstants.SUCCESS_TICKET_PURCHASED, quota));
+            String successMessage = appliedPromoCode != null ? 
+                String.format(AppConstants.SUCCESS_TICKET_PURCHASED + " with promo code applied!", quota) :
+                String.format(AppConstants.SUCCESS_TICKET_PURCHASED, quota);
+            redirectAttributes.addFlashAttribute("message", successMessage);
             return AppConstants.REDIRECT_TICKETS;
         } else {
             // Payment failed - insufficient balance
@@ -164,22 +216,42 @@ public class TicketController {
         User user = userService.getUserByEmail(principal.getName());
         List<Ticket> tickets = ticketService.getTicketsByAttendeeId(user.getId());
 
-        List<Map<String, Object>> ticketWithEventList = tickets.stream()
-                .map(ticket -> {
-                    TicketType type = ticket.getTicketType();
-                    if (type == null) return null;
+        // Group tickets by transaction ID to get quantity
+        Map<UUID, List<Ticket>> ticketsByTransaction = new HashMap<>();
+        for (Ticket ticket : tickets) {
+            if (ticket.getTransactionId() != null) {
+                ticketsByTransaction.computeIfAbsent(ticket.getTransactionId(), k -> new ArrayList<>()).add(ticket);
+            } else {
+                // Handle tickets without transaction ID (legacy data)
+                ticketsByTransaction.put(ticket.getId(), Collections.singletonList(ticket));
+            }
+        }
 
+        List<Map<String, Object>> ticketWithEventList = new ArrayList<>();
+        for (Map.Entry<UUID, List<Ticket>> entry : ticketsByTransaction.entrySet()) {
+            List<Ticket> transactionTickets = entry.getValue();
+    
+            if (!transactionTickets.isEmpty()) {
+                Ticket firstTicket = transactionTickets.get(0);
+                TicketType type = firstTicket.getTicketType();
+        
+                if (type != null) {
                     Integer eventId = type.getEventId();
                     Event event = eventManagementService.getEvent(eventId);
-                    if (event == null) return null;
+            
+                    if (event != null) {
+                        Map<String, Object> ticketEntry = new HashMap<>();
+                        ticketEntry.put(ModelAttributes.TICKET, firstTicket);
+                        ticketEntry.put(ModelAttributes.EVENT, event);
+                        ticketEntry.put("quantity", transactionTickets.size());
+                        ticketEntry.put("tickets", transactionTickets); // All tickets in this transaction
+                        ticketWithEventList.add(ticketEntry);
+                    }
+                }
+            }
+        }
 
-                    Map<String, Object> entry = new HashMap<>();
-                    entry.put(ModelAttributes.TICKET, ticket);
-                    entry.put(ModelAttributes.EVENT, event);
-                    return entry;
-                })
-                .filter(Objects::nonNull)
-                .toList();        model.addAttribute("ticketWithEventList", ticketWithEventList);
+        model.addAttribute("ticketWithEventList", ticketWithEventList);
         return AppConstants.VIEW_TICKET_LIST;
     }
 
@@ -223,5 +295,39 @@ public class TicketController {
         userService.getUserByEmail(principal.getName());
         Ticket updated = ticketService.updateTicket(id, updatedTicket);
         return ResponseEntity.ok(updated);
+    }
+    
+    // Validate promo code (API)
+    @PostMapping("/validate-promo")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> validatePromoCode(@RequestParam("promoCode") String promoCode,
+                                                                @RequestParam("ticketPrice") BigDecimal ticketPrice,
+                                                                @RequestParam("quota") int quota) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Avoid logging user-controlled data directly
+            logger.info("Validating promo code request received for validation process.");
+            PromoCode promo = promoCodeService.getPromoCodeByCode(promoCode.trim());
+            if (promo.isValid()) {
+                BigDecimal basePrice = ticketPrice.multiply(new BigDecimal(quota));
+                BigDecimal discountAmount = basePrice.multiply(promo.getDiscountPercentage().divide(new BigDecimal(100)));
+                BigDecimal finalPrice = basePrice.subtract(discountAmount);
+                
+                response.put("valid", true);
+                response.put("discountPercentage", promo.getDiscountPercentage());
+                response.put("discountAmount", discountAmount);
+                response.put("finalPrice", finalPrice);
+                response.put("message", "Promo code applied successfully!");
+            } else {
+                response.put("valid", false);
+                response.put("message", "Promo code is invalid or expired");
+            }
+        } catch (IllegalArgumentException e) {
+            response.put("valid", false);
+            response.put("message", "Promo code not found");
+        }
+        
+        return ResponseEntity.ok(response);
     }
 }

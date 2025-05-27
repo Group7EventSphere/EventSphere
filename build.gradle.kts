@@ -37,32 +37,32 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
-
+    
     // Thymeleaf extras
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
-
+    
     // MapStruct
     implementation("org.mapstruct:mapstruct:$mapStructVersion")
-
+    
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:$jwtVersion")
-
+    
     // Compile only dependencies
     compileOnly("org.projectlombok:lombok")
-
+    
     // Annotation processors
     annotationProcessor("org.mapstruct:mapstruct-processor:$mapStructVersion")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
-
+    
     // Development only
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-
+    
     // Runtime only dependencies
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jwtVersion")
-
+    
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
@@ -72,7 +72,7 @@ dependencies {
 
     // RabbitMQ dependency
     testImplementation("org.springframework.amqp:spring-rabbit-test")
-
+    
     // Test runtime only
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")

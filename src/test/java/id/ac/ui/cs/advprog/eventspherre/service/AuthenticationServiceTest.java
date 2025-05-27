@@ -60,8 +60,7 @@ class AuthenticationServiceTest {
         when(passwordEncoder.encode("password123")).thenReturn("encoded_password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
-        User result = authService.signup(regularUserDto);
+        authService.signup(regularUserDto);
 
         // Assert
         verify(passwordEncoder).encode("password123");
@@ -82,7 +81,7 @@ class AuthenticationServiceTest {
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        User result = authService.signup(adminUserDto);
+        authService.signup(adminUserDto);
 
         // Assert
         verify(passwordEncoder).encode("adminpass");
@@ -100,7 +99,7 @@ class AuthenticationServiceTest {
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        User result = authService.signup(organizerUserDto);
+        authService.signup(organizerUserDto);
 
         // Assert
         verify(passwordEncoder).encode("orgpass");

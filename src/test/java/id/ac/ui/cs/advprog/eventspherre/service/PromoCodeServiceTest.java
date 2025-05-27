@@ -278,4 +278,146 @@ class PromoCodeServiceTest {
         verify(promoCodeRepository, times(1)).existsByCode("NEWCODE");
         verify(promoCodeRepository, times(1)).existsByCode("SAVE20");
     }
+    
+    @Test
+    void testIsPromoCodeValidInactive() {
+        promoCode.setIsActive(false);
+        when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(promoCode));
+        
+        boolean isValid = promoCodeService.isPromoCodeValid("SAVE20");
+        
+        assertFalse(isValid);
+        verify(promoCodeRepository, times(1)).findByCode("SAVE20");
+    }
+    
+    @Test
+    void testIsPromoCodeValidExpired() {
+        promoCode.setValidUntil(LocalDate.now().minusDays(1));
+        when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(promoCode));
+        
+        boolean isValid = promoCodeService.isPromoCodeValid("SAVE20");
+        
+        assertFalse(isValid);
+        verify(promoCodeRepository, times(1)).findByCode("SAVE20");
+    }
+    
+    @Test
+    void testIsPromoCodeValidNotYetActive() {
+        promoCode.setValidFrom(LocalDate.now().plusDays(1));
+        when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(promoCode));
+        
+        boolean isValid = promoCodeService.isPromoCodeValid("SAVE20");
+        
+        assertFalse(isValid);
+        verify(promoCodeRepository, times(1)).findByCode("SAVE20");
+    }
+    
+    @Test
+    void testIsPromoCodeValidMaxUsageReached() {
+        promoCode.setCurrentUsage(100);
+        when(promoCodeRepository.findByCode("SAVE20")).thenReturn(Optional.of(promoCode));
+        
+        boolean isValid = promoCodeService.isPromoCodeValid("SAVE20");
+        
+        assertFalse(isValid);
+        verify(promoCodeRepository, times(1)).findByCode("SAVE20");
+    }
+    
+    @Test
+    void testGetPromoCodeByCodeNotFound() {
+        when(promoCodeRepository.findByCode("NOTEXIST")).thenReturn(Optional.empty());
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            promoCodeService.getPromoCodeByCode("NOTEXIST");
+        });
+        
+        verify(promoCodeRepository, times(1)).findByCode("NOTEXIST");
+    }
+    
+    @Test
+    void testUpdatePromoCodeWithSameCode() {
+        PromoCode updatedPromoCode = PromoCode.builder()
+                .code("SAVE20") // Same code
+                .description("Updated description")
+                .discountPercentage(new BigDecimal("25.00"))
+                .validFrom(LocalDate.now().minusDays(1))
+                .validUntil(LocalDate.now().plusDays(10))
+                .maxUsage(150)
+                .isActive(true)
+                .build();
+        
+        when(promoCodeRepository.findById(promoCodeId)).thenReturn(Optional.of(promoCode));
+        when(promoCodeRepository.save(any(PromoCode.class))).thenReturn(promoCode);
+        
+        PromoCode updated = promoCodeService.updatePromoCode(promoCodeId, updatedPromoCode, organizer);
+        
+        assertNotNull(updated);
+        verify(promoCodeRepository, times(1)).save(any(PromoCode.class));
+        verify(promoCodeRepository, never()).existsByCode("SAVE20");
+    }
+    
+    @Test
+    void testUpdatePromoCodeWithExistingNewCode() {
+        PromoCode updatedPromoCode = PromoCode.builder()
+                .code("EXISTING")
+                .description("Updated description")
+                .discountPercentage(new BigDecimal("25.00"))
+                .validFrom(LocalDate.now().minusDays(1))
+                .validUntil(LocalDate.now().plusDays(10))
+                .maxUsage(150)
+                .isActive(true)
+                .build();
+        
+        when(promoCodeRepository.findById(promoCodeId)).thenReturn(Optional.of(promoCode));
+        when(promoCodeRepository.existsByCode("EXISTING")).thenReturn(true);
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            promoCodeService.updatePromoCode(promoCodeId, updatedPromoCode, organizer);
+        });
+        
+        verify(promoCodeRepository, times(1)).existsByCode("EXISTING");
+        verify(promoCodeRepository, never()).save(any(PromoCode.class));
+    }
+    
+    @Test
+    void testUpdatePromoCodeNotFound() {
+        PromoCode updatedPromoCode = PromoCode.builder()
+                .code("UPDATED")
+                .description("Updated description")
+                .build();
+        
+        when(promoCodeRepository.findById(999)).thenReturn(Optional.empty());
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            promoCodeService.updatePromoCode(999, updatedPromoCode, organizer);
+        });
+        
+        verify(promoCodeRepository, times(1)).findById(999);
+        verify(promoCodeRepository, never()).save(any(PromoCode.class));
+    }
+    
+    @Test
+    void testDeletePromoCodeNotFound() {
+        when(promoCodeRepository.findById(999)).thenReturn(Optional.empty());
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            promoCodeService.deletePromoCode(999, organizer);
+        });
+        
+        verify(promoCodeRepository, times(1)).findById(999);
+        verify(promoCodeRepository, never()).delete(any(PromoCode.class));
+    }
+    
+    @Test
+    void testSearchPromoCodesByOrganizerWithNullKeyword() {
+        List<PromoCode> promoCodes = Arrays.asList(promoCode);
+        when(promoCodeRepository.findByOrganizerId(organizer.getId())).thenReturn(promoCodes);
+        
+        List<PromoCode> found = promoCodeService.searchPromoCodesByOrganizer(organizer, null);
+        
+        assertEquals(1, found.size());
+        assertEquals(promoCode, found.get(0));
+        
+        verify(promoCodeRepository, times(1)).findByOrganizerId(organizer.getId());
+    }
 }

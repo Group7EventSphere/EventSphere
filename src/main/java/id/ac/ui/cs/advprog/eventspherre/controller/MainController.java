@@ -1,11 +1,13 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.User;
-import id.ac.ui.cs.advprog.eventspherre.service.AdService;
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 import java.security.Principal;
+import java.util.List;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class MainController {
     
     private final UserService userService;
-    private final AdService adService;
+    private final EventManagementService eventManagementService;
 
-    public MainController(UserService userService, AdService adService) {
+    public MainController(UserService userService, EventManagementService eventManagementService) {
         this.userService = userService;
-        this.adService = adService;
+        this.eventManagementService = eventManagementService;
     }
     
     @GetMapping("/")
@@ -40,6 +42,15 @@ public class MainController {
             model.addAttribute("user", guestUser);
             model.addAttribute("isGuest", true);
         }
+        
+        // Get top 5 recent public events
+        List<Event> allPublicEvents = eventManagementService.findPublicEvents();
+        List<Event> recentEvents = allPublicEvents.stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getId(), e1.getId())) // Sort by ID descending (newest first)
+                .limit(5)
+                .toList();
+        model.addAttribute("recentEvents", recentEvents);
+        
         return "dashboard";
     }
     

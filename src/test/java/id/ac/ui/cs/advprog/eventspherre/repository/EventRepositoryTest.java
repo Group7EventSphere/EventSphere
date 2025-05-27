@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest(properties = "spring.sql.init.mode=never")
-public class EventRepositoryTest {
+class EventRepositoryTest {
 
     @Autowired
     private EventRepository eventRepository;
@@ -112,12 +112,10 @@ public class EventRepositoryTest {
         
         assertThat(eventRepository.existsById(eventId)).isFalse();
         assertThat(eventRepository.findById(eventId)).isNotPresent();
-    }
-
-    @Test
+    }    @Test
     @DisplayName("Count Events")
     void testCountEvents() {
-        assertThat(eventRepository.count()).isEqualTo(0L);
+        assertThat(eventRepository.count()).isZero();
 
         Event event1 = createTestEvent("Event 1", "Description 1", "2024-12-01", "Jakarta", 1);
         Event event2 = createTestEvent("Event 2", "Description 2", "2024-12-15", "Bandung", 1);

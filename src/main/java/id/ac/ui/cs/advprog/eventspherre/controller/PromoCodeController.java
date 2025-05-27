@@ -41,8 +41,6 @@ public class PromoCodeController {
     @GetMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public String showCreateForm(Model model, Principal principal) {
-        User organizer = userService.findByEmail(principal.getName());
-        
         PromoCode promoCode = PromoCode.builder()
                 .isActive(true)
                 .currentUsage(0)

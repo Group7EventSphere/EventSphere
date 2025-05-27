@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ToggleEventVisibilityCommandTest {
+class ToggleEventVisibilityCommandTest {
 
     @Mock
     private EventRepository eventRepository;
@@ -35,7 +35,7 @@ public class ToggleEventVisibilityCommandTest {
     private final Map<String, Object> eventDetails = new HashMap<>();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         // Setup event details map
         eventDetails.put("title", "Test Event");
         eventDetails.put("isPublic", true);
@@ -49,7 +49,7 @@ public class ToggleEventVisibilityCommandTest {
     }
 
     @Test
-    public void testExecuteTogglePublicToPrivate() {
+    void testExecuteTogglePublicToPrivate() {
         // Setup
         when(event.isPublic()).thenReturn(true);
         when(event.getDetails()).thenReturn(eventDetails);
@@ -68,7 +68,7 @@ public class ToggleEventVisibilityCommandTest {
     }
 
     @Test
-    public void testExecuteTogglePrivateToPublic() {
+    void testExecuteTogglePrivateToPublic() {
         // Setup
         when(event.isPublic()).thenReturn(false);
         eventDetails.put("isPublic", false);
@@ -88,7 +88,7 @@ public class ToggleEventVisibilityCommandTest {
     }
 
     @Test
-    public void testExecuteEventNotFound() {
+    void testExecuteEventNotFound() {
         // Setup
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
@@ -100,7 +100,7 @@ public class ToggleEventVisibilityCommandTest {
         verify(eventRepository, never()).save(any(Event.class));
         verify(eventSubject, never()).notifyEventVisibilityChanged(any(Event.class), anyBoolean());
     }    @Test
-    public void testUndo() {
+    void testUndo() {
         // Setup - Execute first to set the previous state
         when(event.isPublic()).thenReturn(true);
         when(event.getDetails()).thenReturn(eventDetails);
@@ -128,9 +128,8 @@ public class ToggleEventVisibilityCommandTest {
         verify(event).setPublic(previousVisibilityState);
         verify(eventRepository).save(event);  // Now this will only verify save calls after the reset
         verify(eventSubject).notifyEventVisibilityChanged(event, previousVisibilityState);
-        assertEquals(previousVisibilityState, eventDetails.get("isPublic"));
-    }    @Test
-    public void testUndoEventNotFound() {
+        assertEquals(previousVisibilityState, eventDetails.get("isPublic"));    }    @Test
+    void testUndoEventNotFound() {
         // Setup - Execute first
         when(event.isPublic()).thenReturn(true);
         when(event.getDetails()).thenReturn(eventDetails);
@@ -155,7 +154,7 @@ public class ToggleEventVisibilityCommandTest {
     }
 
     @Test
-    public void testGetEvent() {
+    void testGetEvent() {
         // Arrange
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenReturn(event);
