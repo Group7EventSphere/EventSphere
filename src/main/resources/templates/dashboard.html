@@ -8,7 +8,6 @@
     <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
         .carousel-container {
             width: 100%;
@@ -32,6 +31,7 @@
             opacity: 1;
         }
     </style>
+
 </head>
 <body>
     <!-- Include the navbar fragment -->
@@ -151,6 +151,15 @@
                     <p class="no-events-subtext">Check back later for exciting new events!</p>
                 </div>
                 
+                <div class="carousel-container" th:if="${!#lists.isEmpty(ads)}">
+                <div class="ads-carousel">
+                    <img th:each="ad : ${ads}"
+                         th:src="@{${ad.imageUrl}}"
+                         class="carousel-image"
+                         alt="Ad image"/>
+                </div>
+                </div>  
+                
                 <div th:if="${recentEvents != null and !recentEvents.isEmpty()}" class="events-grid">
                     <div th:each="event : ${recentEvents}" class="event-card">
                         <div class="event-card-layout">
@@ -215,5 +224,20 @@
     
     <!-- Dashboard specific JavaScript -->
     <script th:src="@{/js/dashboard.js}"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        const slides = document.querySelectorAll('.carousel-image');
+        if (slides.length > 0) {
+            let idx = 0;
+            slides[idx].classList.add('active');
+            setInterval(() => {
+                slides[idx].classList.remove('active');
+                idx = (idx + 1) % slides.length;
+                slides[idx].classList.add('active');
+            }, 4000);
+        }
+    });
+</script>
 </body>
 </html>
