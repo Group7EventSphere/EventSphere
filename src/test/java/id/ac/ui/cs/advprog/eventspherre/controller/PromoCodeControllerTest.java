@@ -9,17 +9,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -35,13 +34,13 @@ class PromoCodeControllerTest {
     @Autowired
     private MockMvc mockMvc;
     
-    @MockBean
+    @MockitoBean
     private PromoCodeService promoCodeService;
     
-    @MockBean
+    @MockitoBean
     private UserService userService;
     
-    @MockBean
+    @MockitoBean
     private AuthenticationProvider authenticationProvider;
     
     private User organizer;
@@ -190,5 +189,76 @@ class PromoCodeControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/promo-codes"))
                 .andExpect(flash().attribute("successMessage", "Promo code updated successfully!"));
+    }
+    
+    @Test
+    @WithMockUser(username = "organizer@test.com", roles = {"ORGANIZER"})
+    void testCreatePromoCodeWithServiceException() throws Exception {
+        when(userService.findByEmail("organizer@test.com")).thenReturn(organizer);
+        when(promoCodeService.createPromoCode(any(PromoCode.class), eq(organizer)))
+                .thenThrow(new IllegalArgumentException("Promo code already exists"));
+        
+        mockMvc.perform(post("/promo-codes/create")
+                        .param("code", "DUPLICATE")
+                        .param("description", "Duplicate code")
+                        .param("discountPercentage", "20.00")
+                        .param("validFrom", "2024-01-01")
+                        .param("validUntil", "2024-12-31")
+                        .param("maxUsage", "100")
+                        .with(user("organizer@test.com").roles("ORGANIZER"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/promo-codes/create"))
+                .andExpect(flash().attribute("errorMessage", "Promo code already exists"));
+    }
+    
+    @Test
+    @WithMockUser(username = "organizer@test.com", roles = {"ORGANIZER"})
+    void testDeletePromoCodeWithServiceException() throws Exception {
+        when(userService.findByEmail("organizer@test.com")).thenReturn(organizer);
+        doThrow(new RuntimeException("Cannot delete promo code"))
+                .when(promoCodeService).deletePromoCode(1, organizer);
+        
+        mockMvc.perform(post("/promo-codes/delete/1")
+                        .with(user("organizer@test.com").roles("ORGANIZER"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/promo-codes"))
+                .andExpect(flash().attribute("errorMessage", "Cannot delete promo code"));
+    }
+    
+    @Test
+    @WithMockUser(username = "organizer@test.com", roles = {"ORGANIZER"})
+    void testUpdatePromoCodeWithServiceException() throws Exception {
+        when(userService.findByEmail("organizer@test.com")).thenReturn(organizer);
+        when(promoCodeService.updatePromoCode(eq(1), any(PromoCode.class), eq(organizer)))
+                .thenThrow(new IllegalArgumentException("Unauthorized to update this promo code"));
+        
+        mockMvc.perform(post("/promo-codes/edit/1")
+                        .param("code", "TEST30")
+                        .param("description", "Updated discount")
+                        .param("discountPercentage", "30.00")
+                        .param("validFrom", "2024-01-01")
+                        .param("validUntil", "2024-12-31")
+                        .param("maxUsage", "150")
+                        .param("isActive", "true")
+                        .with(user("organizer@test.com").roles("ORGANIZER"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/promo-codes/edit/1"))
+                .andExpect(flash().attribute("errorMessage", "Unauthorized to update this promo code"));
+    }
+    
+    @Test
+    @WithMockUser(username = "organizer@test.com", roles = {"ORGANIZER"})
+    void testShowEditFormWithNonExistentPromoCode() throws Exception {
+        when(userService.findByEmail("organizer@test.com")).thenReturn(organizer);
+        when(promoCodeService.getPromoCodeById(999))
+                .thenThrow(new IllegalArgumentException("Promo code not found"));
+        
+        mockMvc.perform(get("/promo-codes/edit/999")
+                        .with(user("organizer@test.com").roles("ORGANIZER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/promo-codes"));
     }
 }

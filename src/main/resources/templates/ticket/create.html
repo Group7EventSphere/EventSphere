@@ -41,11 +41,53 @@
             </div>
         </div>
 
+        <!-- Promo Code Section -->
+        <div class="promo-section" style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+            <h4>Promo Code</h4>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="promo-code-input" name="promoCode" placeholder="Enter promo code" 
+                       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <button type="button" id="apply-promo-btn" 
+                        style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Apply
+                </button>
+            </div>
+            <div id="promo-message" style="margin-top: 8px; font-size: 14px;"></div>
+            <div id="discount-details" style="margin-top: 10px; font-size: 14px; display: none;">
+                <div>Discount: <span id="discount-amount"></span></div>
+            </div>
+        </div>
+
+        <!-- Price Details Section -->
+        <div class="price-details-section" style="margin: 20px 0; padding: 15px; background-color: #f7f7f7; border-radius: 8px;">
+            <h4>Price Details</h4>
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                <span>Ticket Price:</span>
+                <span id="ticket-price" th:text="'IDR ' + ${#numbers.formatDecimal(ticket.ticketType.price, 0, 'COMMA', 2, 'POINT')}">IDR 0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                <span>Quantity:</span>
+                <span id="quantity-display" th:text="${quota} + ' ticket(s)'">1 ticket(s)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 8px 0; border-top: 1px solid #ddd; padding-top: 8px;">
+                <span>Subtotal:</span>
+                <span id="subtotal-price" th:text="'IDR ' + ${#numbers.formatDecimal(ticket.ticketType.price * quota, 0, 'COMMA', 2, 'POINT')}">IDR 0</span>
+            </div>
+            <div id="discount-row" style="display: none; justify-content: space-between; margin: 8px 0; color: #28a745;">
+                <span>Discount:</span>
+                <span id="discount-display"></span>
+            </div>
+            <div id="final-price-row" style="display: none; justify-content: space-between; margin: 8px 0; font-weight: bold; border-top: 1px solid #ddd; padding-top: 8px;">
+                <span>Final Price:</span>
+                <span id="final-price-display"></span>
+            </div>
+        </div>
+
         <div class="ticket-footer">
             <span>Total Payment</span>
             <span id="total-price"
                   th:attr="data-ticket-price=${ticket.ticketType != null ? ticket.ticketType.price : 0}"
-                  th:text="'IDR ' + (${ticket.ticketType != null ? ticket.ticketType.price : 0} * ${quota})">
+                  th:text="'IDR ' + ${#numbers.formatDecimal(ticket.ticketType.price * quota, 0, 'COMMA', 2, 'POINT')}">
                 IDR 0
             </span>
         </div>
@@ -62,17 +104,125 @@
         const quotaInput = document.querySelector('input[name="quota"]');
         const priceElement = document.querySelector('[data-ticket-price]');
         const totalDisplay = document.querySelector('#total-price');
+        const promoCodeInput = document.querySelector('#promo-code-input');
+        const applyPromoBtn = document.querySelector('#apply-promo-btn');
+        const promoMessage = document.querySelector('#promo-message');
+        const discountDetails = document.querySelector('#discount-details');
+        const discountAmount = document.querySelector('#discount-amount');
+        
+        let appliedPromoCode = null;
+        let originalPrice = 0;
 
         function updateTotal() {
             const quota = parseInt(quotaInput.value) || 0;
             const price = parseFloat(priceElement.dataset.ticketPrice) || 0;
-            const total = quota * price;
-            totalDisplay.textContent = "IDR " + total.toLocaleString();
+            originalPrice = quota * price;
+            
+            // Update quantity display
+            document.querySelector('#quantity-display').textContent = quota + ' ticket(s)';
+            
+            // Update subtotal
+            document.querySelector('#subtotal-price').textContent = "IDR " + originalPrice.toLocaleString('id-ID');
+            
+            let finalPrice = originalPrice;
+            if (appliedPromoCode) {
+                const discount = originalPrice * (appliedPromoCode.discountPercentage / 100);
+                finalPrice = originalPrice - discount;
+                const discountPerTicket = discount / quota;
+                
+                // Update discount display in promo section
+                discountAmount.textContent = "IDR " + discount.toLocaleString('id-ID') + " (" + appliedPromoCode.discountPercentage + "% off)";
+                discountDetails.style.display = "block";
+                
+                // Update discount and final price in price details section
+                document.querySelector('#discount-display').textContent = "-IDR " + discount.toLocaleString('id-ID') + " (" + appliedPromoCode.discountPercentage + "% off, IDR " + discountPerTicket.toLocaleString('id-ID') + " per ticket)";
+                document.querySelector('#final-price-display').textContent = "IDR " + finalPrice.toLocaleString('id-ID');
+                document.querySelector('#discount-row').style.display = "flex";
+                document.querySelector('#final-price-row').style.display = "flex";
+            } else {
+                discountDetails.style.display = "none";
+                document.querySelector('#discount-row').style.display = "none";
+                document.querySelector('#final-price-row').style.display = "none";
+            }
+            
+            totalDisplay.textContent = "IDR " + finalPrice.toLocaleString('id-ID');
+        }
+
+        function validatePromoCode() {
+            const promoCode = promoCodeInput.value.trim();
+            if (!promoCode) {
+                promoMessage.textContent = "";
+                promoMessage.style.color = "";
+                appliedPromoCode = null;
+                updateTotal();
+                return;
+            }
+
+            const quota = parseInt(quotaInput.value) || 0;
+            const price = parseFloat(priceElement.dataset.ticketPrice) || 0;
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+            fetch('/tickets/validate-promo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'promoCode': promoCode,
+                    'ticketPrice': price,
+                    'quota': quota,
+                    '_csrf': csrfToken
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.valid) {
+                    promoMessage.textContent = data.message;
+                    promoMessage.style.color = "green";
+                    appliedPromoCode = {
+                        discountPercentage: data.discountPercentage,
+                        discountAmount: data.discountAmount,
+                        finalPrice: data.finalPrice
+                    };
+                } else {
+                    promoMessage.textContent = data.message;
+                    promoMessage.style.color = "red";
+                    appliedPromoCode = null;
+                }
+                updateTotal();
+            })
+            .catch(error => {
+                console.error('Error validating promo code:', error);
+                promoMessage.textContent = `Error validating promo code: ${error.message}`;
+                promoMessage.style.color = "red";
+                appliedPromoCode = null;
+                updateTotal();
+            });
         }
 
         if (quotaInput && priceElement && totalDisplay) {
             updateTotal();
             quotaInput.addEventListener("input", updateTotal);
+        }
+
+        if (applyPromoBtn) {
+            applyPromoBtn.addEventListener("click", validatePromoCode);
+        }
+
+        if (promoCodeInput) {
+            promoCodeInput.addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    validatePromoCode();
+                }
+            });
         }
     });
 </script>

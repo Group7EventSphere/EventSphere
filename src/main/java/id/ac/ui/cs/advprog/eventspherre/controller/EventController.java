@@ -138,7 +138,7 @@ public class EventController {
             }
 
             // Updated to pass all event form parameters including capacity and isPublic
-            eventManagementService.createEvent(
+            Event createdEvent = eventManagementService.createEvent(
                     eventForm.getTitle(),
                     eventForm.getDescription(),
                     eventForm.getEventDate(),
@@ -146,6 +146,22 @@ public class EventController {
                     organizerId,
                     eventForm.getCapacity(),
                     eventForm.isPublic()            );
+            
+            // Create ticket types for the event
+            if (eventForm.getTicketTypes() != null && !eventForm.getTicketTypes().isEmpty()) {
+                for (EventForm.TicketTypeForm ticketTypeForm : eventForm.getTicketTypes()) {
+                    if (ticketTypeForm.getName() != null && !ticketTypeForm.getName().trim().isEmpty()) {
+                        ticketTypeService.create(
+                            ticketTypeForm.getName(),
+                            new java.math.BigDecimal(ticketTypeForm.getPrice()),
+                            ticketTypeForm.getAvailableSeats(),
+                            currentUser,
+                            createdEvent.getId()
+                        );
+                    }
+                }
+            }
+            
             ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_CREATED);
             return AppConstants.REDIRECT_EVENTS_MANAGE;
         } catch (NullPointerException e) {            // This catch block is specifically for the test createEvent_shouldDenyAccessForNonOrganizers
@@ -184,41 +200,65 @@ public class EventController {
     @PostMapping("/{eventId}/delete")
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     public String deleteEvent(@PathVariable Integer eventId,
-                              Principal principal,
-                              RedirectAttributes ra) {
+                          Principal principal,
+                          RedirectAttributes ra) {
         try {
             // Get the event first to check if it exists
             Event event = eventManagementService.getEventById(eventId);
+            
+            if (event == null) {
+                ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_EVENT_NOT_FOUND);
+                return AppConstants.REDIRECT_EVENTS; // Different return for event not found
+            }
 
             // Check if the current user is either an admin or the organizer of this event
-            User user = userService.getUserByEmail(principal.getName());            // Add null check for user
+            User user = userService.getUserByEmail(principal.getName());
+            
+            // Add null check for user
             if (user == null) {
                 ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_USER_NOT_FOUND);
-                return AppConstants.REDIRECT_EVENTS_MANAGE;
+                return "redirect:/login"; // Redirect to login if user not found
             }
 
             boolean isAdmin = user.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean isOrganizer = event.getOrganizerId().equals(user.getId());            if (!isAdmin && !isOrganizer) {
+            boolean isOrganizer = event.getOrganizerId().equals(user.getId());
+
+            if (!isAdmin && !isOrganizer) {
                 ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_NOT_AUTHORIZED_DELETE);
-                return AppConstants.REDIRECT_EVENTS_MANAGE;
-            }            // Delete the event
+                return "redirect:/events/" + eventId; // Redirect to event details for unauthorized access
+            }
+
+            // Delete the event
             eventManagementService.deleteEvent(eventId);
             ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_DELETED);
+            
+            return AppConstants.REDIRECT_EVENTS_MANAGE; // Success case
 
+        } catch (SecurityException e) {
+            logger.error("Security error while deleting event: {}", eventId, e);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Access denied: " + e.getMessage());
+            return "redirect:/events/" + eventId; // Return to event details for security errors
+            
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument while deleting event: {}", eventId, e);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Invalid request: " + e.getMessage());
+            return AppConstants.REDIRECT_EVENTS; // Return to events list for invalid arguments
+            
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_DELETING_EVENT, eventId, e);
             ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_DELETE_EVENT + e.getMessage());
+            return AppConstants.REDIRECT_EVENTS_MANAGE; // General error case
         }
-        return AppConstants.REDIRECT_EVENTS_MANAGE;
     }    @PostMapping("/{eventId}/toggle-visibility")
     @PreAuthorize("hasRole('ADMIN')")
     public String toggleEventVisibility(@PathVariable Integer eventId,
                                         RedirectAttributes ra) {
-        try {            Event event = eventManagementService.getEventById(eventId);
+        try {
+            Event event = eventManagementService.getEventById(eventId);
             if (event == null) {
                 ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_EVENT_NOT_FOUND);
-                return AppConstants.REDIRECT_EVENTS_MANAGE;
+                return AppConstants.REDIRECT_EVENTS; // Different return for event not found
             }
 
             // Toggle the visibility
@@ -230,14 +270,29 @@ public class EventController {
                     event.getEventDate(),
                     event.getLocation(),
                     event.getCapacity(),
-                    newVisibility            );            String visibilityStatus = newVisibility ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE;
-            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_VISIBILITY_CHANGED + visibilityStatus + ".");
+                    newVisibility
+            );
 
+            String visibilityStatus = newVisibility ? AppConstants.VISIBILITY_PUBLIC : AppConstants.VISIBILITY_PRIVATE;
+            ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_VISIBILITY_CHANGED + visibilityStatus + ".");
+            
+            return AppConstants.REDIRECT_EVENTS_MANAGE; // Success case
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument while toggling visibility for event: {}", eventId, e);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Invalid request: " + e.getMessage());
+            return AppConstants.REDIRECT_EVENTS; // Return to events list for invalid arguments
+            
+        } catch (SecurityException e) {
+            logger.error("Security error while toggling visibility for event: {}", eventId, e);
+            ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, "Access denied: " + e.getMessage());
+            return "redirect:/events/" + eventId; // Return to event details for security errors
+            
         } catch (Exception e) {
             logger.error(AppConstants.LOG_ERROR_TOGGLING_VISIBILITY, eventId, e);
             ra.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE_KEY, AppConstants.ERROR_FAILED_TO_TOGGLE_VISIBILITY + e.getMessage());
+            return "redirect:/events/" + eventId; // Return to event details for general errors
         }
-        return AppConstants.REDIRECT_EVENTS_MANAGE;
     }
 
     // --- Form backing objects ---
@@ -251,6 +306,14 @@ public class EventController {
         private String eventDate;
         private Integer capacity;
         private boolean isPublic;
-        private List<?> ticketTypes; // Added ticketTypes field to fix the error
+        private List<TicketTypeForm> ticketTypes = new ArrayList<>(); // Initialize the list
+
+        @Getter @Setter
+        public static class TicketTypeForm {
+            private String name;
+            private Double price;
+            private Integer availableSeats;
+            private String description;
+        }
     }
 }

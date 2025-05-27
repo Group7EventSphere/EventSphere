@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TicketTest {
@@ -39,6 +40,22 @@ class TicketTest {
         assertEquals(attendee, ticket.getAttendee());
         assertEquals(confirmationCode, ticket.getConfirmationCode());
         assertEquals(attendee.getId(), ticket.getUserId());
+    }
+    
+    @Test
+    void testTicketPriceFields() {
+        // Test setting price fields
+        BigDecimal originalPrice = new BigDecimal("100.00");
+        BigDecimal purchasePrice = new BigDecimal("90.00");
+        BigDecimal discountPercentage = new BigDecimal("10.00");
+        
+        ticket.setOriginalPrice(originalPrice);
+        ticket.setPurchasePrice(purchasePrice);
+        ticket.setDiscountPercentage(discountPercentage);
+        
+        assertEquals(originalPrice, ticket.getOriginalPrice());
+        assertEquals(purchasePrice, ticket.getPurchasePrice());
+        assertEquals(discountPercentage, ticket.getDiscountPercentage());
     }
 
     @Test
@@ -88,5 +105,18 @@ class TicketTest {
 
         assertThrows(SecurityException.class, () -> ticket.updateTicketType(newType, badUser));
         assertThrows(SecurityException.class, () -> ticket.updateConfirmationCode("TKT-FAKE000", badUser));
+    }
+    
+    @Test
+    @DisplayName("Ticket - should have createdAt field")
+    void testCreatedAtField() {
+        // Test that createdAt field exists and can be set
+        LocalDateTime testTime = LocalDateTime.now();
+        ticket.setCreatedAt(testTime);
+        
+        assertEquals(testTime, ticket.getCreatedAt());
+        
+        // @CreationTimestamp will automatically set this when persisted to DB
+        // so we don't need to test the @PrePersist behavior in unit tests
     }
 }

@@ -61,6 +61,11 @@ class TicketServiceTest {
         UUID typeId = UUID.randomUUID();
         sampleTicket.getTicketType().setId(typeId);
         sampleTicket.getTicketType().setQuota(10);
+        
+        // Set price fields
+        sampleTicket.setOriginalPrice(new BigDecimal("100.00"));
+        sampleTicket.setPurchasePrice(new BigDecimal("90.00"));
+        sampleTicket.setDiscountPercentage(new BigDecimal("10.00"));
 
         when(ticketTypeRepository.findById(typeId)).thenReturn(Optional.of(sampleTicket.getTicketType()));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
@@ -76,6 +81,13 @@ class TicketServiceTest {
         assertEquals(1, savedTickets.size());
         assertEquals(9, sampleTicket.getTicketType().getQuota()); // 10 - 1
         verify(ticketRepository, times(1)).save(any(Ticket.class));
+        
+        // Verify price fields are copied
+        verify(ticketRepository).save(argThat(ticket -> 
+            ticket.getOriginalPrice().equals(new BigDecimal("100.00")) &&
+            ticket.getPurchasePrice().equals(new BigDecimal("90.00")) &&
+            ticket.getDiscountPercentage().equals(new BigDecimal("10.00"))
+        ));
     }
 
     @Test
@@ -138,14 +150,16 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("Should return all tickets for an attendee")
-    void getTicketsByAttendeeId_shouldReturnList() {
-        when(ticketRepository.findAllByUserId(user.getId())).thenReturn(List.of(sampleTicket));
+    @DisplayName("Should return all tickets for an attendee sorted by createdAt desc")
+    void getTicketsByAttendeeId_shouldReturnListSortedByCreatedAtDesc() {
+        // Use ArrayList instead of List.of() to allow sorting
+        when(ticketRepository.findAllByUserId(user.getId())).thenReturn(new ArrayList<>(List.of(sampleTicket)));
 
         List<Ticket> tickets = ticketService.getTicketsByAttendeeId(user.getId());
 
         assertEquals(1, tickets.size());
         assertEquals(sampleTicket, tickets.get(0));
+        verify(ticketRepository).findAllByUserId(user.getId());
     }
 
     @Test

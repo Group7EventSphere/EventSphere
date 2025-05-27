@@ -1,7 +1,9 @@
 package id.ac.ui.cs.advprog.eventspherre.controller;
 
 import id.ac.ui.cs.advprog.eventspherre.model.User;
+import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
+import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,6 +12,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.ui.Model;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -18,6 +22,9 @@ class MainControllerTest {
 
     @Mock
     private UserService userService;
+    
+    @Mock
+    private EventManagementService eventManagementService;
 
     @Mock
     private Model model;
@@ -31,6 +38,8 @@ class MainControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        // Mock empty list of events by default
+        when(eventManagementService.findPublicEvents()).thenReturn(new ArrayList<>());
     }
 
     @Test
@@ -51,6 +60,7 @@ class MainControllerTest {
         assertEquals("dashboard", viewName);
         verify(model).addAttribute("user", authenticatedUser);
         verify(model, never()).addAttribute(eq("isGuest"), any());
+        verify(model).addAttribute(eq("recentEvents"), any(List.class));
     }
 
     @Test
@@ -62,6 +72,7 @@ class MainControllerTest {
         assertEquals("dashboard", viewName);
         verify(model).addAttribute(eq("user"), any(User.class));
         verify(model).addAttribute("isGuest", true);
+        verify(model).addAttribute(eq("recentEvents"), any(List.class));
     }
 
     @Test
@@ -76,5 +87,29 @@ class MainControllerTest {
             "Not logged in".equals(((User) user).getEmail()) &&
             ((User) user).getBalance() == 0.0
         ));
+    }
+    
+    @Test
+    void dashboard_shouldShowTop5RecentEvents() {
+        // Arrange
+        List<Event> mockEvents = new ArrayList<>();
+        for (int i = 1; i <= 7; i++) {
+            Event event = new Event();
+            event.setId(i);
+            event.setTitle("Event " + i);
+            mockEvents.add(event);
+        }
+        when(eventManagementService.findPublicEvents()).thenReturn(mockEvents);
+        
+        // Act
+        mainController.dashboard(model, null);
+        
+        // Assert
+        verify(model).addAttribute(eq("recentEvents"), argThat(events -> {
+            List<Event> eventList = (List<Event>) events;
+            return eventList.size() == 5 && 
+                   eventList.get(0).getId() == 7 && // Most recent (highest ID)
+                   eventList.get(4).getId() == 3;   // 5th most recent
+        }));
     }
 }

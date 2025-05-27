@@ -48,6 +48,12 @@ public class TicketServiceImpl implements TicketService {
             t.setDate(LocalDate.now());
             t.setConfirmationCode(AppConstants.TICKET_CODE_PREFIX + UUID.randomUUID().toString().substring(0, AppConstants.CONFIRMATION_CODE_LENGTH).toUpperCase());
             t.setTransactionId(ticket.getTransactionId()); // Copy transaction ID from passed ticket
+            
+            // Copy price information from the original ticket
+            t.setOriginalPrice(ticket.getOriginalPrice());
+            t.setPurchasePrice(ticket.getPurchasePrice());
+            t.setDiscountPercentage(ticket.getDiscountPercentage());
+            
             tickets.add(ticketRepository.save(t));
         }
 
