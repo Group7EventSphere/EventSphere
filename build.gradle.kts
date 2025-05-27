@@ -7,6 +7,9 @@ plugins {
     id("io.freefair.lombok") version "8.11"
 }
 
+val mapStructVersion = "1.5.5.Final"
+val jwtVersion = "0.11.5"
+
 group = "id.ac.ui.cs.advprog"
 version = "0.0.1-SNAPSHOT"
 
@@ -27,32 +30,52 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot starters
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
+    
+    // Thymeleaf extras
+    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+    
+    // MapStruct
+    implementation("org.mapstruct:mapstruct:$mapStructVersion")
+    
+    // JWT
+    implementation("io.jsonwebtoken:jjwt-api:$jwtVersion")
+    
+    // Compile only dependencies
     compileOnly("org.projectlombok:lombok")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    
+    // Annotation processors
+    annotationProcessor("org.mapstruct:mapstruct-processor:$mapStructVersion")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
-    runtimeOnly("org.postgresql:postgresql:42.5.1")
+    
+    // Development only
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    
+    // Runtime only dependencies
+    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jwtVersion")
+    
+    // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    testRuntimeOnly("com.h2database:h2")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
-    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     testImplementation("org.springframework.security:spring-security-test")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
-    
-    // RabbitMQ dependency
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+    // RabbitMQ dependency
     testImplementation("org.springframework.amqp:spring-rabbit-test")
+    
+    // Test runtime only
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("com.h2database:h2")
 }
 
 tasks.withType<Test> {

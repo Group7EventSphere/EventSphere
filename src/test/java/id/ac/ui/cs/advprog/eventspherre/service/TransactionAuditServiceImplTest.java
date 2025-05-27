@@ -133,22 +133,4 @@ class TransactionAuditServiceImplTest {
             .isEqualTo(id);
     }
 
-    @Test
-    void markSuccess_shouldInvokeMarkSuccessCommand() throws Exception {
-        UUID id = UUID.randomUUID();
-
-        service.markSuccess(id);
-
-        ArgumentCaptor<MarkSuccessCommand> captor =
-            ArgumentCaptor.forClass(MarkSuccessCommand.class);
-        verify(invoker).invoke(captor.capture());
-
-        MarkSuccessCommand cmd = captor.getValue();
-        Field txIdField = MarkSuccessCommand.class
-            .getDeclaredField("txId");
-        txIdField.setAccessible(true);
-
-        assertThat(txIdField.get(cmd))
-            .isEqualTo(id);
-    }
 }

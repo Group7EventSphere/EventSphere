@@ -13,11 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -42,16 +41,16 @@ class AdminTransactionControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    @MockBean
+    @MockitoBean
     private TransactionAuditService auditService;
 
-    @MockBean
+    @MockitoBean
     private PaymentTransactionMapper mapper;
     
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
-    @MockBean
+    @MockitoBean
     private AuthenticationProvider authenticationProvider;
 
     private User admin;
@@ -344,5 +343,246 @@ class AdminTransactionControllerTest {
 
         verify(auditService).hardDelete(sampleId);
         // This tests the log.warn line in hardDelete method
+    }
+
+ 
+    @Test
+    void updateStatus_withNullStatus_shouldReturnBadRequest() throws Exception {
+        // Test missing status parameter
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+                        .with(csrf())
+        )
+        .andExpect(status().isInternalServerError());
+        
+        verify(auditService, never()).flagFailed(any());
+        verify(auditService, never()).markSuccess(any());
+    }
+
+    @Test
+    void updateStatus_withMixedCaseSuccess_shouldWork() throws Exception {
+        // Test mixed case "SuCcEsS"
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "SuCcEsS")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+                        .with(csrf())
+        )
+                .andExpect(status().isNoContent());
+        
+        verify(auditService).markSuccess(transactionId);
+    }
+
+    @Test
+    void updateStatus_withMixedCaseFailed_shouldWork() throws Exception {
+        // Test mixed case "FaIlEd"
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "FaIlEd")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+                        .with(csrf())
+        )
+                .andExpect(status().isNoContent());
+        
+        verify(auditService).flagFailed(transactionId);
+    }
+
+    @Test
+    void list_withAllParametersEmpty_shouldReturnAllActive() throws Exception {
+        // Test all filter parameters as empty strings
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("userName", "")
+                        .param("userEmail", "")
+                        .param("status", "")
+                        .param("type", "")
+                        .param("all", "false")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].userId").value(attendee.getId()));
+    }
+
+    @Test
+    void list_withUserEmailFilter_shouldFilterByEmail() throws Exception {
+        // Test userEmail filter branch
+        when(userRepository.findByEmailContainingIgnoreCase("example")).thenReturn(List.of(attendee));
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("userEmail", "example")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].userId").value(attendee.getId()));
+        
+        verify(userRepository).findByEmailContainingIgnoreCase("example");
+    }
+
+    @Test
+    void list_withTypeFilterDifferentCase_shouldWork() throws Exception {
+        // Test type filter with different cases
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("type", "topup")  // lowercase
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("type", "PURCHASE")  // uppercase
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("type", "Refund")  // mixed case
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void list_withStatusFilterDifferentCase_shouldWork() throws Exception {
+        // Test status filter with different cases
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("status", "success")  // lowercase
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("status", "FAILED")  // uppercase
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("status", "Soft_Deleted")  // mixed case
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void list_withNonMatchingTypeFilter_shouldReturnEmpty() throws Exception {
+        // Test lambda$list$3 branch where type doesn't match
+        PaymentTransaction purchaseTransaction = new PaymentTransaction();
+        purchaseTransaction.setId(UUID.randomUUID());
+        purchaseTransaction.setUserId(attendee.getId());
+        purchaseTransaction.setAmount(50.0);
+        purchaseTransaction.setType(PaymentRequest.PaymentType.PURCHASE);
+        purchaseTransaction.setStatus("SUCCESS");
+        purchaseTransaction.setCreatedAt(Instant.now());
+
+        when(auditService.getActive()).thenReturn(List.of(purchaseTransaction));
+        when(mapper.toDtoList(Collections.emptyList())).thenReturn(Collections.emptyList());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("type", "TOPUP")  // Filter for TOPUP but transaction is PURCHASE
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void list_withNonMatchingStatusFilter_shouldReturnEmpty() throws Exception {
+        // Test status filter that doesn't match
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(Collections.emptyList())).thenReturn(Collections.emptyList());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("status", "FAILED")  // Filter for FAILED but transaction is SUCCESS
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void list_withMultipleUserFilters_shouldIntersectResults() throws Exception {
+        // Test when both userName and userEmail filters are applied
+        User anotherUser = new User();
+        anotherUser.setId(3);
+        anotherUser.setEmail("another@example.com");
+        anotherUser.setName("Another User");
+
+        when(userRepository.findByNameContainingIgnoreCase("Regular")).thenReturn(List.of(attendee));
+        when(userRepository.findByEmailContainingIgnoreCase("another")).thenReturn(List.of(anotherUser));
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(Collections.emptyList())).thenReturn(Collections.emptyList());
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("userName", "Regular")
+                        .param("userEmail", "another")  // No intersection between users
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void list_withAllFiltersBooleanFalse_shouldCallGetActive() throws Exception {
+        // Test explicit all=false
+        when(auditService.getActive()).thenReturn(List.of(transaction));
+        when(mapper.toDtoList(any())).thenReturn(List.of(transactionDTO));
+
+        mvc.perform(
+                get("/api/v1/admin/transactions")
+                        .param("all", "false")
+                        .with(user(admin.getEmail()).roles(admin.getRole().name()))
+        )
+                .andExpect(status().isOk());
+
+        verify(auditService).getActive();
+        verify(auditService, never()).getAll();
+    }
+
+    @Test
+    void updateStatus_forbiddenForAttendee() throws Exception {
+        // Test authorization for updateStatus
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "SUCCESS")
+                        .with(user(attendee.getEmail()).roles("ATTENDEE"))
+                        .with(csrf())
+        )
+                .andExpect(status().isForbidden());
+
+        verify(auditService, never()).markSuccess(any());
+        verify(auditService, never()).flagFailed(any());
+    }
+
+    @Test
+    void updateStatus_redirectsForAnonymous() throws Exception {
+        // Test anonymous access to updateStatus
+        mvc.perform(
+                put("/api/v1/admin/transactions/{id}/status", transactionId)
+                        .param("status", "SUCCESS")
+                        .with(csrf())
+        )
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", containsString("/login")));
     }
 }

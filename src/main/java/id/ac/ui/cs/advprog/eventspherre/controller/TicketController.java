@@ -27,7 +27,6 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/tickets")
@@ -227,22 +226,25 @@ public class TicketController {
         List<Map<String, Object>> ticketWithEventList = new ArrayList<>();
         for (Map.Entry<UUID, List<Ticket>> entry : ticketsByTransaction.entrySet()) {
             List<Ticket> transactionTickets = entry.getValue();
-            if (transactionTickets.isEmpty()) continue;
+    
+            if (!transactionTickets.isEmpty()) {
+                Ticket firstTicket = transactionTickets.get(0);
+                TicketType type = firstTicket.getTicketType();
+        
+                if (type != null) {
+                    Integer eventId = type.getEventId();
+                    Event event = eventManagementService.getEvent(eventId);
             
-            Ticket firstTicket = transactionTickets.get(0);
-            TicketType type = firstTicket.getTicketType();
-            if (type == null) continue;
-
-            Integer eventId = type.getEventId();
-            Event event = eventManagementService.getEvent(eventId);
-            if (event == null) continue;
-
-            Map<String, Object> ticketEntry = new HashMap<>();
-            ticketEntry.put(ModelAttributes.TICKET, firstTicket);
-            ticketEntry.put(ModelAttributes.EVENT, event);
-            ticketEntry.put("quantity", transactionTickets.size());
-            ticketEntry.put("tickets", transactionTickets); // All tickets in this transaction
-            ticketWithEventList.add(ticketEntry);
+                    if (event != null) {
+                        Map<String, Object> ticketEntry = new HashMap<>();
+                        ticketEntry.put(ModelAttributes.TICKET, firstTicket);
+                        ticketEntry.put(ModelAttributes.EVENT, event);
+                        ticketEntry.put("quantity", transactionTickets.size());
+                        ticketEntry.put("tickets", transactionTickets); // All tickets in this transaction
+                        ticketWithEventList.add(ticketEntry);
+                    }
+                }
+            }
         }
 
         model.addAttribute("ticketWithEventList", ticketWithEventList);
