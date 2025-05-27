@@ -261,15 +261,4 @@ class PromoCodeControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/promo-codes"));
     }
-    
-    @Test
-    @WithMockUser(username = "attendee@test.com", roles = {"ATTENDEE"})
-    void testAttendeeAccessDenied() throws Exception {
-    var result = mockMvc.perform(get("/promo-codes")
-            .with(user("attendee@test.com").roles("ATTENDEE")))
-            .andReturn();
-
-    int status = result.getResponse().getStatus();
-    System.out.println("Status: " + status);
-}
 }

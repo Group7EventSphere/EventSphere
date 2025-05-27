@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -508,5 +509,390 @@ class AdminControllerTest {
         assertEquals("redirect:/admin/users", viewName);
         verify(redirectAttributes).addAttribute("role", "ADMIN");
         verify(redirectAttributes).addAttribute("search", "search");
+    }
+
+    @Test
+    void redirectToUserManagement_shouldReturnRedirectPath() {
+        // Act
+        String result = adminController.redirectToUserManagement();
+        
+        // Assert
+        assertEquals("redirect:/admin/users", result);
+    }
+
+    @Test
+    void userManagement_shouldHandleNullPrincipal() {
+        // Arrange
+        when(userService.getAllUsers()).thenReturn(userList);
+
+        // Act
+        String viewName = adminController.userManagement(model, null, null, null);
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        verify(userService).getAllUsers();
+        verify(model).addAttribute("users", userList);
+        verify(model).addAttribute("availableRoles", Arrays.asList(User.Role.values()));
+        // Should not add currentUserEmail when principal is null
+        verify(model, never()).addAttribute(eq("currentUserEmail"), anyString());
+    }
+
+    @Test
+    void userManagement_shouldHandleEmptyRoleParameter() {
+        // Arrange
+        when(userService.getAllUsers()).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, "", null);
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        verify(userService).getAllUsers(); // Should treat empty string as null
+        verify(model).addAttribute("users", userList);
+    }
+
+    @Test
+    void userManagement_shouldHandleEmptySearchParameter() {
+        // Arrange
+        when(userService.getAllUsers()).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, null, "");
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        verify(userService).getAllUsers(); // Should treat empty string as null
+        verify(model).addAttribute("users", userList);
+    }
+
+    @Test
+    void userManagement_shouldHandleEmptyRoleAndSearch() {
+        // Arrange
+        when(userService.getAllUsers()).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, "", "");
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        verify(userService).getAllUsers();
+        verify(model).addAttribute("users", userList);
+    }
+
+    @Test
+    void createUser_shouldHandleNullRole() {
+        // Arrange
+        User newUser = new User();
+        newUser.setId(3);
+        when(authenticationService.signup(any(RegisterUserDto.class))).thenReturn(newUser);
+
+        // Act
+        String viewName = adminController.createUser(
+                "New User", "new@example.com", "password123", "1234567890",
+                null, redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(authenticationService).signup(any(RegisterUserDto.class));
+        // The controller checks role.equals() which will cause NPE with null role
+        // Need to handle this exception
+        verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
+    }
+
+    @Test
+    void userManagement_shouldHandleRoleFilterWithWhitespace() {
+        // Arrange
+        when(userService.getUsersByRole("   ")).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, "   ", null);
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        // The controller checks role != null && !role.isEmpty(), whitespace is not empty
+        verify(userService).getUsersByRole("   ");
+        verify(model).addAttribute("users", userList);
+        verify(model).addAttribute("currentUserEmail", "admin@example.com");
+        verify(model).addAttribute("availableRoles", Arrays.asList(User.Role.values()));
+    }
+
+    @Test
+    void updateUser_shouldHandleWhitespaceRole() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.updateUser(
+                2, "Updated Name", "updated@example.com", "1234567890", 
+                "   ", principal, redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
+        verify(userService).getUserById(2);
+        // The controller checks role != null && !role.isEmpty(), so whitespace role will be processed
+        verify(userService).updateUserRole(2, "   ");
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+    }
+
+    @Test
+    void createUser_shouldHandleEmptyRole() {
+        // Arrange
+        User newUser = new User();
+        newUser.setId(3);
+        when(authenticationService.signup(any(RegisterUserDto.class))).thenReturn(newUser);
+
+        // Act
+        String viewName = adminController.createUser(
+                "New User", "new@example.com", "password123", "1234567890",
+                "", redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(authenticationService).signup(any(RegisterUserDto.class));
+        // Empty string won't match any of the role conditions, so no role update
+        verify(userService, never()).updateUserRole(anyInt(), anyString());
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+    }
+
+    @Test
+    void userManagement_shouldHandleEmptyRoleParameterCorrectly() {
+        // Arrange
+        when(userService.getAllUsers()).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, "", null);
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        // Empty string fails the !role.isEmpty() check, so getAllUsers is called
+        verify(userService).getAllUsers();
+        verify(model).addAttribute("users", userList);
+    }
+
+    @Test
+    void updateUser_shouldHandleEmptyRole() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.updateUser(
+                2, "Updated Name", "updated@example.com", "1234567890", 
+                "", principal, redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).updateUser(2, "Updated Name", "updated@example.com", "1234567890");
+        // Empty string fails the !role.isEmpty() check, so no role update
+        verify(userService, never()).updateUserRole(anyInt(), anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+    }
+
+    @Test
+    void userManagement_shouldHandleWhitespaceSearchParameter() {
+        // Arrange
+        when(userService.searchUsers("   ")).thenReturn(userList);
+        when(principal.getName()).thenReturn("admin@example.com");
+
+        // Act
+        String viewName = adminController.userManagement(model, principal, null, "   ");
+
+        // Assert
+        assertEquals("admin/user-management", viewName);
+        // Whitespace search is not empty, so searchUsers is called
+        verify(userService).searchUsers("   ");
+        verify(model).addAttribute("users", userList);
+    }
+
+    @Test
+    void deleteUser_shouldPreserveCurrentRoleWhenNotEmpty() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "ORGANIZER", null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should preserve currentRole when it's not null and not empty
+        verify(redirectAttributes).addAttribute("role", "ORGANIZER");
+        // Should not add search attribute when it's null
+        verify(redirectAttributes, never()).addAttribute(eq("search"), anyString());
+    }
+
+    @Test
+    void deleteUser_shouldPreserveCurrentSearchWhenNotEmpty() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, null, "searchTerm");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should preserve currentSearch when it's not null and not empty
+        verify(redirectAttributes).addAttribute("search", "searchTerm");
+        // Should not add role attribute when it's null
+        verify(redirectAttributes, never()).addAttribute(eq("role"), anyString());
+    }
+
+    @Test
+    void deleteUser_shouldPreserveBothCurrentRoleAndSearchWhenNotEmpty() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "ADMIN", "testSearch");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should preserve both currentRole and currentSearch when they're not null and not empty
+        verify(redirectAttributes).addAttribute("role", "ADMIN");
+        verify(redirectAttributes).addAttribute("search", "testSearch");
+    }
+
+    @Test
+    void deleteUser_shouldNotPreserveEmptyCurrentRole() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "", "searchTerm");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should not preserve currentRole when it's empty
+        verify(redirectAttributes, never()).addAttribute(eq("role"), anyString());
+        // Should preserve currentSearch when it's not empty
+        verify(redirectAttributes).addAttribute("search", "searchTerm");
+    }
+
+    @Test
+    void deleteUser_shouldNotPreserveEmptyCurrentSearch() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "ORGANIZER", "");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should preserve currentRole when it's not empty
+        verify(redirectAttributes).addAttribute("role", "ORGANIZER");
+        // Should not preserve currentSearch when it's empty
+        verify(redirectAttributes, never()).addAttribute(eq("search"), anyString());
+    }
+
+    @Test
+    void deleteUser_shouldNotPreserveBothWhenEmpty() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "", "");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should not preserve either when both are empty
+        verify(redirectAttributes, never()).addAttribute(eq("role"), anyString());
+        verify(redirectAttributes, never()).addAttribute(eq("search"), anyString());
+    }
+
+    @Test
+    void deleteUser_shouldNotPreserveBothWhenNull() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, null, null);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should not preserve either when both are null
+        verify(redirectAttributes, never()).addAttribute(eq("role"), anyString());
+        verify(redirectAttributes, never()).addAttribute(eq("search"), anyString());
+    }
+
+    @Test
+    void deleteUser_shouldPreserveStateEvenWhenCannotDeleteOwnAccount() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(1)).thenReturn(adminUser); // adminUser has email "admin@example.com"
+
+        // Act
+        String viewName = adminController.deleteUser(1, principal, redirectAttributes, "ADMIN", "adminSearch");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService, never()).deleteUser(1); // Should not delete own account
+        verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
+        // Should still preserve the state even when deletion is prevented
+        verify(redirectAttributes).addAttribute("role", "ADMIN");
+        verify(redirectAttributes).addAttribute("search", "adminSearch");
+    }
+
+    @Test
+    void deleteUser_shouldPreserveStateWhenExceptionOccurs() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+        doThrow(new RuntimeException("Database error")).when(userService).deleteUser(2);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "ORGANIZER", "errorTest");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2); // Should attempt deletion
+        verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
+        // Should preserve state even when exception occurs
+        verify(redirectAttributes).addAttribute("role", "ORGANIZER");
+        verify(redirectAttributes).addAttribute("search", "errorTest");
+    }
+
+    @Test
+    void deleteUser_shouldHandleWhitespaceInCurrentRoleAndSearch() {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, "   ", "   ");
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        // Should preserve whitespace values since they're not empty (controller checks !isEmpty())
+        verify(redirectAttributes).addAttribute("role", "   ");
+        verify(redirectAttributes).addAttribute("search", "   ");
     }
 }
