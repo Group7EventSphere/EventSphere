@@ -138,7 +138,7 @@ public class EventController {
             }
 
             // Updated to pass all event form parameters including capacity and isPublic
-            eventManagementService.createEvent(
+            Event createdEvent = eventManagementService.createEvent(
                     eventForm.getTitle(),
                     eventForm.getDescription(),
                     eventForm.getEventDate(),
@@ -146,6 +146,22 @@ public class EventController {
                     organizerId,
                     eventForm.getCapacity(),
                     eventForm.isPublic()            );
+            
+            // Create ticket types for the event
+            if (eventForm.getTicketTypes() != null && !eventForm.getTicketTypes().isEmpty()) {
+                for (EventForm.TicketTypeForm ticketTypeForm : eventForm.getTicketTypes()) {
+                    if (ticketTypeForm.getName() != null && !ticketTypeForm.getName().trim().isEmpty()) {
+                        ticketTypeService.create(
+                            ticketTypeForm.getName(),
+                            new java.math.BigDecimal(ticketTypeForm.getPrice()),
+                            ticketTypeForm.getAvailableSeats(),
+                            currentUser,
+                            createdEvent.getId()
+                        );
+                    }
+                }
+            }
+            
             ra.addFlashAttribute(AppConstants.ATTR_SUCCESS_MESSAGE_KEY, AppConstants.SUCCESS_EVENT_CREATED);
             return AppConstants.REDIRECT_EVENTS_MANAGE;
         } catch (NullPointerException e) {            // This catch block is specifically for the test createEvent_shouldDenyAccessForNonOrganizers
@@ -251,6 +267,14 @@ public class EventController {
         private String eventDate;
         private Integer capacity;
         private boolean isPublic;
-        private List<?> ticketTypes; // Added ticketTypes field to fix the error
+        private List<TicketTypeForm> ticketTypes = new ArrayList<>(); // Initialize the list
+
+        @Getter @Setter
+        public static class TicketTypeForm {
+            private String name;
+            private Double price;
+            private Integer availableSeats;
+            private String description;
+        }
     }
 }
