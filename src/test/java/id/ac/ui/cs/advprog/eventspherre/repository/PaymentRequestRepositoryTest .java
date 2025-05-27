@@ -25,7 +25,7 @@ class PaymentRequestRepositoryTest {
         r1.setType(PaymentType.TOPUP);
         r1.setProcessed(false);
         r1.setCreatedAt(Instant.now());
-        r1 = repo.saveAndFlush(r1);
+        repo.saveAndFlush(r1);
 
         PaymentRequest r2 = new PaymentRequest();
         r2.setUserId(2);
@@ -41,7 +41,7 @@ class PaymentRequestRepositoryTest {
         r3.setType(PaymentType.PURCHASE);
         r3.setProcessed(false);
         r3.setCreatedAt(Instant.now());
-        r3 = repo.saveAndFlush(r3);
+        repo.saveAndFlush(r3);
 
         List<PaymentRequest> results = repo.findByUserId(1);
 

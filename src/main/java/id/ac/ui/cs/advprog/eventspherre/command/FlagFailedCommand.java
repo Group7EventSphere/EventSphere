@@ -52,12 +52,12 @@ public class FlagFailedCommand implements AuditCommand {
                                     t -> t.getTicketType().getId(),
                                     java.util.stream.Collectors.counting()
                                 ))
-                                .forEach((ticketTypeId, count) -> {
+                                .forEach((ticketTypeId, count) -> 
                                     ticketTypeRepo.findById(ticketTypeId).ifPresent(ticketType -> {
                                         ticketType.setQuota(ticketType.getQuota() + count.intValue());
                                         ticketTypeRepo.save(ticketType);
-                                    });
-                                });
+                                    })
+                                );
                             
                             // Delete the tickets
                             ticketRepo.deleteByTransactionId(tx.getId());
