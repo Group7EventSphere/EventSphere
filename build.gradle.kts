@@ -7,6 +7,9 @@ plugins {
     id("io.freefair.lombok") version "8.11"
 }
 
+val mapStructVersion = "1.5.5.Final"
+val jwtVersion = "0.11.5"
+
 group = "id.ac.ui.cs.advprog"
 version = "0.0.1-SNAPSHOT"
 
@@ -39,16 +42,16 @@ dependencies {
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
     
     // MapStruct
-    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    implementation("org.mapstruct:mapstruct:$mapStructVersion")
     
     // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:$jwtVersion")
     
     // Compile only dependencies
     compileOnly("org.projectlombok:lombok")
     
     // Annotation processors
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:$mapStructVersion")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
     
@@ -57,17 +60,17 @@ dependencies {
     
     // Runtime only dependencies
     runtimeOnly("org.postgresql:postgresql")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jwtVersion")
     
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
-    
-    // RabbitMQ dependency
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+    // RabbitMQ dependency
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     
     // Test runtime only

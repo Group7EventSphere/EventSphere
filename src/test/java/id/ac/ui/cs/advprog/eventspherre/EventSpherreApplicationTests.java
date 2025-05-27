@@ -12,6 +12,8 @@ class EventSpherreApplicationTests {
 
     @Test
     void contextLoads() {
+        // This test simply checks if the application context loads successfully.
+        // No additional assertions are needed as the test will fail if the context cannot be loaded.
     }
 
     @Test

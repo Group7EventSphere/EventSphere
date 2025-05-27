@@ -79,6 +79,8 @@ public class AdminTransactionController {
                         .filter(t -> t.getPaymentType() == paymentType)
                         .toList();
             } catch (IllegalArgumentException e) {
+                log.warn("Unrecognized payment type");
+                // If the type is invalid, we simply skip filtering by type
             }
         }
 
