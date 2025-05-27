@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThymeleafConfigTest {
