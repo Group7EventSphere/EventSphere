@@ -6,6 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -117,11 +118,8 @@ class FileSystemImageStorageServiceTest {
         );
     }
 
-    // ===== New tests to cover IOException paths =====
-
     @Test
     void init_rootIsAFile_shouldWrapIOException() throws IOException {
-        // make a file at the path instead of a directory
         Path fileInsteadOfDir = Files.createTempFile("not-a-dir", ".txt");
         FileSystemImageStorageService svc = new FileSystemImageStorageService(fileInsteadOfDir);
 
@@ -132,11 +130,9 @@ class FileSystemImageStorageServiceTest {
 
     @Test
     void store_whenInputStreamFails_shouldWrapIOException() throws IOException {
-        // re-init service
         service = new FileSystemImageStorageService(tempRoot);
         service.init();
 
-        // mock a multipart file whose getInputStream() throws
         MultipartFile broken = mock(MultipartFile.class);
         when(broken.getContentType()).thenReturn("image/png");
         when(broken.isEmpty()).thenReturn(false);
@@ -150,5 +146,39 @@ class FileSystemImageStorageServiceTest {
         );
         assertTrue(ex.getMessage().contains("Failed to store image"));
         assertTrue(ex.getCause() instanceof IOException);
+    }
+
+    @Test
+    void store_nullContentType_shouldThrow() {
+        MultipartFile noType = mock(MultipartFile.class);
+        when(noType.getContentType()).thenReturn(null);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.store(noType)
+        );
+        // service currently treats null type as invalid content type
+        assertEquals("Only PNG or JPEG images are allowed", ex.getMessage());
+    }
+
+    @Test
+    void delete_outsideRoot_shouldThrow() {
+        String outside = ".." + File.separator + "foo.png";
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> service.delete(outside)
+        );
+        assertEquals("Cannot delete file outside of storage directory", ex.getMessage());
+    }
+
+    @Test
+    void delete_nonEmptyDirectory_shouldBeIgnored() throws IOException {
+        Path subdir = tempRoot.resolve("subdir");
+        Files.createDirectory(subdir);
+        Files.writeString(subdir.resolve("inside.txt"), "data");
+
+        assertDoesNotThrow(() -> service.delete("subdir"));
+        assertTrue(Files.exists(subdir), "non-empty directory should remain when delete fails");
     }
 }
