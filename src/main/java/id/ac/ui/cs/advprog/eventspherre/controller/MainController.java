@@ -29,7 +29,6 @@ public class MainController {
     @GetMapping("/")
     public String dashboard(Model model, Principal principal) {
         // Check if user is authenticated
-        model.addAttribute("ads", adService.getAllAds());
         if (principal != null) {
             User user = userService.getUserByEmail(principal.getName());
             model.addAttribute("user", user);
