@@ -20,12 +20,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 @ExtendWith(MockitoExtension.class)
 class AdminControllerTest {
@@ -894,5 +895,43 @@ class AdminControllerTest {
         // Should preserve whitespace values since they're not empty (controller checks !isEmpty())
         verify(redirectAttributes).addAttribute("role", "   ");
         verify(redirectAttributes).addAttribute("search", "   ");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        // currentRole, currentSearch, expectRole, expectSearch
+        "ORGANIZER,,true,false",
+        ",searchTerm,false,true",
+        "ADMIN,testSearch,true,true",
+        "'',searchTerm,false,true",
+        "ORGANIZER,'',true,false",
+        "'','',false,false",
+        ",,false,false",
+        "'   ','   ',true,true"
+    })
+    void deleteUser_shouldPreserveRoleAndSearchState(
+            String currentRole, String currentSearch,
+            boolean expectRole, boolean expectSearch) {
+        // Arrange
+        when(principal.getName()).thenReturn("admin@example.com");
+        when(userService.getUserById(2)).thenReturn(regularUser);
+
+        // Act
+        String viewName = adminController.deleteUser(2, principal, redirectAttributes, currentRole, currentSearch);
+
+        // Assert
+        assertEquals("redirect:/admin/users", viewName);
+        verify(userService).deleteUser(2);
+        verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
+        if (expectRole) {
+            verify(redirectAttributes).addAttribute("role", currentRole);
+        } else {
+            verify(redirectAttributes, never()).addAttribute(eq("role"), any());
+        }
+        if (expectSearch) {
+            verify(redirectAttributes).addAttribute("search", currentSearch);
+        } else {
+            verify(redirectAttributes, never()).addAttribute(eq("search"), any());
+        }
     }
 }
