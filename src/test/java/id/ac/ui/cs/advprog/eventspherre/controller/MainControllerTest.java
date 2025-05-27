@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
+import id.ac.ui.cs.advprog.eventspherre.service.AdService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -27,6 +28,9 @@ class MainControllerTest {
     private EventManagementService eventManagementService;
 
     @Mock
+    private AdService adService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -40,6 +44,8 @@ class MainControllerTest {
         MockitoAnnotations.openMocks(this);
         // Mock empty list of events by default
         when(eventManagementService.findPublicEvents()).thenReturn(new ArrayList<>());
+        // Mock empty list of ads by default
+        when(adService.getAllAds()).thenReturn(new ArrayList<>());
     }
 
     @Test

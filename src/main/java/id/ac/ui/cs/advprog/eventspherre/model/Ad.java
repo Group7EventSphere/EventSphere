@@ -1,48 +1,64 @@
 package id.ac.ui.cs.advprog.eventspherre.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.Builder.Default;
 
+
+@Entity
+@Table(name = "ads")
 @Getter
 @Setter
+@NoArgsConstructor
+@Builder
 public class Ad {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false, length = 1024)
     private String description;
+
+    @Column(nullable = false)
     private String imageUrl;
-    private String userRole;
 
-    public Ad() { }
+    @Default
+    @Column(nullable = false)
+    private String userRole = "USER";
 
-    public Ad(Long id, String title, String description, String imageUrl, String userRole) {
+    @Default
+    @Column(nullable = false)
+    private boolean active = true;
+
+    public Ad(Long id,
+              String title,
+              String description,
+              String imageUrl) {
+        this(id, title, description, imageUrl, "USER", true);
+    }
+
+    public Ad(Long id,
+              String title,
+              String description,
+              String imageUrl,
+              String userRole) {
+        this(id, title, description, imageUrl, userRole, true);
+    }
+
+    public Ad(Long id,
+              String title,
+              String description,
+              String imageUrl,
+              String userRole,
+              boolean active) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
         this.userRole = userRole;
-    }
-
-    public Ad(Long id, String title, String description, String imageUrl) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.imageUrl = imageUrl;
-        this.userRole = "USER";
-    }
-
-    public boolean canEdit() {
-        return "ADMIN".equalsIgnoreCase(this.userRole);
-    }
-
-    public boolean isValid() {
-        return title != null && !title.isEmpty() &&
-                description != null && !description.isEmpty() &&
-                imageUrl != null && imageUrl.matches(".*\\.(jpg|png)$");
-    }
-
-    @Override
-    public String toString() {
-        return "Ad [id=" + id + ", title=" + title + ", description=" + description + ", imageUrl=" + imageUrl + "]";
+        this.active = active;
     }
 }

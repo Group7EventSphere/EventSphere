@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.eventspherre.model.User;
 import id.ac.ui.cs.advprog.eventspherre.model.Event;
 import id.ac.ui.cs.advprog.eventspherre.service.UserService;
 import id.ac.ui.cs.advprog.eventspherre.service.EventManagementService;
+import id.ac.ui.cs.advprog.eventspherre.service.AdService;
 import id.ac.ui.cs.advprog.eventspherre.constants.AppConstants;
 
 import java.security.Principal;
@@ -20,13 +21,14 @@ public class MainController {
     
     private final UserService userService;
     private final EventManagementService eventManagementService;
+    private final AdService adService;
 
-    public MainController(UserService userService, EventManagementService eventManagementService) {
+    public MainController(UserService userService, EventManagementService eventManagementService, AdService adService) {
         this.userService = userService;
         this.eventManagementService = eventManagementService;
+        this.adService = adService;
     }
-    
-    @GetMapping("/")
+      @GetMapping("/")
     public String dashboard(Model model, Principal principal) {
         // Check if user is authenticated
         if (principal != null) {
@@ -49,6 +51,9 @@ public class MainController {
                 .limit(5)
                 .toList();
         model.addAttribute("recentEvents", recentEvents);
+        
+        // Add ads data for the carousel
+        model.addAttribute("ads", adService.getAllAds());
         
         return "dashboard";
     }

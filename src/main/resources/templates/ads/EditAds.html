@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Edit Ads — EventSphere</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Form layout */
+        .form-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .create-header .btn-primary { border: none; }
+        /* Upload card */
+        .upload-card {
+            position: relative;
+            border: 2px dashed #e5e7eb;
+            border-radius: 0.375rem;
+            background: #fafafa;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .upload-card-icon { font-size: 2.5rem; color: #9ca3af; margin-bottom: 0.5rem; }
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #4F46E5;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .upload-btn:hover { background: #2563eb; }
+        .upload-input { display: none; }
+        .upload-loading {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+        }
+        .upload-loading span { font-size: 0.9rem; color: #374151; }
+        .upload-preview {
+            margin-top: 1rem;
+            display: none;
+            max-width: 240px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .upload-preview img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16/9;
+        }
+        .status-message {
+            display: none;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .status-success { color: #16a34a; }
+        .status-error   { color: #dc2626; }
+    </style>
+</head>
+<body>
+<!-- navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content with-navbar container">
+    <form id="ad-form">
+        <div class="create-header">
+            <h2>Edit Ads</h2>
+            <button type="submit" id="update-btn" class="btn btn-primary" disabled>Update</button>
+        </div>
+
+        <div class="form-container">
+            <!-- Left: Title & Image -->
+            <div>
+                <div class="form-group">
+                    <label for="ads-title">Ads Title</label>
+                    <input type="text"
+                           id="ads-title"
+                           name="title"
+                           class="form-control"
+                           th:value="${ad.title}"
+                           required/>
+                </div>
+                <div class="upload-card">
+                    <div class="upload-loading" id="upload-loading"><span>Uploading…</span></div>
+                    <div class="upload-card-icon">⬆️</div>
+                    <p>Upload Image</p>
+                    <label class="upload-btn" for="file-input">Choose File</label>
+                    <input type="file"
+                           id="file-input"
+                           accept="image/png, image/jpeg"
+                           class="upload-input"/>
+                    <div class="upload-preview" id="image-preview" th:if="${ad.imageUrl}">
+                        <img id="preview-image"
+                             th:src="@{${ad.imageUrl}}"
+                             alt="Preview"/>
+                    </div>
+                    <div id="upload-status" class="status-message"></div>
+                    <input type="hidden" id="image-url" name="imageUrl" th:value="${ad.imageUrl}"/>
+                </div>
+            </div>
+
+            <!-- Right: Description -->
+            <div>
+                <div class="form-group">
+                    <label for="ads-desc">Ads Description</label>
+                    <textarea id="ads-desc"
+                              name="description"
+                              class="form-control"
+                              rows="6"
+                              required
+                              th:text="${ad.description}"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" id="ad-id" th:value="${ad.id}"/>
+    </form>
+</main>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput   = document.getElementById('file-input');
+        const urlInput    = document.getElementById('image-url');
+        const updateBtn   = document.getElementById('update-btn');
+        const loadingEl   = document.getElementById('upload-loading');
+        const previewWrap = document.getElementById('image-preview');
+        const previewImg  = document.getElementById('preview-image');
+        const statusMsg   = document.getElementById('upload-status');
+        const titleInput  = document.getElementById('ads-title');
+        const descInput   = document.getElementById('ads-desc');
+        const form        = document.getElementById('ad-form');
+        const adId        = document.getElementById('ad-id').value;
+
+        const CLOUD_URL = `https://api.cloudinary.com/v1_1/dgtd4i3r5/image/upload`;
+        const PRESET    = 'adpro-ads';
+
+        function toggleUpdate() {
+            updateBtn.disabled =
+                !(titleInput.value.trim() &&
+                    descInput.value.trim() &&
+                    urlInput.value);
+        }
+
+        function showStatus(text, isError = false) {
+            statusMsg.textContent = text;
+            statusMsg.className = isError
+                ? 'status-message status-error'
+                : 'status-message status-success';
+            statusMsg.style.display = 'block';
+            setTimeout(() => statusMsg.style.display = 'none', 4000);
+        }
+
+        [titleInput, descInput].forEach(el => el.addEventListener('input', toggleUpdate));
+
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            loadingEl.style.display = 'flex';
+            previewWrap && (previewWrap.style.display = 'none');
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('upload_preset', PRESET);
+                const res = await fetch(CLOUD_URL, { method: 'POST', body: fd });
+                if (!res.ok) throw new Error();
+                const json = await res.json();
+                urlInput.value = json.secure_url;
+                previewImg.src = json.secure_url;
+                previewWrap.style.display = 'block';
+                showStatus('Upload successful');
+                toggleUpdate();
+            } catch {
+                showStatus('Upload failed', true);
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        });
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            updateBtn.disabled = true;
+            try {
+                const payload = {
+                    title:       titleInput.value.trim(),
+                    description: descInput.value.trim(),
+                    imageUrl:    urlInput.value
+                };
+                const res = await fetch(`/api/ads/${adId}`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error();
+                window.location.href = '/ads/list';
+            } catch {
+                alert('Update failed');
+            } finally {
+                updateBtn.disabled = false;
+            }
+        });
+
+        toggleUpdate();
+    });
+</script>
+</body>
+</html>
