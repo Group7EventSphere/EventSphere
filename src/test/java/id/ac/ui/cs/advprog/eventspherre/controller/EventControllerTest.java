@@ -223,18 +223,19 @@ void deleteEvent_shouldDenyAccessForAttendees() throws Exception {
     }    @Test
     @WithMockUser(username = "organizer@example.com", roles = {"ORGANIZER"})
     void createEvent_withValidationErrors_shouldReturnFormWithErrors() throws Exception {
+        // Simulate validation error by omitting required fields
         mockMvc.perform(post("/events/create")
-                        .with(csrf())
-                        .param("title", "") // Empty title should trigger validation error
-                        .param("description", "Test Description")
-                        .param("eventDate", "2024-12-31")
-                        .param("location", "Jakarta")
-                        .param("capacity", "100")
-                        .param("public", "true"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("events/create"))
-                .andExpect(model().attributeHasErrors("eventForm"))
-                .andExpect(model().attributeHasFieldErrors("eventForm", "title"));
+                .with(csrf())
+                .param("title", "") // Empty title triggers validation error
+                .param("description", "Test Description")
+                .param("eventDate", "2024-12-31")
+                .param("location", "Jakarta")
+                .param("capacity", "100")
+                .param("public", "true"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("events/create"))
+            .andExpect(model().attributeHasErrors("eventForm"))
+            .andExpect(model().attributeHasFieldErrors("eventForm", "title"));
     }
 
     @Test
