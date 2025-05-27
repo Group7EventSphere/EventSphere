@@ -12,11 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -41,10 +41,10 @@ class TicketTypeControllerTest {
 
     @Autowired MockMvc mockMvc;
 
-    @MockBean TicketTypeService      ticketTypeService;
-    @MockBean UserService            userService;
-    @MockBean EventManagementService eventManagementService;
-    @MockBean AuthenticationProvider authenticationProvider;
+    @MockitoBean TicketTypeService      ticketTypeService;
+    @MockitoBean UserService            userService;
+    @MockitoBean EventManagementService eventManagementService;
+    @MockitoBean AuthenticationProvider authenticationProvider;
 
     private User mockUser;
     private Event sampleEvent;

@@ -20,12 +20,12 @@ import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -51,13 +51,13 @@ class TicketControllerTest {
 
     @Autowired MockMvc mockMvc;
 
-    @MockBean TicketService            ticketService;
-    @MockBean TicketTypeService        ticketTypeService;
-    @MockBean UserService              userService;
-    @MockBean EventManagementService   eventManagementService;
-    @MockBean AuthenticationProvider   authenticationProvider;
-    @MockBean PaymentHandler           paymentHandler;
-    @MockBean PaymentService           paymentService;
+    @MockitoBean TicketService            ticketService;
+    @MockitoBean TicketTypeService        ticketTypeService;
+    @MockitoBean UserService              userService;
+    @MockitoBean EventManagementService   eventManagementService;
+    @MockitoBean AuthenticationProvider   authenticationProvider;
+    @MockitoBean PaymentHandler           paymentHandler;
+    @MockitoBean PaymentService           paymentService;
 
     @InjectMocks
     TicketController ticketController;
