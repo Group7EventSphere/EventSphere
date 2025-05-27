@@ -5,7 +5,6 @@ import id.ac.ui.cs.advprog.eventspherre.dto.AdResponseDTO;
 import id.ac.ui.cs.advprog.eventspherre.model.Ad;
 import id.ac.ui.cs.advprog.eventspherre.repository.AdRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
